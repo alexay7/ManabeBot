@@ -1,12 +1,5 @@
 """Cog responsible for random things."""
 
-import json
-import random
-import re
-from attr import has
-import discord
-import time
-import aiohttp
 from discord.ext import commands
 from datetime import datetime, timezone
 from dateutil.tz import gettz
@@ -15,25 +8,10 @@ import requests
 from time import strftime
 from time import gmtime
 
-with open(f"cogs/myguild.json") as json_file:
-    data_dict = json.load(json_file)
-    guild_id = data_dict["guild_id"]
-
 
 class Extra(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-
-    async def getjson(self, url):
-        async with self.aiosession.get(url) as resp:
-            return await resp.json()
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.myguild = self.bot.get_guild(guild_id)
-        await self.bot.change_presence(activity=discord.Activity(
-            type=discord.ActivityType.watching, name="Cosas japonesas"))
-        self.aiosession = aiohttp.ClientSession()
 
     @commands.command()
     async def japantime(self, ctx):
