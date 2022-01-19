@@ -1,0 +1,9 @@
+git+https://github.com/Rapptz/discord.py@master
+pandas
+seaborn
+srt
+matplotlib
+ujson
+requests
+boto3
+beautifulsoup4 
