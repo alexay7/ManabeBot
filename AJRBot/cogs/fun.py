@@ -31,6 +31,8 @@ class Extra(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         self.myguild = self.bot.get_guild(guild_id)
+        await self.bot.change_presence(activity=discord.Activity(
+            type=discord.ActivityType.watching, name="Cosas japonesas"))
         self.aiosession = aiohttp.ClientSession()
 
     @commands.command()
