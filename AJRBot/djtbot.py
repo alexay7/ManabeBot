@@ -1,4 +1,5 @@
 """Main file"""
+from discord.ext.commands import CommandNotFound
 import os
 import discord
 import json
@@ -15,6 +16,11 @@ client = discord.Client()
 with open(f"cogs/myguild.json") as json_file:
     data_dict = json.load(json_file)
     trusted_server_ids = data_dict["trusted_server_ids"]
+
+
+@djtbot.event
+async def on_command_error(ctx, error):
+    await ctx.message.add_reaction('❓')
 
 
 @djtbot.check

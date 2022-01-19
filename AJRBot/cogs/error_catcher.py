@@ -3,6 +3,7 @@ import discord
 import re
 import json
 from discord.ext import commands
+from discord.ext.commands import CommandNotFound
 
 #############################################################
 # Variables (Temporary)

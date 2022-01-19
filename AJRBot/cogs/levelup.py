@@ -45,7 +45,7 @@ class Quiz(commands.Cog):
     async def on_ready(self):
         self.myguild = self.bot.get_guild(guild_id)
         await self.bot.change_presence(activity=discord.Activity(
-            type=discord.ActivityType.watching, name="Cosas japonesas"))
+            type=discord.ActivityType.watching, name="Cosas japonesas| $help"))
         self.aiosession = aiohttp.ClientSession()
 
     @commands.command()
@@ -55,7 +55,7 @@ class Quiz(commands.Cog):
         """
         if ctx.channel.id not in join_quiz_channel_ids:
             await ctx.send(
-                f"Este bot solo puede ser usado en <#796084920790679612>.")
+                f"Este comando solo puede ser usado en <#796084920790679612>.")
             return
 
         member = await self.myguild.fetch_member(ctx.author.id)
