@@ -13,7 +13,7 @@ class Extra(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
+    @commands.command(aliases=['tiempojapon', 'horajapon'])
     async def japantime(self, ctx):
         "Muestra la hora actual y la de Japón."
         local = datetime.now(gettz('Spain'))
@@ -53,7 +53,7 @@ class Extra(commands.Cog):
         await ctx.send(
             f"Hora Local: {localtime} del {local.day} de {intToMonth(local.month)} de {local.year}\nHora Japonesa: {japantime} del {local_japan.day} de {intToMonth(local_japan.month)} de {local_japan.year}")
 
-    @commands.command(aliases=['canigotojapan'])
+    @commands.command(aliases=['canigotojapan', 'quieroirajapon'])
     async def japonabierto(self, ctx):
         "Te dice si las fronteras de Japón están abiertas para el turismo o no"
         url = "https://canigotojapan.com"
