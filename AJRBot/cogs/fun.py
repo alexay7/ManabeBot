@@ -77,11 +77,13 @@ class Extra(commands.Cog):
 
     @commands.command(aliases=['jpytoeuro', 'yentoeuro', 'jpyaeuro', 'y2e'])
     async def yenaeuro(self, ctx, yenes):
+        "Convierte yenes a euros. Uso: $comando cantidad"
         result = round(int(yenes)*0.0077, 2)
         await ctx.send(yenes+"¥ equivalen a "+str(result)+"€")
 
     @commands.command(aliases=['eurotojpy', 'eurotoyen', 'euroajpy', 'e2y'])
     async def euroayen(self, ctx, euros):
+        "Convierte euros a yenes. Uso: $comando cantidad"
         result = int(euros)*129.8701298701
         await ctx.send(euros+"€ equivalen a "+str(result)+"¥")
 

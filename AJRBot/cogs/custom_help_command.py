@@ -18,7 +18,11 @@ class MyHelpCommand(commands.MinimalHelpCommand):
             lines = []
             for command in commands:
                 commandline = f"`{command.name}` {command.help}"
-                lines.append(commandline)
+                if(len(command.aliases) != 0):
+                    commandline += f"\nOtros usos:"
+                    for element in command.aliases:
+                        commandline += f"\n - `{element}`"
+                lines.append(commandline + "\n")
 
             joined = '\n'.join(lines)
             self.paginator.add_line(joined)
