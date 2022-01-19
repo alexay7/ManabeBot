@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 import requests
 from time import strftime
 from time import gmtime
+import math
 
 
 class Extra(commands.Cog):
@@ -73,6 +74,16 @@ class Extra(commands.Cog):
         soup = BeautifulSoup(req.content, 'html.parser')
 
         await ctx.send(soup.find("h2").text)
+
+    @commands.command(aliases=['jpytoeuro', 'yentoeuro', 'jpyaeuro', 'y2e'])
+    async def yenaeuro(self, ctx, yenes):
+        result = round(int(yenes)*0.0077, 2)
+        await ctx.send(yenes+"¥ equivalen a "+str(result)+"€")
+
+    @commands.command(aliases=['eurotojpy', 'eurotoyen', 'euroajpy', 'e2y'])
+    async def euroayen(self, ctx, euros):
+        result = int(euros)*129.8701298701
+        await ctx.send(euros+"€ equivalen a "+str(result)+"¥")
 
 
 def setup(bot):
