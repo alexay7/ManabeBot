@@ -80,7 +80,7 @@ class Manga(commands.Cog):
                 manga = parse.urlsplit(message.content).path.split("/")
                 response = anilistApi(manga[2])
                 if(response.status_code == 200):
-                    if(response.json()["data"]["Media"]["meanScore"] == None or int(response.json()["data"]["Media"]["meanScore"]) < 60):
+                    if(response.json()["data"]["Media"]["meanScore"] == None or int(response.json()["data"]["Media"]["meanScore"]) < 65):
                         await message.add_reaction("❌")
                         badgrade = discord.Embed(color=0xff2929)
                         badgrade.add_field(
