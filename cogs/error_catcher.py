@@ -42,6 +42,9 @@ class ErrorHandler(commands.Cog):
         elif isinstance(error, commands.errors.CommandNotFound):
 
             return
+        elif isinstance(error, commands.errors.CommandOnCooldown):
+            await ctx.send(f'Tienes que esperar {int(error.retry_after)} segundos antes de volver a usar ese comando.')
+            return
         elif isinstance(error, commands.errors.PrivateMessageOnly):
             await ctx.send(f"Este comando solo esta disponible via MP")
             return
