@@ -80,6 +80,13 @@ class Manga(commands.Cog):
                 manga = parse.urlsplit(message.content).path.split("/")
                 response = anilistApi(manga[2])
                 if(response.status_code == 200):
+                    if(response.json()["data"]["Media"]["meanScore"] == None or int(response.json()["data"]["Media"]["meanScore"]) < 60):
+                        await message.add_reaction("❌")
+                        badgrade = discord.Embed(color=0xff2929)
+                        badgrade.add_field(
+                            name="❌", value="Nota media demasiado baja", inline=False)
+                        await ctx.send(embed=badgrade, delete_after=10.0)
+                        return
                     output = self.bot.get_channel(outputchannel)
                     embed = discord.Embed(
                         title="Nueva petición de manga", description="Ha llegado una nueva petición de manga", color=0x24b14d)
@@ -98,12 +105,14 @@ class Manga(commands.Cog):
                     embed.add_field(
                         name="Link", value=message.content, inline=False)
                     await output.send(embed=embed)
-                    embed = discord.Embed()
-                    embed.add_field(
-                        name="✅", value="Petición enviada con éxito", inline=False)
-                    tempmes = await ctx.send(embed=embed, delete_after=5.0)
+                    await message.add_reaction("✅")
                 else:
-                    await ctx.send("Ha habido un error leyendo los datos de ese manga.")
+                    await message.add_reaction("❌")
+                    notfound = discord.Embed(color=0xff2929)
+                    notfound.add_field(
+                        name="❌", value="Manga no encontrado en anilist", inline=False)
+                    await ctx.send(embed=notfound, delete_after=10.0)
+                    return
 
 
 def setup(bot):
