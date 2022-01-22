@@ -1,5 +1,6 @@
 """Cog responsible for random things."""
 
+import discord
 from discord.ext import commands
 from datetime import datetime, timezone
 from dateutil.tz import gettz
@@ -7,7 +8,7 @@ from bs4 import BeautifulSoup
 import requests
 from time import strftime
 from time import gmtime
-import math
+import random
 
 
 class Extra(commands.Cog):
@@ -75,17 +76,47 @@ class Extra(commands.Cog):
 
         await ctx.send(soup.find("h2").text)
 
-    @commands.command(aliases=['jpytoeuro', 'yentoeuro', 'jpyaeuro', 'y2e'])
+    @commands.command(aliases=['jpytoeuro', 'yentoeuro', 'jpyaeuro', 'y2e', 'yte', 'yae'])
     async def yenaeuro(self, ctx, yenes):
         "Convierte yenes a euros. Uso: $comando cantidad"
         result = round(int(yenes)*0.0077, 2)
         await ctx.send(yenes+"¥ equivalen a "+str(result)+"€")
 
-    @commands.command(aliases=['eurotojpy', 'eurotoyen', 'euroajpy', 'e2y'])
+    @commands.command(aliases=['eurotojpy', 'eurotoyen', 'euroajpy', 'e2y', 'ety', 'eay'])
     async def euroayen(self, ctx, euros):
         "Convierte euros a yenes. Uso: $comando cantidad"
         result = int(euros)*129.8701298701
         await ctx.send(euros+"€ equivalen a "+str(result)+"¥")
+
+    @commands.cooldown(1, 300, commands.BucketType.user)
+    @commands.command(aliases=['randomyoji', 'yojialeatorio', 'palabraaleatoria', 'randomword'])
+    async def aleatoria(self, ctx):
+        "Obtiene un yoji aleatorio de jisho.org (cooldown de 5 min)"
+        page = random.randint(1, 100)
+        element = random.randint(0, 19)
+        response = requests.get(
+            f"https://jisho.org/api/v1/search/words?keyword=%23yoji&page={page}")
+        element = response.json()["data"][element]
+        kanji = element["japanese"][0]["word"]
+        furigana = element["japanese"][0]["reading"]
+        meaninggroup = element["senses"][0]["english_definitions"]
+        meanings = meaninggroup[0]
+        for element in meaninggroup[1:]:
+            meanings += ", "+element
+
+        embed = discord.Embed(title="Yoji aleatorio de AJR",
+                              description="Recibe un yojijukugo aleatorio de jisho.org", color=0x24b14d)
+        embed.set_author(
+            name="IniestaBot", icon_url="https://cdn.discordapp.com/avatars/892168738193936424/c08307c917ffb2fe9e4f59b66db66c9e.webp?size=48")
+        embed.set_thumbnail(
+            url="https://cdn.discordapp.com/icons/654351832734498836/6909a6a37d50d4010169c388c56c2746.webp?size=96")
+        embed.add_field(name="Palabra", value=kanji, inline=True)
+        embed.add_field(name="Lectura", value=furigana, inline=True)
+        embed.add_field(
+            name="Significados", value=meanings, inline=False)
+        embed.set_footer(
+            text="Si quieres obtener otra palabra, escribe $randomyoji dentro de 5 minutos.")
+        await ctx.send(embed=embed)
 
 
 def setup(bot):

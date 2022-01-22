@@ -2,6 +2,7 @@ Dockerfile
 /levelup.py
 token.txt
 volumenes.py
+/test.py
 
 .dockerignore
 
