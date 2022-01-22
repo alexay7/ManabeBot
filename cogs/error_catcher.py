@@ -40,7 +40,7 @@ class ErrorHandler(commands.Cog):
             await ctx.send(f"Argumento necesario: {error.param}")
             return
         elif isinstance(error, commands.errors.CommandNotFound):
-
+            await ctx.message.add_reaction('❓')
             return
         elif isinstance(error, commands.errors.CommandOnCooldown):
             await ctx.send(f'Tienes que esperar {int(error.retry_after)} segundos antes de volver a usar ese comando.')

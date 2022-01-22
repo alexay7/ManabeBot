@@ -19,8 +19,17 @@ with open(f"cogs/myguild.json") as json_file:
 
 
 @djtbot.event
-async def on_command_error(ctx, error):
-    await ctx.message.add_reaction('❓')
+async def on_message(message):
+    if message.content == "pong":
+        await message.channel.send('ping')
+
+    for cog in djtbot.cogs:
+        cog = djtbot.get_cog(cog)
+        try:
+            check = await cog.searchAnilist(message)
+        except AttributeError:
+            continue
+    await djtbot.process_commands(message)
 
 
 @djtbot.check

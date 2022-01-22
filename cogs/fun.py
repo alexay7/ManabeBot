@@ -1,5 +1,6 @@
 """Cog responsible for random things."""
 
+import json
 import discord
 from discord.ext import commands
 from datetime import datetime, timezone
@@ -9,6 +10,14 @@ import requests
 from time import strftime
 from time import gmtime
 import random
+
+#############################################################
+# Variables (Temporary)
+with open(f"cogs/myguild.json") as json_file:
+    data_dict = json.load(json_file)
+    join_quiz_channel_ids = [
+        data_dict["join_quiz_1_id"]]
+#############################################################
 
 
 class Extra(commands.Cog):
@@ -92,10 +101,16 @@ class Extra(commands.Cog):
     @commands.command(aliases=['randomyoji', 'yojialeatorio', 'palabraaleatoria', 'randomword'])
     async def aleatoria(self, ctx):
         "Obtiene un yoji aleatorio de jisho.org (cooldown de 5 min)"
+
+        if ctx.channel.id not in join_quiz_channel_ids:
+            await ctx.send(
+                f"Este comando solo puede ser usado en <#796084920790679612>.")
+            return
+
         page = random.randint(1, 100)
-        element = random.randint(0, 19)
         response = requests.get(
             f"https://jisho.org/api/v1/search/words?keyword=%23yoji&page={page}")
+        element = random.randint(0, len(response.json()["data"])-1)
         element = response.json()["data"][element]
         kanji = element["japanese"][0]["word"]
         furigana = element["japanese"][0]["reading"]
