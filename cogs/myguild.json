@@ -12,17 +12,17 @@
             8001,
             40,
             [
-                "Eishiikaisho"
+                "Noto Sans CJK"
             ],
             892868169729986600,
             0
         ],
         "JLPT N4 Reading Quiz": [
-            15,
+            1,
             8001,
             40,
             [
-                "Eishiikaisho"
+                "Noto Sans CJK"
             ],
             892868325724524594,
             0
@@ -32,7 +32,7 @@
             8001,
             40,
             [
-                "Eishiikaisho"
+                "Noto Sans CJK"
             ],
             892868371396296724,
             0
@@ -42,7 +42,7 @@
             8001,
             40,
             [
-                "Eishiikaisho"
+                "Noto Sans CJK"
             ],
             892868404132843560,
             0
@@ -52,7 +52,7 @@
             8001,
             40,
             [
-                "Eishiikaisho"
+                "Noto Sans CJK"
             ],
             892868429877485598,
             0
@@ -77,11 +77,11 @@
     ],
     "join_quiz_1_id": 796084920790679612,
     "mycommands": {
-        "654352144664887297": "Lucha por el N5:\n`k!quiz n5 nodelay atl=8 15 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=5`",
-        "892868169729986600": "Lucha por el N4:\n`k!quiz n4 nodelay atl=8 15 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=5`",
-        "892868325724524594": "Lucha por el N3:\n`k!quiz n3 nodelay atl=8 15 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=5`",
-        "892868371396296724": "Lucha por el N2:\n`k!quiz n2 nodelay atl=8 20 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=5`",
-        "892868404132843560": "Lucha por el N1:\n`k!quiz n1 nodelay atl=8 20 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=5`",
+        "654352144664887297": "Lucha por el N5:\n`k!quiz n5 nodelay atl=8 15 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=1`",
+        "892868169729986600": "Lucha por el N4:\n`k!quiz n4 nodelay atl=8 15 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=1`",
+        "892868325724524594": "Lucha por el N3:\n`k!quiz n3 nodelay atl=8 15 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=1`",
+        "892868371396296724": "Lucha por el N2:\n`k!quiz n2 nodelay atl=8 20 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=1`",
+        "892868404132843560": "Lucha por el N1:\n`k!quiz n1 nodelay atl=8 20 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=1`",
         "892868429877485598": ":\n`Nivel mas alto`"
     },
     "kaigen_user_id": 615896601554190346
