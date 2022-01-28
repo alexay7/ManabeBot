@@ -24,7 +24,7 @@ class Extra(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=['tiempojapon', 'horajapon'])
+    @commands.command(aliases=['tiempojapon', 'horajapon', 'japonhora', 'japontiempo'])
     async def japantime(self, ctx):
         "Muestra la hora actual y la de Japón."
         local = datetime.now(gettz('Spain'))
