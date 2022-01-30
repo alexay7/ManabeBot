@@ -27,9 +27,10 @@ class ErrorHandler(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         self.myguild = self.bot.get_guild(guild_id)
-        admin_user = self.myguild.get_member(admin_user_id)
-        await admin_user.create_dm()
-        self.private_admin_channel = admin_user.dm_channel
+        if(self.myguild):
+            admin_user = self.myguild.get_member(admin_user_id)
+            await admin_user.create_dm()
+            self.private_admin_channel = admin_user.dm_channel
 
         # await self.private_admin_channel.send("Bot started.")
 

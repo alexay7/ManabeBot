@@ -17,12 +17,20 @@ with open(f"cogs/myguild.json") as json_file:
     data_dict = json.load(json_file)
     join_quiz_channel_ids = [
         data_dict["join_quiz_1_id"]]
+    admin_user_id = data_dict["kaigen_user_id"]
 #############################################################
 
 
 class Extra(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.command()
+    async def say(self, ctx, message):
+        "Comando para hablar a través del bot"
+        if(ctx.message.author.id == admin_user_id):
+            channel = self.bot.get_channel(654363913470738462)
+            await channel.send(message)
 
     @commands.command(aliases=['tiempojapon', 'horajapon', 'japonhora', 'japontiempo'])
     async def japantime(self, ctx):
