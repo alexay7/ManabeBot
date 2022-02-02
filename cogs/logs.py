@@ -1,6 +1,6 @@
 """Cog responsible for immersion logs."""
 
-from pymongo import MongoClient
+from pymongo import MongoClient,errors
 import os
 from dotenv import load_dotenv
 import os
@@ -81,25 +81,25 @@ def calc_points(log):
     if int(log["parametro"]) > 9999999:
         return -2
     if log["medio"] == "LIBRO":
-        log["puntos"] = float(log["parametro"])
+        log["puntos"] = int(log["parametro"])
         return 1
     elif log["medio"] == "MANGA":
-        log["puntos"] = float(log["parametro"])/5
+        log["puntos"] = int(log["parametro"])/5
         return 1
     elif log["medio"] == "VN":
-        log["puntos"] = float(log["parametro"])/350
+        log["puntos"] = int(log["parametro"])/350
         return 1
     elif log["medio"] == "ANIME":
-        log["puntos"] = float(log["parametro"])*95/10
+        log["puntos"] = int(log["parametro"])*95/10
         return 1
     elif log["medio"] == "LECTURA":
-        log["puntos"] = float(log["parametro"])/350
+        log["puntos"] = int(log["parametro"])/350
         return 1
     elif log["medio"] == "TIEMPOLECTURA":
-        log["puntos"] = float(log["parametro"])*45/100
+        log["puntos"] = int(log["parametro"])*45/100
         return 1
     elif log["medio"] == "ESCUCHA":
-        log["puntos"] = float(log["parametro"])*45/100
+        log["puntos"] = int(log["parametro"])*45/100
         return 1
 
 
@@ -112,60 +112,70 @@ class Logs(commands.Cog):
         load_dotenv()
         self.myguild = self.bot.get_guild(guild_id)
         if(self.myguild):
-            client = MongoClient(os.getenv("MONGOURL"))
+            try:
+                client = MongoClient(os.getenv("MONGOURL"),
+                                 serverSelectionTimeoutMS=1000)
+                client.server_info()
+            except errors.ServerSelectionTimeoutError as err:
+                print("Ha ocurrido un error intentando conectar con la base de datos.")
+                exit(1)
+            print("Conexión con base de datos ha sido un éxito.")
             self.db = client.ajrlogs
 
         # await self.private_admin_channel.send("Connected to db successfully")
 
     @ commands.command()
     async def test(self, ctx):
-        await test(self.db)
+        if ctx.author.id==admin_user_id:
+            await test(self.db)
 
     @ commands.command()
     async def backfill(self, ctx, fecha, medio, cantidad, desc):
-        if(not await check_user(self.db, ctx.author.id)):
-            await create_user(self.db, ctx.author.id, "alexay7")
+        if ctx.author.id==admin_user_id:
+            if(not await check_user(self.db, ctx.author.id)):
+                await create_user(self.db, ctx.author.id, "alexay7")
 
-        date = fecha.split("/")
+            date = fecha.split("/")
 
-        newlog = {
-            'timestamp': int(datetime(int(date[2]), int(date[1]), int(date[0])).timestamp()),
-            'descripcion': desc,
-            'medio': medio.upper(),
-            'parametro': cantidad
-        }
+            newlog = {
+                'timestamp': int(datetime(int(date[2]), int(date[1]), int(date[0])).timestamp()),
+                'descripcion': desc,
+                'medio': medio.upper(),
+                'parametro': cantidad
+            }
 
-        if calc_points(newlog) == 1:
-            await add_log(self.db, ctx.author.id, newlog)
-        elif calc_points(newlog) == 0:
-            await ctx.send("LIBRO" + "MANGA" + "VN" + "ANIME" +
-                           "LECTURA" + "TIEMPOLECTURA" + "ESCUCHA")
-        elif calc_points(newlog) == -1:
-            await ctx.send("Solo números por favor.")
-        elif calc_points(newlog) == -2:
-            await ctx.send("Me temo que esa cantidad de inmersión no es humana así que no puedo registrarla.")
+            if calc_points(newlog) == 1:
+                await add_log(self.db, ctx.author.id, newlog)
+            elif calc_points(newlog) == 0:
+                await ctx.send("LIBRO" + "MANGA" + "VN" + "ANIME" +
+                            "LECTURA" + "TIEMPOLECTURA" + "ESCUCHA")
+            elif calc_points(newlog) == -1:
+                await ctx.send("Solo números por favor.")
+            elif calc_points(newlog) == -2:
+                await ctx.send("Me temo que esa cantidad de inmersión no es humana así que no puedo registrarla.")
 
     @ commands.command()
     async def log(self, ctx, medio, cantidad, desc):
-        if(not await check_user(self.db, ctx.author.id)):
-            await create_user(self.db, ctx.author.id, "alexay7")
+        if ctx.author.id==admin_user_id:
+            if(not await check_user(self.db, ctx.author.id)):
+                await create_user(self.db, ctx.author.id, "alexay7")
 
-        newlog = {
-            'timestamp': int(datetime.today().timestamp()),
-            'descripcion': desc,
-            'medio': medio.upper(),
-            'parametro': cantidad
-        }
+            newlog = {
+                'timestamp': int(datetime.today().timestamp()),
+                'descripcion': desc,
+                'medio': medio.upper(),
+                'parametro': cantidad
+            }
 
-        if calc_points(newlog) == 1:
-            await add_log(self.db, ctx.author.id, newlog)
-        elif calc_points(newlog) == 0:
-            await ctx.send("LIBRO" + "MANGA" + "VN" + "ANIME" +
-                           "LECTURA" + "TIEMPOLECTURA" + "ESCUCHA")
-        elif calc_points(newlog) == -1:
-            await ctx.send("Eres tonto o que te pasa? No ves que aquí solo puede ir un número.")
-        elif calc_points(newlog) == -2:
-            await ctx.send("Me temo que esa cantidad de inmersión no es humana así que no puedo registrarla.")
+            if calc_points(newlog) == 1:
+                await add_log(self.db, ctx.author.id, newlog)
+            elif calc_points(newlog) == 0:
+                await ctx.send("LIBRO" + "MANGA" + "VN" + "ANIME" +
+                            "LECTURA" + "TIEMPOLECTURA" + "ESCUCHA")
+            elif calc_points(newlog) == -1:
+                await ctx.send("Eres tonto o que te pasa? No ves que aquí solo puede ir un número.")
+            elif calc_points(newlog) == -2:
+                await ctx.send("Me temo que esa cantidad de inmersión no es humana así que no puedo registrarla.")
 
 
 def setup(bot):
