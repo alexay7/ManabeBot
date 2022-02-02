@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from discord.ext import commands
 
 #############################################################
@@ -30,6 +30,77 @@ async def create_user(db, userid, username):
     }
     users.insert_one(newuser)
 
+async def get_user_points(db,userid,timelapse):
+    logs = await get_user_logs(db,userid,timelapse)
+    total=0
+    for log in logs:
+        total+=log["puntos"]
+    return total
+
+async def get_user_logs(db,userid,timelapse):
+    users = db.users
+    if timelapse=="ALL":
+        # Get all the logs from the user and compute the points
+        result = users.find_one({"userId":userid},{"logs"})
+        return result["logs"]
+        
+    elif timelapse=="WEEK":
+        # Get the logs from 7 days ago until today
+        start = int((datetime.today()-timedelta(weeks=1)).timestamp())
+        end = int(datetime.today().timestamp())
+        result = users.aggregate([
+            {
+                "$match":{
+                "userId":userid
+            }
+            },{
+                "$project": {
+                    "logs": {
+                        "$filter": {
+                            "input": "$logs",
+                            "as": "log",
+                            "cond": {"$and": [
+                                {"$gte": ["$$log.timestamp", start]},
+                                {"$lte": ["$$log.timestamp", end]},
+                                {"userId":userid}
+                            ]}
+                        }
+                    }
+                }
+            }
+        ])
+        for elem in result:
+            print(elem)
+            # Only one document should be found so no problem returning data
+            return elem["logs"]
+    else:
+        # Get the logs from the current month
+        start = int((datetime(datetime.today().year,datetime.today().month,1)).timestamp())
+        end = int(datetime.today().timestamp())
+        result = users.aggregate([
+            {
+                "$match":{
+                "userId":userid
+            }
+            },{
+                "$project": {
+                    "logs": {
+                        "$filter": {
+                            "input": "$logs",
+                            "as": "log",
+                            "cond": {"$and": [
+                                {"$gte": ["$$log.timestamp", start]},
+                                {"$lte": ["$$log.timestamp", end]},
+                                {"userId":userid}
+                            ]}
+                        }
+                    }
+                }
+            }
+        ])
+        for elem in result:
+            # Only one document should be found so no problem returning data
+            return elem["logs"]
 
 async def check_user(db, userid):
     users = db.users
@@ -42,33 +113,6 @@ async def add_log(db, userid, log):
         {'userId': userid},
         {'$push': {"logs": log}}
     )
-
-
-async def test(db):
-    start = int(datetime(2021, 9, 24).timestamp())
-    end = int(datetime.today().timestamp())
-    print(start)
-    users = db.users
-    result = users.aggregate([
-        {
-            "$project": {
-                "logs": {
-                    "$filter": {
-                        "input": "$logs",
-                        "as": "log",
-                        "cond": {"$and": [
-                            {"$gte": ["$$log.timestamp", start]},
-                            {"$lte": ["$$log.timestamp", end]}
-                        ]}
-                    }
-                }
-            }
-        }
-    ])
-
-    for doc in result:
-        print(doc)
-
 
 def calc_points(log):
     # Mejor prevenir que curar
@@ -124,21 +168,29 @@ class Logs(commands.Cog):
 
         # await self.private_admin_channel.send("Connected to db successfully")
 
-    @ commands.command()
-    async def test(self, ctx):
-        if ctx.author.id==admin_user_id:
-            await test(self.db)
+    @commands.command()
+    async def leaderboard(self,ctx,timelapse):
+        leaderboard=[]
+        users = self.db.users.find({},{"userId","username"})
+        for user in users:
+            leaderboard.append({
+                "username":user["username"],
+                "points":await get_user_points(self.db,user["userId"],timelapse.upper())
+            })
+            print(sorted(leaderboard,key=lambda x: x["points"],reverse=True))
 
     @ commands.command()
     async def backfill(self, ctx, fecha, medio, cantidad, desc):
-        if ctx.author.id==admin_user_id:
+        if ctx.author.id==admin_user_id or True:
             if(not await check_user(self.db, ctx.author.id)):
                 await create_user(self.db, ctx.author.id, "alexay7")
 
             date = fecha.split("/")
-
+            datets=int(datetime(int(date[2]), int(date[1]), int(date[0])).timestamp())
+            if(datetime.today().timestamp()-datets<0):
+                await ctx.send("No puedes inmersar en el futuro.")
             newlog = {
-                'timestamp': int(datetime(int(date[2]), int(date[1]), int(date[0])).timestamp()),
+                'timestamp': datets,
                 'descripcion': desc,
                 'medio': medio.upper(),
                 'parametro': cantidad
@@ -154,9 +206,45 @@ class Logs(commands.Cog):
             elif calc_points(newlog) == -2:
                 await ctx.send("Me temo que esa cantidad de inmersión no es humana así que no puedo registrarla.")
 
-    @ commands.command()
+    @commands.command()
+    async def me(self,ctx,timelapse):
+        if ctx.author.id==admin_user_id or True:
+            if(not await check_user(self.db, ctx.author.id)):
+                ctx.send("No tienes ningún log.")
+                return
+            logs = await get_user_logs(self.db,ctx.author.id,timelapse.upper())
+            points={
+                "book":0,
+                "manga":0,
+                "anime":0,
+                "vn":0,
+                "read":0,
+                "readtime":0,
+                "listentime":0,
+                "total":0
+            }
+            for log in logs:
+                if log["medio"]=="LIBRO":
+                    points["book"]+=log["puntos"]
+                elif log["medio"]=="MANGA":
+                    points["manga"]+=log["puntos"]
+                elif log["medio"]=="ANIME":
+                    points["anime"]+=log["puntos"]
+                elif log["medio"]=="VN":
+                    points["vn"]+=log["puntos"]
+                elif log["medio"]=="LECTURA":
+                    points["read"]+=log["puntos"]
+                elif log["medio"]=="TIEMPOLECTURA":
+                    points["readtime"]+=log["puntos"]
+                elif log["medio"]=="ESCUCHA":
+                    points["listentim"]+=log["puntos"]
+                points["total"]+=log["puntos"]
+            await ctx.send(points)
+
+
+    @commands.command()
     async def log(self, ctx, medio, cantidad, desc):
-        if ctx.author.id==admin_user_id:
+        if ctx.author.id==admin_user_id or True:
             if(not await check_user(self.db, ctx.author.id)):
                 await create_user(self.db, ctx.author.id, "alexay7")
 
