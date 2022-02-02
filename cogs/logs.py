@@ -385,6 +385,10 @@ class Logs(commands.Cog):
             if(not await check_user(self.db, ctx.author.id)):
                 await create_user(self.db, ctx.author.id, "alexay7")
 
+            message = ""
+            for word in ctx.message.content.split(" ")[3:]:
+                message += word + " "
+
             today = datetime.today()
 
             newlog = {
@@ -400,7 +404,7 @@ class Logs(commands.Cog):
                 logid = await add_log(self.db, ctx.author.id, newlog)
 
                 embed = Embed(title="Log registrado con éxito",
-                              description=f"Log #{logid} || {today.day}/{today.month}/{today.year}", color=0x24b14d)
+                              description=f"Log #{logid} || {today.strftime('%d/%m/%Y')}", color=0x24b14d)
                 embed.add_field(
                     name="Usuario", value=ctx.author.name, inline=True)
                 embed.add_field(name="Medio", value=medio.upper(), inline=True)
@@ -408,7 +412,7 @@ class Logs(commands.Cog):
                 embed.add_field(name="Inmersado",
                                 value=choose_syntax(cantidad, medio.upper()), inline=True)
                 embed.add_field(name="Inmersión",
-                                value=desc, inline=False)
+                                value=message, inline=False)
                 embed.set_footer(
                     text=ctx.author.id)
                 message = await ctx.send(embed=embed)

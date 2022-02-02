@@ -30,6 +30,9 @@ class Extra(commands.Cog):
         "Comando para hablar a través del bot"
         if(ctx.message.author.id == admin_user_id):
             channel = self.bot.get_channel(654363913470738462)
+            message = ""
+            for word in ctx.message.content.split(" ")[1:]:
+                message += word + " "
             await channel.send(message)
 
     @commands.command(aliases=['tiempojapon', 'horajapon', 'japonhora', 'japontiempo'])
