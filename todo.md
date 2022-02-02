@@ -1,0 +1,2 @@
+- Opción de borrar y editar logs (dado el identificador del log y solo puede hacerlo el usuario del que sea propio)
+- Mensaje de confirmación una vez emitido un log, tendrá un emote para eliminar el log por si hubiera habido un error.

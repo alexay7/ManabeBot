@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 import json
 from datetime import datetime, timedelta
 from discord.ext import commands
+from discord import Embed
+from time import sleep
 
 #############################################################
 # Variables (Temporary)
@@ -19,6 +21,11 @@ with open("cogs/myguild.json") as json_file:
     myrankstructure = data_dict["rank_structure"]
 #############################################################
 
+MEDIA_TYPES = {"LIBRO", "MANGA", "VN", "ANIME",
+               "LECTURA", "TIEMPOLECTURA", "AUDIO"}
+
+TIMESTAMP_TYPES = {"ALL", "MONTH", "WEEK"}
+
 
 async def create_user(db, userid, username):
     users = db.users
@@ -30,80 +37,154 @@ async def create_user(db, userid, username):
     users.insert_one(newuser)
 
 
-async def get_user_points(db, userid, timelapse):
-    logs = await get_user_logs(db, userid, timelapse)
+async def get_user_points(db, userid, timelapse, media="ALL"):
+    logs = await get_user_logs(db, userid, timelapse, media)
     total = 0
     for log in logs:
         total += log["puntos"]
     return total
 
 
-async def get_user_logs(db, userid, timelapse):
+async def get_user_logs(db, userid, timelapse, media=None):
     users = db.users
+
     if timelapse == "ALL":
-        # Get all the logs from the user and compute the points
-        result = users.find_one({"userId": userid}, {"logs"})
-        return result["logs"]
+        if media in MEDIA_TYPES:
+            # ALL LOGS OF A MEDIA TYPE FROM USER
+            result = users.aggregate([
+                {
+                    "$match": {
+                        "userId": userid
+                    }
+                }, {
+                    "$project": {
+                        "logs": {
+                            "$filter": {
+                                "input": "$logs",
+                                "as": "log",
+                                "cond": {"$eq": ["$$log.medio", media]}
+                            }
+                        }
+                    }
+                }
+            ])
+            for elem in result:
+                # Only one document should be found so no problem returning data
+                return elem["logs"]
+        else:
+            # ALL LOGS OF ALL MEDIA TYPES FROM USER
+            result = users.find_one({"userId": userid}, {"logs"})
+            return result["logs"]
 
     elif timelapse == "WEEK":
-        # Get the logs from 7 days ago until today
         start = int((datetime.today() - timedelta(weeks=1)).timestamp())
         end = int(datetime.today().timestamp())
-        result = users.aggregate([
-            {
-                "$match": {
-                    "userId": userid
-                }
-            }, {
-                "$project": {
-                    "logs": {
-                        "$filter": {
-                            "input": "$logs",
-                            "as": "log",
-                            "cond": {"$and": [
-                                {"$gte": ["$$log.timestamp", start]},
-                                {"$lte": ["$$log.timestamp", end]},
-                                {"userId": userid}
-                            ]}
+        if media in MEDIA_TYPES:
+            # SEVEN-DAY LOGS OF A MEDIA TYPE FROM USER
+            result = users.aggregate([
+                {
+                    "$match": {
+                        "userId": userid
+                    }
+                }, {
+                    "$project": {
+                        "logs": {
+                            "$filter": {
+                                "input": "$logs",
+                                "as": "log",
+                                "cond": {"$and": [
+                                    {"$gte": ["$$log.timestamp", start]},
+                                    {"$lte": ["$$log.timestamp", end]},
+                                    {"$eq": ["$$log.medio", media]}
+                                ]}
+                            }
                         }
                     }
                 }
-            }
-        ])
-        for elem in result:
-            print(elem)
-            # Only one document should be found so no problem returning data
-            return elem["logs"]
+            ])
+            for elem in result:
+                # Only one document should be found so no problem returning data
+                return elem["logs"]
+        else:
+            # SEVEN-DAY LOGS OF ALL MEDIA TYPES FROM USER
+            result = users.aggregate([
+                {
+                    "$match": {
+                        "userId": userid
+                    }
+                }, {
+                    "$project": {
+                        "logs": {
+                            "$filter": {
+                                "input": "$logs",
+                                "as": "log",
+                                "cond": {"$and": [
+                                    {"$gte": ["$$log.timestamp", start]},
+                                    {"$lte": ["$$log.timestamp", end]}
+                                ]}
+                            }
+                        }
+                    }
+                }
+            ])
+            for elem in result:
+                # Only one document should be found so no problem returning data
+                return elem["logs"]
     else:
-        # Get the logs from the current month
         start = int(
-            (datetime(datetime.today().year, datetime.today().month,
-             1)).timestamp())
+            (datetime(datetime.today().year, datetime.today().month, 1)).timestamp())
         end = int(datetime.today().timestamp())
-        result = users.aggregate([
-            {
-                "$match": {
-                    "userId": userid
-                }
-            }, {
-                "$project": {
-                    "logs": {
-                        "$filter": {
-                            "input": "$logs",
-                            "as": "log",
-                            "cond": {"$and": [
-                                {"$gte": ["$$log.timestamp", start]},
-                                {"$lte": ["$$log.timestamp", end]},
-                                {"userId": userid}
-                            ]}
+        if media in MEDIA_TYPES:
+            # MONTHLY LOGS OF A MEDIA TYPE FROM USER
+            result = users.aggregate([
+                {
+                    "$match": {
+                        "userId": userid
+                    }
+                }, {
+                    "$project": {
+                        "logs": {
+                            "$filter": {
+                                "input": "$logs",
+                                "as": "log",
+                                "cond": {"$and": [
+                                    {"$gte": ["$$log.timestamp", start]},
+                                    {"$lte": ["$$log.timestamp", end]},
+                                    {"$eq": ["$$log.medio", media]}
+                                ]}
+                            }
                         }
                     }
                 }
-            }
-        ])
-        for elem in result:
-            # Only one document should be found so no problem returning data
-            return elem["logs"]
+            ])
+            for elem in result:
+                # Only one document should be found so no problem returning data
+                return elem["logs"]
+        else:
+            # MONTHLY LOGS OF ALL MEDIA TYPES FROM USER
+            result = users.aggregate([
+                {
+                    "$match": {
+                        "userId": userid
+                    }
+                }, {
+                    "$project": {
+                        "logs": {
+                            "$filter": {
+                                "input": "$logs",
+                                "as": "log",
+                                "cond": {"$and": [
+                                    {"$gte": ["$$log.timestamp", start]},
+                                    {"$lte": ["$$log.timestamp", end]}
+                                ]}
+                            }
+                        }
+                    }
+                }
+            ])
+            for elem in result:
+                # Only one document should be found so no problem returning data
+                return elem["logs"]
 
 
 async def check_user(db, userid):
@@ -117,44 +198,76 @@ async def add_log(db, userid, log):
         {'userId': userid},
         {'$push': {"logs": log}}
     )
+    user = users.find_one({'userId': userid})
+    return len(user["logs"])-1
 
 
 def calc_points(log):
     # Mejor prevenir que curar
-    media_types = {"LIBRO", "MANGA", "VN", "ANIME",
-                   "LECTURA", "TIEMPOLECTURA", "ESCUCHA"}
-    if log["medio"] not in media_types:
+    if log["medio"] not in MEDIA_TYPES:
         return 0
     if not log["parametro"].isnumeric():
         return -1
     if int(log["parametro"]) > 9999999:
         return -2
     if log["medio"] == "LIBRO":
-        log["puntos"] = int(log["parametro"])
-        return 1
+        puntos = round(int(log["parametro"]), 1)
+        log["puntos"] = puntos
+        return puntos
     elif log["medio"] == "MANGA":
-        log["puntos"] = int(log["parametro"]) / 5
-        return 1
+        puntos = round(int(log["parametro"]) / 5, 1)
+        log["puntos"] = puntos
+        return puntos
     elif log["medio"] == "VN":
-        log["puntos"] = int(log["parametro"]) / 350
-        return 1
+        puntos = round(int(log["parametro"]) / 350, 1)
+        log["puntos"] = puntos
+        return puntos
     elif log["medio"] == "ANIME":
-        log["puntos"] = int(log["parametro"]) * 95 / 10
-        return 1
+        puntos = round(int(log["parametro"]) * 95 / 10, 1)
+        log["puntos"] = puntos
+        return puntos
     elif log["medio"] == "LECTURA":
-        log["puntos"] = int(log["parametro"]) / 350
-        return 1
+        puntos = round(int(log["parametro"]) / 350, 1)
+        log["puntos"] = puntos
+        return puntos
     elif log["medio"] == "TIEMPOLECTURA":
-        log["puntos"] = int(log["parametro"]) * 45 / 100
-        return 1
-    elif log["medio"] == "ESCUCHA":
-        log["puntos"] = int(log["parametro"]) * 45 / 100
-        return 1
+        puntos = round(int(log["parametro"]) * 45 / 100, 1)
+        log["puntos"] = puntos
+        return puntos
+    elif log["medio"] == "AUDIO":
+        puntos = round(int(log["parametro"]) * 45 / 100, 1)
+        log["puntos"] = puntos
+        return puntos
+
+
+def choose_syntax(num, media):
+    if media == "MANGA" or media == "LIBRO":
+        if num == 1:
+            return "1 página"
+        return f"{num} páginas"
+    if media == "VN" or media == "LECTURA":
+        if num == 1:
+            return "1 caracter"
+        return f"{num} caracteres"
+    if media == "ANIME":
+        if num == 1:
+            return "1 episodio"
+        return f"{num} episodios"
+    if media == "TIEMPOLECTURA" or media == "AUDIO":
+        if int(num) < 60:
+            return f"{int(num)%60} minutos"
+        elif int(num) < 120:
+            return f"1 hora y {int(num)%60} minutos"
+        return f"{int(int(num)/60)} horas y {int(num)%60} minutos"
 
 
 class Logs(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.command()
+    async def test(self, ctx, timelapse="MONTH", media="ALL"):
+        print(ctx.author.name)
 
     @ commands.Cog.listener()
     async def on_ready(self):
@@ -174,22 +287,41 @@ class Logs(commands.Cog):
         # await self.private_admin_channel.send("Connected to db successfully")
 
     @commands.command()
-    async def leaderboard(self, ctx, timelapse):
+    async def leaderboard(self, ctx, timelapse="MONTH", media="ALL"):
         leaderboard = []
+        if timelapse.upper() in MEDIA_TYPES:
+            media = timelapse
+            timelapse = "MONTH"
         users = self.db.users.find({}, {"userId", "username"})
+
         for user in users:
+            points = await get_user_points(self.db, user["userId"], timelapse.upper(), media.upper())
             leaderboard.append({
                 "username": user["username"],
-                "points": await
-                get_user_points(self.db, user["userId"], timelapse.upper())
-            })
-            print(sorted(leaderboard, key=lambda x: x["points"], reverse=True))
+                "points": points})
+        await ctx.send(
+            sorted(leaderboard, key=lambda x: x["points"], reverse=True))
+
+    @commands.command()
+    async def logs(self, ctx, timelapse="ALL", user=None):
+        if not user:
+            user = ctx.author.id
+
+        if timelapse.isnumeric():
+            user = int(timelapse)
+            timelapse = "ALL"
+
+        print(user)
+        print(timelapse)
+        result = await get_user_logs(self.db, user, timelapse)
+
+        await ctx.send(sorted(result, key=lambda x: x["timestamp"]))
 
     @ commands.command()
     async def backfill(self, ctx, fecha, medio, cantidad, desc):
         if ctx.author.id == admin_user_id or True:
             if(not await check_user(self.db, ctx.author.id)):
-                await create_user(self.db, ctx.author.id, "alexay7")
+                await create_user(self.db, ctx.author.id, ctx.author.name)
 
             date = fecha.split("/")
             datets = int(datetime(int(date[2]), int(
@@ -206,14 +338,14 @@ class Logs(commands.Cog):
             if calc_points(newlog) == 1:
                 await add_log(self.db, ctx.author.id, newlog)
             elif calc_points(newlog) == 0:
-                await ctx.send("LIBRO" + "MANGA" + "VN" + "ANIME" + "LECTURA" + "TIEMPOLECTURA" + "ESCUCHA")
+                await ctx.send("LIBRO" + "MANGA" + "VN" + "ANIME" + "LECTURA" + "TIEMPOLECTURA" + "AUDIO")
             elif calc_points(newlog) == -1:
                 await ctx.send("Solo números por favor.")
             elif calc_points(newlog) == -2:
                 await ctx.send("Me temo que esa cantidad de inmersión no es humana así que no puedo registrarla.")
 
-    @commands.command()
-    async def me(self, ctx, timelapse):
+    @ commands.command()
+    async def me(self, ctx, timelapse="MONTH"):
         if ctx.author.id == admin_user_id or True:
             if(not await check_user(self.db, ctx.author.id)):
                 ctx.send("No tienes ningún log.")
@@ -242,32 +374,62 @@ class Logs(commands.Cog):
                     points["read"] += log["puntos"]
                 elif log["medio"] == "TIEMPOLECTURA":
                     points["readtime"] += log["puntos"]
-                elif log["medio"] == "ESCUCHA":
+                elif log["medio"] == "AUDIO":
                     points["listentim"] += log["puntos"]
                 points["total"] += log["puntos"]
             await ctx.send(points)
 
-    @commands.command()
+    @ commands.command()
     async def log(self, ctx, medio, cantidad, desc):
         if ctx.author.id == admin_user_id or True:
             if(not await check_user(self.db, ctx.author.id)):
                 await create_user(self.db, ctx.author.id, "alexay7")
 
+            today = datetime.today()
+
             newlog = {
-                'timestamp': int(datetime.today().timestamp()),
+                'timestamp': int(today.timestamp()),
                 'descripcion': desc,
                 'medio': medio.upper(),
                 'parametro': cantidad
             }
 
-            if calc_points(newlog) == 1:
-                await add_log(self.db, ctx.author.id, newlog)
-            elif calc_points(newlog) == 0:
-                await ctx.send("LIBRO" + "MANGA" + "VN" + "ANIME" + "LECTURA" + "TIEMPOLECTURA" + "ESCUCHA")
-            elif calc_points(newlog) == -1:
+            output = calc_points(newlog)
+
+            if output > 0:
+                logid = await add_log(self.db, ctx.author.id, newlog)
+
+                embed = Embed(title="Log registrado con éxito",
+                              description=f"Log #{logid} || {today.day}/{today.month}/{today.year}", color=0x24b14d)
+                embed.add_field(
+                    name="Usuario", value=ctx.author.name, inline=True)
+                embed.add_field(name="Medio", value=medio.upper(), inline=True)
+                embed.add_field(name="Puntos", value=output, inline=True)
+                embed.add_field(name="Inmersado",
+                                value=choose_syntax(cantidad, medio.upper()), inline=True)
+                embed.add_field(name="Inmersión",
+                                value=desc, inline=False)
+                embed.set_footer(
+                    text=ctx.author.id)
+                message = await ctx.send(embed=embed)
+                await message.add_reaction("❌")
+
+            elif output == 0:
+                await ctx.send("LIBRO" + "MANGA" + "VN" + "ANIME" + "LECTURA" + "TIEMPOLECTURA" + "AUDIO")
+            elif output == -1:
                 await ctx.send("Eres tonto o que te pasa? No ves que aquí solo puede ir un número.")
-            elif calc_points(newlog) == -2:
+            elif output == -2:
                 await ctx.send("Me temo que esa cantidad de inmersión no es humana así que no puedo registrarla.")
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+        channel = await self.bot.fetch_channel(payload.channel_id)
+        message = await channel.fetch_message(payload.message_id)
+
+        if(len(message.embeds) > 0):
+            if(message.embeds[0].title == "Log registrado con éxito" and int(message.embeds[0].footer.text) == payload.user_id):
+                # TODO: función para borrar logs dado el id del log y el id del usuario
+                ...
 
 
 def setup(bot):
