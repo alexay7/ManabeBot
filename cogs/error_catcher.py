@@ -5,7 +5,7 @@ from discord.ext import commands
 
 #############################################################
 # Variables (Temporary)
-with open(f"cogs/myguild.json") as json_file:
+with open("cogs/myguild.json") as json_file:
     data_dict = json.load(json_file)
     guild_id = data_dict["guild_id"]
     admin_user_id = data_dict["kaigen_user_id"]
@@ -45,13 +45,13 @@ class ErrorHandler(commands.Cog):
             await ctx.send(f'Tienes que esperar {int(error.retry_after)} segundos antes de volver a usar ese comando.')
             return
         elif isinstance(error, commands.errors.PrivateMessageOnly):
-            await ctx.send(f"Este comando solo esta disponible via MP")
+            await ctx.send("Este comando solo esta disponible via MP")
             return
         elif isinstance(error, commands.errors.MaxConcurrencyReached):
             await ctx.send("Ya hay un usuario usando este comando! De uno en uno...")
             return
         elif ctx.command and ctx.command.name == "levelup":
-            await ctx.send(f"Ha ocurrido un error")
+            await ctx.send("Ha ocurrido un error")
             member = await self.myguild.fetch_member(ctx.author.id)
             for role in member.roles:
                 if role.id in quizranks:

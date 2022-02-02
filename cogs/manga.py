@@ -9,7 +9,7 @@ from urllib import parse
 
 #############################################################
 # Variables (Temporary)
-with open(f"cogs/myguild.json") as json_file:
+with open("cogs/myguild.json") as json_file:
     data_dict = json.load(json_file)
     guild_id = data_dict["guild_id"]
     petitions_channel = data_dict["manga_petitions_channel_id"]
@@ -59,13 +59,9 @@ class Manga(commands.Cog):
             petitionserver = self.bot.get_guild(guild_id)
             message = await channel.fetch_message(payload.message_id)
 
-            requester = await petitionserver.fetch_member(
-                message.embeds[0].fields[1].value)
-            try:
-                await message.delete()
-                await petitions.send(f"Hola {requester.mention},\nEl manga {message.embeds[0].fields[0].value} que solicitaste ya está disponible en Komga.")
-            except:
-                print("El usuario abandonó el servidor")
+            requester = await petitionserver.fetch_member(message.embeds[0].fields[1].value)
+            await message.delete()
+            await petitions.send(f"Hola {requester.mention},\nEl manga {message.embeds[0].fields[0].value} que solicitaste ya está disponible en Komga.")
 
     async def searchAnilist(self, message):
         ctx = await self.bot.get_context(message)
@@ -74,7 +70,7 @@ class Manga(commands.Cog):
                 manga = parse.urlsplit(message.content).path.split("/")
                 response = anilistApi(manga[2])
                 if(response.status_code == 200):
-                    if(response.json()["data"]["Media"]["meanScore"] == None or int(response.json()["data"]["Media"]["meanScore"]) < 65):
+                    if(response.json()["data"]["Media"]["meanScore"] is None or int(response.json()["data"]["Media"]["meanScore"]) < 65):
                         await message.add_reaction("❌")
                         badgrade = discord.Embed(color=0xff2929)
                         badgrade.add_field(

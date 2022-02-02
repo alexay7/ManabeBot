@@ -19,7 +19,7 @@ class MyHelpCommand(commands.MinimalHelpCommand):
             for command in commands:
                 commandline = f"`{command.name}` {command.help}"
                 if(len(command.aliases) != 0):
-                    commandline += f"\nOtros usos:"
+                    commandline += "\nOtros usos:"
                     for element in command.aliases:
                         commandline += f"\n - `{element}`"
                 lines.append(commandline + "\n")

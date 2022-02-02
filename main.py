@@ -1,8 +1,8 @@
 """Main file"""
 
 import os
-import discord
 import json
+import discord
 from discord.ext import commands
 
 intents = discord.Intents.default()
@@ -12,13 +12,14 @@ intents.members = True
 djtbot = commands.Bot(command_prefix='$', intents=intents)
 client = discord.Client()
 
-with open(f"cogs/myguild.json") as json_file:
+with open("cogs/myguild.json") as json_file:
     data_dict = json.load(json_file)
     trusted_server_ids = data_dict["trusted_server_ids"]
 
 
 @djtbot.event
 async def on_message(message):
+    """Activates when message detected"""
     for cog in djtbot.cogs:
         cog = djtbot.get_cog(cog)
         try:
@@ -30,6 +31,7 @@ async def on_message(message):
 
 @djtbot.check
 def check_guild(ctx):
+    """Checks if the guild is allowed to run the bot"""
     try:
         return ctx.guild.id in trusted_server_ids
     except AttributeError:

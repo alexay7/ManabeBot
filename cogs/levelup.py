@@ -10,7 +10,7 @@ from discord.ext import commands
 
 #############################################################
 # Variables (Temporary)
-with open(f"cogs/myguild.json") as json_file:
+with open("cogs/myguild.json") as json_file:
     data_dict = json.load(json_file)
     guild_id = data_dict["guild_id"]
     kotobabotid = data_dict["kotoba_id"]
@@ -48,7 +48,7 @@ class Quiz(commands.Cog):
         """
         if ctx.channel.id not in join_quiz_channel_ids:
             await ctx.send(
-                f"Este comando solo puede ser usado en <#796084920790679612>.")
+                "Este comando solo puede ser usado en <#796084920790679612>.")
             return
 
         member = await self.myguild.fetch_member(ctx.author.id)
@@ -60,7 +60,7 @@ class Quiz(commands.Cog):
                 await ctx.send(currentcommand)
 
         await ctx.send(
-            f"Usa este comando para subir de nivel.\nPara ver todos los niveles disponibles escribe `$levelupall`")
+            "Usa este comando para subir de nivel.\nPara ver todos los niveles disponibles escribe `$levelupall`")
 
     @commands.command()
     async def levelupall(self, ctx):
@@ -161,7 +161,7 @@ class Quiz(commands.Cog):
                                         print("Wrong color settings.")
                                         return
 
-                                    if startindex != 0 or endindex != 0 or mc == True or shuffle == False or isloaded == True:
+                                    if startindex != 0 or endindex != 0 or mc or shuffle is False or isloaded:
                                         if message.channel.id in join_quiz_channel_ids:
                                             await message.channel.send(
                                                 "Ajustes ilegales detectados. Usa el siguiente comando:")
@@ -242,7 +242,7 @@ class Quiz(commands.Cog):
 
                                     if message.channel.id not in join_quiz_channel_ids:
                                         await message.channel.send(
-                                            f"Los tests solo serán evaluados en <#796084920790679612>.")
+                                            "Los tests solo serán evaluados en <#796084920790679612>.")
                                         return
 
                                     quizwinner = self.myguild.get_member(
@@ -272,7 +272,7 @@ class Quiz(commands.Cog):
         "Genera un quiz semi-aleatorio (no cuenta para subir de nivel)."
         if ctx.channel.id not in join_quiz_channel_ids:
             await ctx.send(
-                f"Este bot solo puede ser usado en <#796084920790679612>.")
+                "Este bot solo puede ser usado en <#796084920790679612>.")
             return
         basis = "k!quiz"
         quiz_selection = ['N3', 'N2', 'N1', 'suugaku', 'pasokon', 'rikagaku', 'igaku',

@@ -13,7 +13,7 @@ import random
 
 #############################################################
 # Variables (Temporary)
-with open(f"cogs/myguild.json") as json_file:
+with open("cogs/myguild.json") as json_file:
     data_dict = json.load(json_file)
     join_quiz_channel_ids = [
         data_dict["join_quiz_1_id"]]
@@ -64,13 +64,15 @@ class Extra(commands.Cog):
             return "Diciembre"
 
         localtime = strftime("%H:%M", gmtime(
-            int(local.hour)*3600+int(local.minute)*60))
+            int(local.hour) * 3600 + int(local.minute) * 60))
 
         japantime = strftime("%H:%M", gmtime(
-            int(local_japan.hour)*3600+int(local_japan.minute)*60))
+            int(local_japan.hour) * 3600 + int(local_japan.minute) * 60))
 
         await ctx.send(
-            f"Hora Local: {localtime} del {local.day} de {intToMonth(local.month)} de {local.year}\nHora Japonesa: {japantime} del {local_japan.day} de {intToMonth(local_japan.month)} de {local_japan.year}")
+            f"Hora Local: {localtime} del {local.day} de {intToMonth(local.month)} \
+                de {local.year}\nHora Japonesa: {japantime} del {local_japan.day} \
+                    de {intToMonth(local_japan.month)} de {local_japan.year}")
 
     @commands.command(aliases=['canigotojapan', 'quieroirajapon'])
     async def japonabierto(self, ctx):
@@ -78,7 +80,7 @@ class Extra(commands.Cog):
         url = "https://canigotojapan.com"
 
         headers = {
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': ' * ',
             'Access-Control-Allow-Methods': 'GET',
             'Access-Control-Allow-Headers': 'Content-Type',
             'Access-Control-Max-Age': '3600',
@@ -96,14 +98,14 @@ class Extra(commands.Cog):
     @commands.command(aliases=['jpytoeuro', 'yentoeuro', 'jpyaeuro', 'y2e', 'yte', 'yae'])
     async def yenaeuro(self, ctx, yenes):
         "Convierte yenes a euros. Uso: $comando cantidad"
-        result = round(int(yenes)*0.0077, 2)
-        await ctx.send(yenes+"¥ equivalen a "+str(result)+"€")
+        result = round(int(yenes) * 0.0077, 2)
+        await ctx.send(yenes + "¥ equivalen a " + str(result) + "€")
 
     @commands.command(aliases=['eurotojpy', 'eurotoyen', 'euroajpy', 'e2y', 'ety', 'eay'])
     async def euroayen(self, ctx, euros):
         "Convierte euros a yenes. Uso: $comando cantidad"
-        result = int(euros)*129.8701298701
-        await ctx.send(euros+"€ equivalen a "+str(result)+"¥")
+        result = int(euros) * 129.8701298701
+        await ctx.send(euros + "€ equivalen a " + str(result) + "¥")
 
     @commands.cooldown(1, 300, commands.BucketType.user)
     @commands.command(aliases=['randomyoji', 'yojialeatorio', 'palabraaleatoria', 'randomword'])
@@ -112,20 +114,20 @@ class Extra(commands.Cog):
 
         if ctx.channel.id not in join_quiz_channel_ids:
             await ctx.send(
-                f"Este comando solo puede ser usado en <#796084920790679612>.")
+                "Este comando solo puede ser usado en <#796084920790679612>.")
             return
 
         page = random.randint(1, 100)
         response = requests.get(
             f"https://jisho.org/api/v1/search/words?keyword=%23yoji&page={page}")
-        element = random.randint(0, len(response.json()["data"])-1)
+        element = random.randint(0, len(response.json()["data"]) - 1)
         element = response.json()["data"][element]
         kanji = element["japanese"][0]["word"]
         furigana = element["japanese"][0]["reading"]
         meaninggroup = element["senses"][0]["english_definitions"]
         meanings = meaninggroup[0]
         for element in meaninggroup[1:]:
-            meanings += ", "+element
+            meanings += ", " + element
 
         embed = discord.Embed(title="Yoji aleatorio de AJR",
                               description="Recibe un yojijukugo aleatorio de jisho.org", color=0x24b14d)
