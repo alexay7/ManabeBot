@@ -1,16 +1,10 @@
 """Cog responsible for manga petitions."""
 
 import json
-from multiprocessing.connection import wait
 import discord
 from discord.ext import commands
-from datetime import datetime, timezone
 from dateutil.tz import gettz
-from bs4 import BeautifulSoup
 import requests
-from time import sleep, strftime
-from time import gmtime
-import random
 from urllib import parse
 
 #############################################################

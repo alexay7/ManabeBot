@@ -3,17 +3,10 @@
 import json
 import random
 import re
-from attr import has
 import discord
 import time
 import aiohttp
 from discord.ext import commands
-from datetime import datetime, timezone
-from dateutil.tz import gettz
-from bs4 import BeautifulSoup
-import requests
-from time import strftime
-from time import gmtime
 
 #############################################################
 # Variables (Temporary)

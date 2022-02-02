@@ -7,3 +7,6 @@ volumenes.py
 .dockerignore
 
 cogs/__pycache__
+
+.env
+/.vscode

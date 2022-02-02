@@ -1,10 +1,9 @@
 """Main file"""
-from discord.ext.commands import CommandNotFound
+
 import os
 import discord
 import json
 from discord.ext import commands
-import time
 
 intents = discord.Intents.default()
 intents.typing = False
@@ -20,13 +19,10 @@ with open(f"cogs/myguild.json") as json_file:
 
 @djtbot.event
 async def on_message(message):
-    if message.content == "pong":
-        await message.channel.send('ping')
-
     for cog in djtbot.cogs:
         cog = djtbot.get_cog(cog)
         try:
-            check = await cog.searchAnilist(message)
+            await cog.searchAnilist(message)
         except AttributeError:
             continue
     await djtbot.process_commands(message)
