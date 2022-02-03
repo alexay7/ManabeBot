@@ -349,7 +349,7 @@ class Logs(commands.Cog):
             user = ctx.author.id
 
         if(not await check_user(self.db, user)):
-            ctx.send("Ese usuario no tiene ningún log.")
+            await ctx.send("Ese usuario no tiene ningún log.")
             return
 
         if timelapse.isnumeric():
@@ -549,7 +549,7 @@ class Logs(commands.Cog):
     @ commands.command()
     async def remlog(self, ctx, logid):
         if(not await check_user(self.db, ctx.author.id)):
-            ctx.send("No tienes ningún log.")
+            await ctx.send("No tienes ningún log.")
             return
         result = await remove_log(self.db, ctx.author.id, logid)
         if(result == 1):
