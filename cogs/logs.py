@@ -26,7 +26,7 @@ with open("cogs/myguild.json") as json_file:
 MEDIA_TYPES = {"LIBRO", "MANGA", "VN", "ANIME",
                "LECTURA", "TIEMPOLECTURA", "AUDIO"}
 
-TIMESTAMP_TYPES = {"ALL", "MONTH", "WEEK"}
+TIMESTAMP_TYPES = {"TOTAL", "MES", "SEMANA"}
 
 
 async def remove_log(db, userid, logid):
@@ -46,7 +46,7 @@ async def create_user(db, userid, username):
     users.insert_one(newuser)
 
 
-async def get_user_data(db, userid, timelapse, media="ALL"):
+async def get_user_data(db, userid, timelapse, media="TOTAL"):
     logs = await get_user_logs(db, userid, timelapse.upper(), media.upper())
     points = {
         "LIBRO": 0,
@@ -97,7 +97,7 @@ async def get_user_data(db, userid, timelapse, media="ALL"):
 async def get_user_logs(db, userid, timelapse, media=None):
     users = db.users
 
-    if timelapse == "ALL":
+    if timelapse == "TOTAL":
         if media in MEDIA_TYPES:
             # ALL LOGS OF A MEDIA TYPE FROM USER
             result = users.aggregate([
@@ -127,7 +127,7 @@ async def get_user_logs(db, userid, timelapse, media=None):
             if result:
                 return result["logs"]
 
-    elif timelapse == "WEEK":
+    elif timelapse == "SEMANA":
         start = int((datetime.today() - timedelta(weeks=1)).timestamp())
         end = int(datetime.today().timestamp())
         if media in MEDIA_TYPES:
@@ -300,9 +300,9 @@ def calc_points(log):
 
 def get_ranking_title(timelapse, media):
     tiempo = ""
-    if timelapse == "MONTH":
+    if timelapse == "MES":
         tiempo = "mensual"
-    elif timelapse == "WEEK":
+    elif timelapse == "SEMANA":
         tiempo = "semanal"
     else:
         tiempo = "total"
@@ -360,12 +360,12 @@ class Logs(commands.Cog):
         # await self.private_admin_channel.send("Connected to db successfully")
 
     @commands.command(aliases=["ranking", "podio"])
-    async def leaderboard(self, ctx, timelapse="MONTH", media="ALL"):
+    async def leaderboard(self, ctx, timelapse="MES", media="TOTAL"):
         """Uso:: $leaderboard <tiempo (week/month/all)/tipo de inmersión> <tipo de inmersión>"""
         leaderboard = []
         if timelapse.upper() in MEDIA_TYPES:
             media = timelapse
-            timelapse = "MONTH"
+            timelapse = "MES"
         users = self.db.users.find({}, {"userId", "username"})
         counter = 0
         for user in users:
@@ -398,11 +398,11 @@ class Logs(commands.Cog):
         await ctx.send(embed=embed)
 
     @ commands.command()
-    async def logs(self, ctx, timelapse="ALL", user=None):
+    async def logs(self, ctx, timelapse="TOTAL", user=None):
         """Uso:: $logs <tiempo (week/month/all)/Id usuario> <Id usuario>"""
         if timelapse.isnumeric():
             user = int(timelapse)
-            timelapse = "ALL"
+            timelapse = "TOTAL"
 
         errmsg = "No se han encontrado logs asociados a esa Id."
         if user is None:
@@ -440,8 +440,8 @@ class Logs(commands.Cog):
             await ctx.send(embed=logdeleted, delete_after=10.0)
 
     @ commands.command(aliases=["yo"])
-    async def me(self, ctx, timelapse="MONTH"):
-        """Uso:: $me <tiempo (week/month/all)>"""
+    async def me(self, ctx, timelapse="MES"):
+        """Uso:: $me <tiempo (semana/mes/all)>"""
         if(not await check_user(self.db, ctx.author.id)):
             await ctx.send("No tienes ningún log.")
             return
