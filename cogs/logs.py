@@ -194,12 +194,14 @@ async def check_user(db, userid):
 
 async def add_log(db, userid, log):
     users = db.users
+    user = users.find_one({'userId': userid})
+    newid = len(user["logs"])
+    log["id"] = newid
     users.update_one(
         {'userId': userid},
         {'$push': {"logs": log}}
     )
-    user = users.find_one({'userId': userid})
-    return len(user["logs"]) - 1
+    return newid
 
 
 def calc_points(log):
@@ -239,8 +241,27 @@ def calc_points(log):
         log["puntos"] = puntos
         return puntos
 
+def get_ranking_title(timelapse, media):
+    print(media)
+    tiempo = ""
+    if timelapse == "MONTH":
+        tiempo = "mensual"
+    elif timelapse == "WEEK":
+        tiempo = "semanal"
+    else:
+        tiempo = "total"
+    medio = ""
+    if media in {"MANGA", "ANIME", "AUDIO", "LECTURA"}:
+        medio = "de " + media.lower()
+    elif media in {"LIBRO"}:
+        medio = "de " + media.lower() + "s"
+    elif media in {"LECTURATIEMPO"}:
+        medio = "de lectura (tiempo)"
+    elif media in {"VN"}:
+        medio = "de " + media
+    return f"Ranking {tiempo} {medio}"
 
-def choose_syntax(num, media):
+def get_media_element(num, media):
     if media == "MANGA" or media == "LIBRO":
         if num == 1:
             return "1 página"
@@ -292,14 +313,23 @@ class Logs(commands.Cog):
             media = timelapse
             timelapse = "MONTH"
         users = self.db.users.find({}, {"userId", "username"})
-
         for user in users:
             points = await get_user_points(self.db, user["userId"], timelapse.upper(), media.upper())
             leaderboard.append({
                 "username": user["username"],
                 "points": points})
-        await ctx.send(
-            sorted(leaderboard, key=lambda x: x["points"], reverse=True))
+        sortedlist = sorted(leaderboard, key=lambda x: x["points"], reverse=True)
+        message = ""
+        position = 1
+        for user in sortedlist[0:10]:
+            if(user["points"] != 0):
+                message += f"**{str(position)}º {user['username']}:** {str(user['points'])} puntos\n"
+                position += 1
+
+        title = get_ranking_title(timelapse.upper(), media.upper())
+        embed = Embed(color=0x5842ff)
+        embed.add_field(name=title, value=message, inline=True)
+        await ctx.send(embed=embed)
 
     @commands.command()
     async def logs(self, ctx, timelapse="ALL", user=None):
@@ -310,11 +340,22 @@ class Logs(commands.Cog):
             user = int(timelapse)
             timelapse = "ALL"
 
-        print(user)
-        print(timelapse)
         result = await get_user_logs(self.db, user, timelapse)
+        sorted_res = sorted(result, key=lambda x: x["timestamp"])
 
-        await ctx.send(sorted(result, key=lambda x: x["timestamp"]))
+        output = ""
+        overflow = 0
+        for log in sorted_res:
+            timestring = datetime.fromtimestamp(log["timestamp"]).strftime('%d/%m/%Y')
+            line = f"#{log['id']} | {timestring}: {log['medio']} {get_media_element(log['parametro'],log['medio'])} -> {log['puntos']} puntos: {log['descripcion']}\n"
+            if len(output) + len(line) < 1000:
+                output += line
+            else:
+                overflow += 1
+        if(overflow > 0):
+            output += f"y {overflow} logs más..."
+
+        await ctx.send("```" + output + "```")
 
     @ commands.command()
     async def backfill(self, ctx, fecha, medio, cantidad, desc):
@@ -325,22 +366,45 @@ class Logs(commands.Cog):
             date = fecha.split("/")
             datets = int(datetime(int(date[2]), int(
                 date[1]), int(date[0])).timestamp())
+            strdate = datetime.fromtimestamp(datets)
             if(datetime.today().timestamp() - datets < 0):
                 await ctx.send("No puedes inmersar en el futuro.")
+
+            message = ""
+            for word in ctx.message.content.split(" ")[4:]:
+                message += word + " "
+            
             newlog = {
                 'timestamp': datets,
-                'descripcion': desc,
+                'descripcion': message,
                 'medio': medio.upper(),
                 'parametro': cantidad
             }
 
-            if calc_points(newlog) == 1:
-                await add_log(self.db, ctx.author.id, newlog)
-            elif calc_points(newlog) == 0:
+            output = calc_points(newlog)
+
+            if output > 0:
+                logid = await add_log(self.db, ctx.author.id, newlog)
+
+                embed = Embed(title="Log registrado con éxito",
+                              description=f"Log #{logid} || {strdate.strftime('%d/%m/%Y')}", color=0x24b14d)
+                embed.add_field(
+                    name="Usuario", value=ctx.author.name, inline=True)
+                embed.add_field(name="Medio", value=medio.upper(), inline=True)
+                embed.add_field(name="Puntos", value=output, inline=True)
+                embed.add_field(name="Inmersado",
+                                value=get_media_element(cantidad, medio.upper()), inline=True)
+                embed.add_field(name="Inmersión",
+                                value=message, inline=False)
+                embed.set_footer(
+                    text=ctx.author.id)
+                message = await ctx.send(embed=embed)
+                await message.add_reaction("❌")
+            elif output == 0:
                 await ctx.send("LIBRO" + "MANGA" + "VN" + "ANIME" + "LECTURA" + "TIEMPOLECTURA" + "AUDIO")
-            elif calc_points(newlog) == -1:
+            elif output == -1:
                 await ctx.send("Solo números por favor.")
-            elif calc_points(newlog) == -2:
+            elif output == -2:
                 await ctx.send("Me temo que esa cantidad de inmersión no es humana así que no puedo registrarla.")
 
     @ commands.command()
@@ -392,7 +456,7 @@ class Logs(commands.Cog):
 
             newlog = {
                 'timestamp': int(today.timestamp()),
-                'descripcion': desc,
+                'descripcion': message,
                 'medio': medio.upper(),
                 'parametro': cantidad
             }
@@ -409,7 +473,7 @@ class Logs(commands.Cog):
                 embed.add_field(name="Medio", value=medio.upper(), inline=True)
                 embed.add_field(name="Puntos", value=output, inline=True)
                 embed.add_field(name="Inmersado",
-                                value=choose_syntax(cantidad, medio.upper()), inline=True)
+                                value=get_media_element(cantidad, medio.upper()), inline=True)
                 embed.add_field(name="Inmersión",
                                 value=message, inline=False)
                 embed.set_footer(
