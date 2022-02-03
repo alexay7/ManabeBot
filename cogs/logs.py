@@ -523,11 +523,34 @@ class Logs(commands.Cog):
             await create_user(self.db, ctx.author.id, ctx.author.name)
 
         date = fecha.split("/")
-        datets = int(datetime(int(date[2]), int(
-            date[1]), int(date[0])).timestamp())
+        if(len(date) < 3):
+            somethingbad = Embed(color=0xff2929)
+            somethingbad.add_field(
+                name="❌", value="Formato de fecha no válido", inline=False)
+            await ctx.send(embed=somethingbad, delete_after=10.0)
+            return
+        try:
+            datets = int(datetime(int(date[2]), int(
+                date[1]), int(date[0])).timestamp())
+        except ValueError:
+            somethingbad = Embed(color=0xff2929)
+            somethingbad.add_field(
+                name="❌", value="Formato de fecha no válido", inline=False)
+            await ctx.send(embed=somethingbad, delete_after=10.0)
+            return
+        except OSError:
+            somethingbad = Embed(color=0xff2929)
+            somethingbad.add_field(
+                name="❌", value="Formato de fecha no válido", inline=False)
+            await ctx.send(embed=somethingbad, delete_after=10.0)
+            return
         strdate = datetime.fromtimestamp(datets)
         if(datetime.today().timestamp() - datets < 0):
-            await ctx.send("No puedes inmersar en el futuro.")
+            somethingbad = Embed(color=0xff2929)
+            somethingbad.add_field(
+                name="❌", value="Prohibido viajar en el tiempo", inline=False)
+            await ctx.send(embed=somethingbad, delete_after=10.0)
+            return
 
         message = ""
         for word in ctx.message.content.split(" ")[4:]:
