@@ -271,27 +271,27 @@ def calc_points(log):
     if log["medio"] == "LIBRO":
         puntos = round(int(log["parametro"]), 1)
         log["puntos"] = puntos
-        return puntos, log["parametro"]
+        return puntos
     elif log["medio"] == "MANGA":
         puntos = round(int(log["parametro"]) / 5, 1)
         log["puntos"] = puntos
-        return puntos, log["parametro"]
+        return puntos
     elif log["medio"] == "VN":
         puntos = round(int(log["parametro"]) / 350, 1)
         log["puntos"] = puntos
-        return puntos, log["parametro"]
+        return puntos
     elif log["medio"] == "ANIME":
         puntos = round(int(log["parametro"]) * 95 / 10, 1)
         log["puntos"] = puntos
-        return puntos, log["parametro"]
+        return puntos
     elif log["medio"] == "LECTURA":
         puntos = round(int(log["parametro"]) / 350, 1)
         log["puntos"] = puntos
-        return puntos, log["parametro"]
+        return puntos
     elif log["medio"] == "TIEMPOLECTURA":
         puntos = round(int(log["parametro"]) * 45 / 100, 1)
         log["puntos"] = puntos
-        return puntos, log["parametro"]
+        return puntos
     elif log["medio"] == "AUDIO":
         puntos = round(int(log["parametro"]) * 45 / 100, 1)
         log["puntos"] = puntos
