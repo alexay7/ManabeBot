@@ -46,12 +46,52 @@ async def create_user(db, userid, username):
     users.insert_one(newuser)
 
 
-async def get_user_points(db, userid, timelapse, media="ALL"):
-    logs = await get_user_logs(db, userid, timelapse, media)
-    total = 0
+async def get_user_data(db, userid, timelapse, media="ALL"):
+    logs = await get_user_logs(db, userid, timelapse.upper(), media.upper())
+    points = {
+        "LIBRO": 0,
+        "MANGA": 0,
+        "ANIME": 0,
+        "VN": 0,
+        "LECTURA": 0,
+        "TIEMPOLECTURA": 0,
+        "AUDIO": 0,
+        "total": 0
+    }
+    parameters = {
+        "LIBRO": 0,
+        "MANGA": 0,
+        "ANIME": 0,
+        "VN": 0,
+        "LECTURA": 0,
+        "TIEMPOLECTURA": 0,
+        "AUDIO": 0
+    }
+
     for log in logs:
-        total += log["puntos"]
-    return total
+        if log["medio"] == "LIBRO":
+            points["LIBRO"] += log["puntos"]
+            parameters["LIBRO"] += int(log["parametro"])
+        elif log["medio"] == "MANGA":
+            points["MANGA"] += log["puntos"]
+            parameters["MANGA"] += int(log["parametro"])
+        elif log["medio"] == "ANIME":
+            points["ANIME"] += log["puntos"]
+            parameters["ANIME"] += int(log["parametro"])
+        elif log["medio"] == "VN":
+            points["VN"] += log["puntos"]
+            parameters["VN"] += int(log["parametro"])
+        elif log["medio"] == "LECTURA":
+            points["LECTURA"] += log["puntos"]
+            parameters["LECTURA"] += int(log["parametro"])
+        elif log["medio"] == "TIEMPOLECTURA":
+            points["TIEMPOLECTURA"] += log["puntos"]
+            parameters["TIEMPOLECTURA"] += int(log["parametro"])
+        elif log["medio"] == "AUDIO":
+            points["AUDIO"] += log["puntos"]
+            parameters["AUDIO"] += int(log["parametro"])
+        points["total"] += log["puntos"]
+    return points, parameters
 
 
 async def get_user_logs(db, userid, timelapse, media=None):
@@ -231,27 +271,27 @@ def calc_points(log):
     if log["medio"] == "LIBRO":
         puntos = round(int(log["parametro"]), 1)
         log["puntos"] = puntos
-        return puntos
+        return puntos, log["parametro"]
     elif log["medio"] == "MANGA":
         puntos = round(int(log["parametro"]) / 5, 1)
         log["puntos"] = puntos
-        return puntos
+        return puntos, log["parametro"]
     elif log["medio"] == "VN":
         puntos = round(int(log["parametro"]) / 350, 1)
         log["puntos"] = puntos
-        return puntos
+        return puntos, log["parametro"]
     elif log["medio"] == "ANIME":
         puntos = round(int(log["parametro"]) * 95 / 10, 1)
         log["puntos"] = puntos
-        return puntos
+        return puntos, log["parametro"]
     elif log["medio"] == "LECTURA":
         puntos = round(int(log["parametro"]) / 350, 1)
         log["puntos"] = puntos
-        return puntos
+        return puntos, log["parametro"]
     elif log["medio"] == "TIEMPOLECTURA":
         puntos = round(int(log["parametro"]) * 45 / 100, 1)
         log["puntos"] = puntos
-        return puntos
+        return puntos, log["parametro"]
     elif log["medio"] == "AUDIO":
         puntos = round(int(log["parametro"]) * 45 / 100, 1)
         log["puntos"] = puntos
@@ -326,18 +366,28 @@ class Logs(commands.Cog):
             media = timelapse
             timelapse = "MONTH"
         users = self.db.users.find({}, {"userId", "username"})
+        counter = 0
         for user in users:
-            points = await get_user_points(self.db, user["userId"], timelapse.upper(), media.upper())
+            points, parameters = await get_user_data(
+                self.db, user["userId"], timelapse.upper(), media.upper())
             leaderboard.append({
                 "username": user["username"],
-                "points": points})
+                "points": points["total"]})
+            if media.upper() in MEDIA_TYPES:
+                leaderboard[counter]["param"] = parameters[media.upper()]
+            counter += 1
+
         sortedlist = sorted(
             leaderboard, key=lambda x: x["points"], reverse=True)
         message = ""
         position = 1
         for user in sortedlist[0:10]:
             if(user["points"] != 0):
-                message += f"**{str(position)}º {user['username']}:** {str(user['points'])} puntos\n"
+                message += f"**{str(position)}º {user['username']}:** {str(user['points'])} puntos"
+                if("param" in user):
+                    message += f" -> {get_media_element(user['param'],media.upper())}\n"
+                else:
+                    message += "\n"
                 position += 1
 
         title = "Ranking " + \
@@ -346,11 +396,11 @@ class Logs(commands.Cog):
         embed.add_field(name=title, value=message, inline=True)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @ commands.command()
     async def test(self, ctx, timelapse="MONTH", media="ALL"):
         await self.leaderboard(ctx, timelapse, media)
 
-    @commands.command()
+    @ commands.command()
     async def logs(self, ctx, timelapse="ALL", user=None):
         if timelapse.isnumeric():
             user = int(timelapse)
@@ -578,7 +628,7 @@ class Logs(commands.Cog):
                 name="❌", value="Ese log no existe", inline=False)
             await ctx.send(embed=somethingbad, delete_after=10.0)
 
-    @commands.Cog.listener()
+    @ commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         try:
             channel = await self.bot.fetch_channel(payload.channel_id)
