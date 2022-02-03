@@ -382,7 +382,7 @@ class Logs(commands.Cog):
     @ commands.command()
     async def me(self, ctx, timelapse="MONTH"):
         if(not await check_user(self.db, ctx.author.id)):
-            ctx.send("No tienes ningún log.")
+            await ctx.send("No tienes ningún log.")
             return
         logs = await get_user_logs(self.db, ctx.author.id, timelapse.upper())
         points = {
