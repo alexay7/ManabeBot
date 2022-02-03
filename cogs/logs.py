@@ -560,11 +560,20 @@ class Logs(commands.Cog):
             message = await ctx.send(embed=embed)
             await message.add_reaction("❌")
         elif output == 0:
-            await ctx.send("LIBRO" + "MANGA" + "VN" + "ANIME" + "LECTURA" + "TIEMPOLECTURA" + "AUDIO")
+            somethingbad = Embed(color=0xff2929)
+            somethingbad.add_field(
+                name="❌", value="Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura y audio", inline=False)
+            await ctx.send(embed=somethingbad, delete_after=10.0)
         elif output == -1:
-            await ctx.send("Solo números por favor.")
+            somethingbad = Embed(color=0xff2929)
+            somethingbad.add_field(
+                name="❌", value="La cantidad de inmersión solo puede expresarse en números", inline=False)
+            await ctx.send(embed=somethingbad, delete_after=10.0)
         elif output == -2:
-            await ctx.send("Me temo que esa cantidad de inmersión no es humana así que no puedo registrarla.")
+            somethingbad = Embed(color=0xff2929)
+            somethingbad.add_field(
+                name="❌", value="Cantidad de inmersión exagerada", inline=False)
+            await ctx.send(embed=somethingbad, delete_after=10.0)
 
     @ commands.command()
     async def log(self, ctx, medio, cantidad):
@@ -606,11 +615,20 @@ class Logs(commands.Cog):
             await message.add_reaction("❌")
 
         elif output == 0:
-            await ctx.send("LIBRO" + "MANGA" + "VN" + "ANIME" + "LECTURA" + "TIEMPOLECTURA" + "AUDIO")
+            somethingbad = Embed(color=0xff2929)
+            somethingbad.add_field(
+                name="❌", value="Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura y audio", inline=False)
+            await ctx.send(embed=somethingbad, delete_after=10.0)
         elif output == -1:
-            await ctx.send("Eres tonto o que te pasa? No ves que aquí solo puede ir un número.")
+            somethingbad = Embed(color=0xff2929)
+            somethingbad.add_field(
+                name="❌", value="La cantidad de inmersión solo puede expresarse en números", inline=False)
+            await ctx.send(embed=somethingbad, delete_after=10.0)
         elif output == -2:
-            await ctx.send("Me temo que esa cantidad de inmersión no es humana así que no puedo registrarla.")
+            somethingbad = Embed(color=0xff2929)
+            somethingbad.add_field(
+                name="❌", value="Cantidad de inmersión exagerada", inline=False)
+            await ctx.send(embed=somethingbad, delete_after=10.0)
 
     @ commands.command(aliases=["dellog"])
     async def remlog(self, ctx, logid):
