@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 from discord.ext import commands
 from discord import Embed
 from time import sleep
+import re
+import discord.errors
 
 #############################################################
 # Variables (Temporary)
@@ -25,6 +27,13 @@ MEDIA_TYPES = {"LIBRO", "MANGA", "VN", "ANIME",
                "LECTURA", "TIEMPOLECTURA", "AUDIO"}
 
 TIMESTAMP_TYPES = {"ALL", "MONTH", "WEEK"}
+
+
+async def remove_log(db, userid, logid):
+    users = db.users
+    result = users.update_one(
+        {"userId": userid}, {"$pull": {"logs": {"id": int(logid)}}})
+    return result.modified_count
 
 
 async def create_user(db, userid, username):
@@ -241,8 +250,8 @@ def calc_points(log):
         log["puntos"] = puntos
         return puntos
 
+
 def get_ranking_title(timelapse, media):
-    print(media)
     tiempo = ""
     if timelapse == "MONTH":
         tiempo = "mensual"
@@ -259,7 +268,8 @@ def get_ranking_title(timelapse, media):
         medio = "de lectura (tiempo)"
     elif media in {"VN"}:
         medio = "de " + media
-    return f"Ranking {tiempo} {medio}"
+    return f"{tiempo} {medio}"
+
 
 def get_media_element(num, media):
     if media == "MANGA" or media == "LIBRO":
@@ -318,7 +328,8 @@ class Logs(commands.Cog):
             leaderboard.append({
                 "username": user["username"],
                 "points": points})
-        sortedlist = sorted(leaderboard, key=lambda x: x["points"], reverse=True)
+        sortedlist = sorted(
+            leaderboard, key=lambda x: x["points"], reverse=True)
         message = ""
         position = 1
         for user in sortedlist[0:10]:
@@ -326,7 +337,8 @@ class Logs(commands.Cog):
                 message += f"**{str(position)}º {user['username']}:** {str(user['points'])} puntos\n"
                 position += 1
 
-        title = get_ranking_title(timelapse.upper(), media.upper())
+        title = "Ranking " + \
+            get_ranking_title(timelapse.upper(), media.upper())
         embed = Embed(color=0x5842ff)
         embed.add_field(name=title, value=message, inline=True)
         await ctx.send(embed=embed)
@@ -335,6 +347,10 @@ class Logs(commands.Cog):
     async def logs(self, ctx, timelapse="ALL", user=None):
         if not user:
             user = ctx.author.id
+
+        if(not await check_user(self.db, user)):
+            ctx.send("Ese usuario no tiene ningún log.")
+            return
 
         if timelapse.isnumeric():
             user = int(timelapse)
@@ -346,7 +362,8 @@ class Logs(commands.Cog):
         output = ""
         overflow = 0
         for log in sorted_res:
-            timestring = datetime.fromtimestamp(log["timestamp"]).strftime('%d/%m/%Y')
+            timestring = datetime.fromtimestamp(
+                log["timestamp"]).strftime('%d/%m/%Y')
             line = f"#{log['id']} | {timestring}: {log['medio']} {get_media_element(log['parametro'],log['medio'])} -> {log['puntos']} puntos: {log['descripcion']}\n"
             if len(output) + len(line) < 1000:
                 output += line
@@ -354,149 +371,211 @@ class Logs(commands.Cog):
                 overflow += 1
         if(overflow > 0):
             output += f"y {overflow} logs más..."
-
-        await ctx.send("```" + output + "```")
-
-    @ commands.command()
-    async def backfill(self, ctx, fecha, medio, cantidad, desc):
-        if ctx.author.id == admin_user_id or True:
-            if(not await check_user(self.db, ctx.author.id)):
-                await create_user(self.db, ctx.author.id, ctx.author.name)
-
-            date = fecha.split("/")
-            datets = int(datetime(int(date[2]), int(
-                date[1]), int(date[0])).timestamp())
-            strdate = datetime.fromtimestamp(datets)
-            if(datetime.today().timestamp() - datets < 0):
-                await ctx.send("No puedes inmersar en el futuro.")
-
-            message = ""
-            for word in ctx.message.content.split(" ")[4:]:
-                message += word + " "
-            
-            newlog = {
-                'timestamp': datets,
-                'descripcion': message,
-                'medio': medio.upper(),
-                'parametro': cantidad
-            }
-
-            output = calc_points(newlog)
-
-            if output > 0:
-                logid = await add_log(self.db, ctx.author.id, newlog)
-
-                embed = Embed(title="Log registrado con éxito",
-                              description=f"Log #{logid} || {strdate.strftime('%d/%m/%Y')}", color=0x24b14d)
-                embed.add_field(
-                    name="Usuario", value=ctx.author.name, inline=True)
-                embed.add_field(name="Medio", value=medio.upper(), inline=True)
-                embed.add_field(name="Puntos", value=output, inline=True)
-                embed.add_field(name="Inmersado",
-                                value=get_media_element(cantidad, medio.upper()), inline=True)
-                embed.add_field(name="Inmersión",
-                                value=message, inline=False)
-                embed.set_footer(
-                    text=ctx.author.id)
-                message = await ctx.send(embed=embed)
-                await message.add_reaction("❌")
-            elif output == 0:
-                await ctx.send("LIBRO" + "MANGA" + "VN" + "ANIME" + "LECTURA" + "TIEMPOLECTURA" + "AUDIO")
-            elif output == -1:
-                await ctx.send("Solo números por favor.")
-            elif output == -2:
-                await ctx.send("Me temo que esa cantidad de inmersión no es humana así que no puedo registrarla.")
+        if len(output) > 0:
+            await ctx.send("```" + output + "```")
+        else:
+            logdeleted = Embed(color=0xff2929)
+            logdeleted.add_field(
+                name="❌", value="No has registrado ningún log", inline=False)
+            await ctx.send(embed=logdeleted, delete_after=10.0)
 
     @ commands.command()
     async def me(self, ctx, timelapse="MONTH"):
-        if ctx.author.id == admin_user_id or True:
-            if(not await check_user(self.db, ctx.author.id)):
-                ctx.send("No tienes ningún log.")
-                return
-            logs = await get_user_logs(self.db, ctx.author.id, timelapse.upper())
-            points = {
-                "book": 0,
-                "manga": 0,
-                "anime": 0,
-                "vn": 0,
-                "read": 0,
-                "readtime": 0,
-                "listentime": 0,
-                "total": 0
-            }
-            for log in logs:
-                if log["medio"] == "LIBRO":
-                    points["book"] += log["puntos"]
-                elif log["medio"] == "MANGA":
-                    points["manga"] += log["puntos"]
-                elif log["medio"] == "ANIME":
-                    points["anime"] += log["puntos"]
-                elif log["medio"] == "VN":
-                    points["vn"] += log["puntos"]
-                elif log["medio"] == "LECTURA":
-                    points["read"] += log["puntos"]
-                elif log["medio"] == "TIEMPOLECTURA":
-                    points["readtime"] += log["puntos"]
-                elif log["medio"] == "AUDIO":
-                    points["listentim"] += log["puntos"]
-                points["total"] += log["puntos"]
-            await ctx.send(points)
+        if(not await check_user(self.db, ctx.author.id)):
+            ctx.send("No tienes ningún log.")
+            return
+        logs = await get_user_logs(self.db, ctx.author.id, timelapse.upper())
+        points = {
+            "book": 0,
+            "manga": 0,
+            "anime": 0,
+            "vn": 0,
+            "read": 0,
+            "readtime": 0,
+            "listentime": 0,
+            "total": 0
+        }
+        parameters = {
+            "book": 0,
+            "manga": 0,
+            "anime": 0,
+            "vn": 0,
+            "read": 0,
+            "readtime": 0,
+            "listentime": 0
+        }
+
+        output = ""
+        for log in logs:
+            if log["medio"] == "LIBRO":
+                points["book"] += log["puntos"]
+                parameters["book"] += int(log["parametro"])
+            elif log["medio"] == "MANGA":
+                points["manga"] += log["puntos"]
+                parameters["manga"] += int(log["parametro"])
+            elif log["medio"] == "ANIME":
+                points["anime"] += log["puntos"]
+                parameters["anime"] += int(log["parametro"])
+            elif log["medio"] == "VN":
+                points["vn"] += log["puntos"]
+                parameters["vn"] += int(log["parametro"])
+            elif log["medio"] == "LECTURA":
+                points["read"] += log["puntos"]
+                parameters["read"] += int(log["parametro"])
+            elif log["medio"] == "TIEMPOLECTURA":
+                points["readtime"] += log["puntos"]
+                parameters["readtime"] += int(log["parametro"])
+            elif log["medio"] == "AUDIO":
+                points["listentime"] += log["puntos"]
+                parameters["listentime"] += int(log["parametro"])
+            points["total"] += log["puntos"]
+
+        if points["book"] > 0:
+            output += f"**LIBROS:** {get_media_element(parameters['book'],'LIBRO')} -> {points['book']} pts\n"
+        if points["manga"] > 0:
+            output += f"**MANGA:** {get_media_element(parameters['manga'],'MANGA')} -> {points['manga']} pts\n"
+        if points["anime"] > 0:
+            output += f"**ANIME:** {get_media_element(parameters['anime'],'ANIME')} -> {points['anime']} pts\n"
+        if points["vn"] > 0:
+            output += f"**VN:** {get_media_element(parameters['vn'],'VN')} -> {points['vn']} pts\n"
+        if points["read"] > 0:
+            output += f"**LECTURA:** {get_media_element(parameters['read'],'LECTURA')} -> {points['read']} pts\n"
+        if points["readtime"] > 0:
+            output += f"**LECTURA:** {get_media_element(parameters['readtime'],'TIEMPOLECTURA')} -> {points['readtime']} pts\n"
+        if points["listentime"] > 0:
+            output += f"**AUDIO:** {get_media_element(parameters['listentime'],'AUDIO')} -> {points['listentime']} pts\n"
+
+        embed = discord.Embed(
+            title=f"Vista {get_ranking_title(timelapse.upper(),'ALL')}")
+        embed.add_field(name="Usuario", value=ctx.author.name, inline=True)
+        embed.add_field(name="Puntos", value=points["total"], inline=True)
+        embed.add_field(name="Medios", value=output, inline=False)
+        await ctx.send(embed=embed)
 
     @ commands.command()
-    async def log(self, ctx, medio, cantidad, desc):
-        if ctx.author.id == admin_user_id or True:
-            if(not await check_user(self.db, ctx.author.id)):
-                await create_user(self.db, ctx.author.id, "alexay7")
+    async def backfill(self, ctx, fecha, medio, cantidad):
+        if(not await check_user(self.db, ctx.author.id)):
+            await create_user(self.db, ctx.author.id, ctx.author.name)
 
-            message = ""
-            for word in ctx.message.content.split(" ")[3:]:
-                message += word + " "
+        date = fecha.split("/")
+        datets = int(datetime(int(date[2]), int(
+            date[1]), int(date[0])).timestamp())
+        strdate = datetime.fromtimestamp(datets)
+        if(datetime.today().timestamp() - datets < 0):
+            await ctx.send("No puedes inmersar en el futuro.")
 
-            today = datetime.today()
+        message = ""
+        for word in ctx.message.content.split(" ")[4:]:
+            message += word + " "
 
-            newlog = {
-                'timestamp': int(today.timestamp()),
-                'descripcion': message,
-                'medio': medio.upper(),
-                'parametro': cantidad
-            }
+        newlog = {
+            'timestamp': datets,
+            'descripcion': message,
+            'medio': medio.upper(),
+            'parametro': cantidad
+        }
 
-            output = calc_points(newlog)
+        output = calc_points(newlog)
 
-            if output > 0:
-                logid = await add_log(self.db, ctx.author.id, newlog)
+        if output > 0:
+            logid = await add_log(self.db, ctx.author.id, newlog)
 
-                embed = Embed(title="Log registrado con éxito",
-                              description=f"Log #{logid} || {today.strftime('%d/%m/%Y')}", color=0x24b14d)
-                embed.add_field(
-                    name="Usuario", value=ctx.author.name, inline=True)
-                embed.add_field(name="Medio", value=medio.upper(), inline=True)
-                embed.add_field(name="Puntos", value=output, inline=True)
-                embed.add_field(name="Inmersado",
-                                value=get_media_element(cantidad, medio.upper()), inline=True)
-                embed.add_field(name="Inmersión",
-                                value=message, inline=False)
-                embed.set_footer(
-                    text=ctx.author.id)
-                message = await ctx.send(embed=embed)
-                await message.add_reaction("❌")
+            embed = Embed(title="Log registrado con éxito",
+                          description=f"Log #{logid} || {strdate.strftime('%d/%m/%Y')}", color=0x24b14d)
+            embed.add_field(
+                name="Usuario", value=ctx.author.name, inline=True)
+            embed.add_field(name="Medio", value=medio.upper(), inline=True)
+            embed.add_field(name="Puntos", value=output, inline=True)
+            embed.add_field(name="Inmersado",
+                            value=get_media_element(cantidad, medio.upper()), inline=True)
+            embed.add_field(name="Inmersión",
+                            value=message, inline=False)
+            embed.set_footer(
+                text=ctx.author.id)
+            message = await ctx.send(embed=embed)
+            await message.add_reaction("❌")
+        elif output == 0:
+            await ctx.send("LIBRO" + "MANGA" + "VN" + "ANIME" + "LECTURA" + "TIEMPOLECTURA" + "AUDIO")
+        elif output == -1:
+            await ctx.send("Solo números por favor.")
+        elif output == -2:
+            await ctx.send("Me temo que esa cantidad de inmersión no es humana así que no puedo registrarla.")
 
-            elif output == 0:
-                await ctx.send("LIBRO" + "MANGA" + "VN" + "ANIME" + "LECTURA" + "TIEMPOLECTURA" + "AUDIO")
-            elif output == -1:
-                await ctx.send("Eres tonto o que te pasa? No ves que aquí solo puede ir un número.")
-            elif output == -2:
-                await ctx.send("Me temo que esa cantidad de inmersión no es humana así que no puedo registrarla.")
+    @ commands.command()
+    async def log(self, ctx, medio, cantidad):
+        if(not await check_user(self.db, ctx.author.id)):
+            await create_user(self.db, ctx.author.id, ctx.author.name)
+
+        message = ""
+        for word in ctx.message.content.split(" ")[3:]:
+            message += word + " "
+
+        today = datetime.today()
+
+        newlog = {
+            'timestamp': int(today.timestamp()),
+            'descripcion': message,
+            'medio': medio.upper(),
+            'parametro': cantidad
+        }
+
+        output = calc_points(newlog)
+
+        if output > 0:
+            logid = await add_log(self.db, ctx.author.id, newlog)
+
+            embed = Embed(title="Log registrado con éxito",
+                          description=f"Log #{logid} || {today.strftime('%d/%m/%Y')}", color=0x24b14d)
+            embed.add_field(
+                name="Usuario", value=ctx.author.name, inline=True)
+            embed.add_field(name="Medio", value=medio.upper(), inline=True)
+            embed.add_field(name="Puntos", value=output, inline=True)
+            embed.add_field(name="Inmersado",
+                            value=get_media_element(cantidad, medio.upper()), inline=True)
+            embed.add_field(name="Inmersión",
+                            value=message, inline=False)
+            embed.set_footer(
+                text=ctx.author.id)
+            message = await ctx.send(embed=embed)
+            await message.add_reaction("❌")
+
+        elif output == 0:
+            await ctx.send("LIBRO" + "MANGA" + "VN" + "ANIME" + "LECTURA" + "TIEMPOLECTURA" + "AUDIO")
+        elif output == -1:
+            await ctx.send("Eres tonto o que te pasa? No ves que aquí solo puede ir un número.")
+        elif output == -2:
+            await ctx.send("Me temo que esa cantidad de inmersión no es humana así que no puedo registrarla.")
+
+    @ commands.command()
+    async def remlog(self, ctx, logid):
+        if(not await check_user(self.db, ctx.author.id)):
+            ctx.send("No tienes ningún log.")
+            return
+        result = await remove_log(self.db, ctx.author.id, logid)
+        if(result == 1):
+            logdeleted = Embed(color=0x24b14d)
+            logdeleted.add_field(
+                name="✅", value="Log eliminado con éxito", inline=False)
+            await ctx.send(embed=logdeleted, delete_after=10.0)
+        else:
+            somethingbad = Embed(color=0xff2929)
+            somethingbad.add_field(
+                name="❌", value="Ese log no existe", inline=False)
+            await ctx.send(embed=somethingbad, delete_after=10.0)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
-        channel = await self.bot.fetch_channel(payload.channel_id)
-        message = await channel.fetch_message(payload.message_id)
+        try:
+            channel = await self.bot.fetch_channel(payload.channel_id)
+            message = await channel.fetch_message(payload.message_id)
+        except discord.errors.NotFound:
+            print("todo en orden")
 
         if(len(message.embeds) > 0):
             if(message.embeds[0].title == "Log registrado con éxito" and int(message.embeds[0].footer.text) == payload.user_id):
                 # TODO: función para borrar logs dado el id del log y el id del usuario
-                ...
+                await remove_log(self.db, payload.user_id, message.embeds[0].description.split(" ")[1].replace("#", ""))
+                await message.delete()
 
 
 def setup(bot):

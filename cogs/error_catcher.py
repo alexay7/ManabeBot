@@ -62,9 +62,13 @@ class ErrorHandler(commands.Cog):
             return
 
         else:
-            await self.private_admin_channel.send(f"{str(error)}\n\nTriggered by: `{ctx.message.content}`\n"
-                                                  f"Here: {ctx.message.jump_url}")
-            raise error
+            try:
+                await self.private_admin_channel.send(f"{str(error)}\n\nTriggered by: `{ctx.message.content}`\n"
+                                                      f"Here: {ctx.message.jump_url}")
+                raise error
+            except AttributeError:
+                print(f"{str(error)}\n\nTriggered by: `{ctx.message.content}`\n"
+                      f"Here: {ctx.message.jump_url}")
 
 
 def setup(bot):
