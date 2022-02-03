@@ -517,7 +517,7 @@ class Logs(commands.Cog):
         await ctx.send(embed=embed)
 
     @ commands.command(aliases=["backlog"])
-    async def backfill(self, ctx, fecha, medio, cantidad):
+    async def backfill(self, ctx, fecha, medio, cantidad, descripcion):
         """Uso:: $backfill <fecha (dd/mm/yyyy)> <tipo de inmersión> <cantidad inmersada>"""
         if(not await check_user(self.db, ctx.author.id)):
             await create_user(self.db, ctx.author.id, ctx.author.name)
@@ -587,19 +587,22 @@ class Logs(commands.Cog):
             somethingbad.add_field(
                 name="❌", value="Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura y audio", inline=False)
             await ctx.send(embed=somethingbad, delete_after=10.0)
+            return
         elif output == -1:
             somethingbad = Embed(color=0xff2929)
             somethingbad.add_field(
                 name="❌", value="La cantidad de inmersión solo puede expresarse en números", inline=False)
             await ctx.send(embed=somethingbad, delete_after=10.0)
+            return
         elif output == -2:
             somethingbad = Embed(color=0xff2929)
             somethingbad.add_field(
                 name="❌", value="Cantidad de inmersión exagerada", inline=False)
             await ctx.send(embed=somethingbad, delete_after=10.0)
+            return
 
     @ commands.command()
-    async def log(self, ctx, medio, cantidad):
+    async def log(self, ctx, medio, cantidad, descripcion):
         """Uso:: $log <tipo de inmersión> <cantidad inmersada>"""
         if(not await check_user(self.db, ctx.author.id)):
             await create_user(self.db, ctx.author.id, ctx.author.name)
