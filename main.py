@@ -3,8 +3,10 @@
 import os
 import json
 import discord
+from dotenv import load_dotenv
 from discord.ext import commands
 
+load_dotenv()
 intents = discord.Intents.default()
 intents.typing = False
 intents.presences = False
@@ -43,7 +45,4 @@ for filename in os.listdir('./cogs'):
         djtbot.load_extension(f'cogs.{filename[:-3]}')
         print(f"Loaded cog {filename}")
 
-with open("./token.txt") as token_file:
-    bot_token = token_file.read()
-
-djtbot.run(bot_token)
+djtbot.run(os.getenv("BOT_TOKEN"))

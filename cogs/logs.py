@@ -199,7 +199,7 @@ async def add_log(db, userid, log):
         {'$push': {"logs": log}}
     )
     user = users.find_one({'userId': userid})
-    return len(user["logs"])-1
+    return len(user["logs"]) - 1
 
 
 def calc_points(log):
@@ -271,7 +271,6 @@ class Logs(commands.Cog):
 
     @ commands.Cog.listener()
     async def on_ready(self):
-        load_dotenv()
         self.myguild = self.bot.get_guild(guild_id)
         if(self.myguild):
             try:
