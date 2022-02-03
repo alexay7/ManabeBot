@@ -359,8 +359,9 @@ class Logs(commands.Cog):
 
         # await self.private_admin_channel.send("Connected to db successfully")
 
-    @commands.command()
+    @commands.command(aliases=["ranking", "podio"])
     async def leaderboard(self, ctx, timelapse="MONTH", media="ALL"):
+        """Uso:: $leaderboard <tiempo (week/month/all)/tipo de inmersión> <tipo de inmersión>"""
         leaderboard = []
         if timelapse.upper() in MEDIA_TYPES:
             media = timelapse
@@ -397,11 +398,8 @@ class Logs(commands.Cog):
         await ctx.send(embed=embed)
 
     @ commands.command()
-    async def test(self, ctx, timelapse="MONTH", media="ALL"):
-        await self.leaderboard(ctx, timelapse, media)
-
-    @ commands.command()
     async def logs(self, ctx, timelapse="ALL", user=None):
+        """Uso:: $logs <tiempo (week/month/all)/Id usuario> <Id usuario>"""
         if timelapse.isnumeric():
             user = int(timelapse)
             timelapse = "ALL"
@@ -441,8 +439,9 @@ class Logs(commands.Cog):
                 name="❌", value=errmsg, inline=False)
             await ctx.send(embed=logdeleted, delete_after=10.0)
 
-    @ commands.command()
+    @ commands.command(aliases=["yo"])
     async def me(self, ctx, timelapse="MONTH"):
+        """Uso:: $me <tiempo (week/month/all)>"""
         if(not await check_user(self.db, ctx.author.id)):
             await ctx.send("No tienes ningún log.")
             return
@@ -517,8 +516,9 @@ class Logs(commands.Cog):
         embed.add_field(name="Medios", value=output, inline=False)
         await ctx.send(embed=embed)
 
-    @ commands.command()
+    @ commands.command(aliases=["backlog"])
     async def backfill(self, ctx, fecha, medio, cantidad):
+        """Uso:: $backfill <fecha (dd/mm/yyyy)> <tipo de inmersión> <cantidad inmersada>"""
         if(not await check_user(self.db, ctx.author.id)):
             await create_user(self.db, ctx.author.id, ctx.author.name)
 
@@ -568,6 +568,7 @@ class Logs(commands.Cog):
 
     @ commands.command()
     async def log(self, ctx, medio, cantidad):
+        """Uso:: $log <tipo de inmersión> <cantidad inmersada>"""
         if(not await check_user(self.db, ctx.author.id)):
             await create_user(self.db, ctx.author.id, ctx.author.name)
 
@@ -611,8 +612,9 @@ class Logs(commands.Cog):
         elif output == -2:
             await ctx.send("Me temo que esa cantidad de inmersión no es humana así que no puedo registrarla.")
 
-    @ commands.command()
+    @ commands.command(aliases=["dellog"])
     async def remlog(self, ctx, logid):
+        """Uso:: $remlog <Id log a borrar>"""
         if(not await check_user(self.db, ctx.author.id)):
             await ctx.send("No tienes ningún log.")
             return
