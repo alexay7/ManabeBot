@@ -303,10 +303,6 @@ class Logs(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
-    async def test(self, ctx, timelapse="MONTH", media="ALL"):
-        print(ctx.author.name)
-
     @ commands.Cog.listener()
     async def on_ready(self):
         self.myguild = self.bot.get_guild(guild_id)
@@ -351,6 +347,10 @@ class Logs(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
+    async def test(self, ctx, timelapse="MONTH", media="ALL"):
+        await self.leaderboard(ctx, timelapse, media)
+
+    @commands.command()
     async def logs(self, ctx, timelapse="ALL", user=None):
         if timelapse.isnumeric():
             user = int(timelapse)
@@ -362,7 +362,10 @@ class Logs(commands.Cog):
             user = ctx.author.id
 
         if(not await check_user(self.db, user)):
-            await ctx.send("Ese usuario no tiene ningún log.")
+            logdeleted = Embed(color=0xff2929)
+            logdeleted.add_field(
+                name="❌", value=errmsg, inline=False)
+            await ctx.send(embed=logdeleted, delete_after=10.0)
             return
 
         result = await get_user_logs(self.db, user, timelapse)
@@ -439,20 +442,23 @@ class Logs(commands.Cog):
                 parameters["listentime"] += int(log["parametro"])
             points["total"] += log["puntos"]
 
-        if points["book"] > 0:
-            output += f"**LIBROS:** {get_media_element(parameters['book'],'LIBRO')} -> {points['book']} pts\n"
-        if points["manga"] > 0:
-            output += f"**MANGA:** {get_media_element(parameters['manga'],'MANGA')} -> {points['manga']} pts\n"
-        if points["anime"] > 0:
-            output += f"**ANIME:** {get_media_element(parameters['anime'],'ANIME')} -> {points['anime']} pts\n"
-        if points["vn"] > 0:
-            output += f"**VN:** {get_media_element(parameters['vn'],'VN')} -> {points['vn']} pts\n"
-        if points["read"] > 0:
-            output += f"**LECTURA:** {get_media_element(parameters['read'],'LECTURA')} -> {points['read']} pts\n"
-        if points["readtime"] > 0:
-            output += f"**LECTURA:** {get_media_element(parameters['readtime'],'TIEMPOLECTURA')} -> {points['readtime']} pts\n"
-        if points["listentime"] > 0:
-            output += f"**AUDIO:** {get_media_element(parameters['listentime'],'AUDIO')} -> {points['listentime']} pts\n"
+        if points["total"] == 0:
+            output = "No se han encontrado logs"
+        else:
+            if points["book"] > 0:
+                output += f"**LIBROS:** {get_media_element(parameters['book'],'LIBRO')} -> {points['book']} pts\n"
+            if points["manga"] > 0:
+                output += f"**MANGA:** {get_media_element(parameters['manga'],'MANGA')} -> {points['manga']} pts\n"
+            if points["anime"] > 0:
+                output += f"**ANIME:** {get_media_element(parameters['anime'],'ANIME')} -> {points['anime']} pts\n"
+            if points["vn"] > 0:
+                output += f"**VN:** {get_media_element(parameters['vn'],'VN')} -> {points['vn']} pts\n"
+            if points["read"] > 0:
+                output += f"**LECTURA:** {get_media_element(parameters['read'],'LECTURA')} -> {points['read']} pts\n"
+            if points["readtime"] > 0:
+                output += f"**LECTURA:** {get_media_element(parameters['readtime'],'TIEMPOLECTURA')} -> {points['readtime']} pts\n"
+            if points["listentime"] > 0:
+                output += f"**AUDIO:** {get_media_element(parameters['listentime'],'AUDIO')} -> {points['listentime']} pts\n"
 
         embed = discord.Embed(
             title=f"Vista {get_ranking_title(timelapse.upper(),'ALL')}")
