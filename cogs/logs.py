@@ -77,13 +77,15 @@ async def get_user_logs(db, userid, timelapse, media=None):
                     }
                 }
             ])
-            for elem in result:
-                # Only one document should be found so no problem returning data
-                return elem["logs"]
+            if result:
+                for elem in result:
+                    # Only one document should be found so no problem returning data
+                    return elem["logs"]
         else:
             # ALL LOGS OF ALL MEDIA TYPES FROM USER
             result = users.find_one({"userId": userid}, {"logs"})
-            return result["logs"]
+            if result:
+                return result["logs"]
 
     elif timelapse == "WEEK":
         start = int((datetime.today() - timedelta(weeks=1)).timestamp())
@@ -111,9 +113,10 @@ async def get_user_logs(db, userid, timelapse, media=None):
                     }
                 }
             ])
-            for elem in result:
-                # Only one document should be found so no problem returning data
-                return elem["logs"]
+            if result:
+                for elem in result:
+                    # Only one document should be found so no problem returning data
+                    return elem["logs"]
         else:
             # SEVEN-DAY LOGS OF ALL MEDIA TYPES FROM USER
             result = users.aggregate([
@@ -136,9 +139,10 @@ async def get_user_logs(db, userid, timelapse, media=None):
                     }
                 }
             ])
-            for elem in result:
-                # Only one document should be found so no problem returning data
-                return elem["logs"]
+            if result:
+                for elem in result:
+                    # Only one document should be found so no problem returning data
+                    return elem["logs"]
     else:
         start = int(
             (datetime(datetime.today().year, datetime.today().month, 1)).timestamp())
@@ -166,9 +170,10 @@ async def get_user_logs(db, userid, timelapse, media=None):
                     }
                 }
             ])
-            for elem in result:
-                # Only one document should be found so no problem returning data
-                return elem["logs"]
+            if result:
+                for elem in result:
+                    # Only one document should be found so no problem returning data
+                    return elem["logs"]
         else:
             # MONTHLY LOGS OF ALL MEDIA TYPES FROM USER
             result = users.aggregate([
@@ -191,9 +196,11 @@ async def get_user_logs(db, userid, timelapse, media=None):
                     }
                 }
             ])
-            for elem in result:
-                # Only one document should be found so no problem returning data
-                return elem["logs"]
+            if result:
+                for elem in result:
+                    # Only one document should be found so no problem returning data
+                    return elem["logs"]
+    return ""
 
 
 async def check_user(db, userid):
@@ -345,16 +352,18 @@ class Logs(commands.Cog):
 
     @commands.command()
     async def logs(self, ctx, timelapse="ALL", user=None):
-        if not user:
+        if timelapse.isnumeric():
+            user = int(timelapse)
+            timelapse = "ALL"
+
+        errmsg = "No se han encontrado logs asociados a esa Id."
+        if user is None:
+            errmsg = "No has registrado ningún log"
             user = ctx.author.id
 
         if(not await check_user(self.db, user)):
             await ctx.send("Ese usuario no tiene ningún log.")
             return
-
-        if timelapse.isnumeric():
-            user = int(timelapse)
-            timelapse = "ALL"
 
         result = await get_user_logs(self.db, user, timelapse)
         sorted_res = sorted(result, key=lambda x: x["timestamp"])
@@ -376,7 +385,7 @@ class Logs(commands.Cog):
         else:
             logdeleted = Embed(color=0xff2929)
             logdeleted.add_field(
-                name="❌", value="No has registrado ningún log", inline=False)
+                name="❌", value=errmsg, inline=False)
             await ctx.send(embed=logdeleted, delete_after=10.0)
 
     @ commands.command()
