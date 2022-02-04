@@ -384,7 +384,7 @@ class Logs(commands.Cog):
         position = 1
         for user in sortedlist[0:10]:
             if(user["points"] != 0):
-                message += f"**{str(position)}º {user['username']}:** {str(user['points'])} puntos"
+                message += f"**{str(position)}º {user['username']}:** {str(round(user['points'],2))} puntos"
                 if("param" in user):
                     message += f" -> {get_media_element(user['param'],media.upper())}\n"
                 else:
@@ -392,7 +392,7 @@ class Logs(commands.Cog):
                 position += 1
             else:
                 sortedlist.remove(user)
-        if len(sortedlist)>0:
+        if len(sortedlist) > 0:
             title = "Ranking " + \
                 get_ranking_title(timelapse.upper(), media.upper())
             embed = Embed(color=0x5842ff)
