@@ -7,8 +7,7 @@ from datetime import datetime
 from dateutil.tz import gettz
 from bs4 import BeautifulSoup
 import requests
-from time import strftime
-from time import gmtime
+from time import strftime, gmtime, sleep
 import random
 
 #############################################################
@@ -95,8 +94,15 @@ class Extra(commands.Cog):
 
         # Parse the html content
         soup = BeautifulSoup(req.content, 'html.parser')
-
-        await ctx.send(soup.find("h2").text)
+        countdown = 5
+        message = await ctx.send(f"La respuesta será revelada en {countdown}...")
+        while(countdown > 0):
+            sleep(1)
+            countdown -= 1
+            await message.edit(
+                content=f"La respuesta será revelada en {countdown}...")
+        sleep(1)
+        await message.edit(content=soup.find("h2").text)
 
     @commands.command(aliases=['jpytoeuro', 'yentoeuro', 'jpyaeuro', 'y2e', 'yte', 'yae'])
     async def yenaeuro(self, ctx, yenes):

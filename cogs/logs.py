@@ -3,13 +3,10 @@
 import asyncio
 from pymongo import MongoClient, errors
 import os
-from dotenv import load_dotenv
 import json
 from datetime import datetime, timedelta
 from discord.ext import commands
 from discord import Embed
-from time import sleep
-import re
 import discord.errors
 
 #############################################################
@@ -17,17 +14,14 @@ import discord.errors
 with open("cogs/myguild.json") as json_file:
     data_dict = json.load(json_file)
     guild_id = data_dict["guild_id"]
-    admin_user_id = data_dict["kaigen_user_id"]
-    quizranks = data_dict["quizranks"]
-    mycommands = data_dict["mycommands"]
-    mycommands = {int(key): value for key, value in mycommands.items()}
-    myrankstructure = data_dict["rank_structure"]
 #############################################################
 
 MEDIA_TYPES = {"LIBRO", "MANGA", "VN", "ANIME",
                "LECTURA", "TIEMPOLECTURA", "AUDIO", "VIDEO"}
 
 TIMESTAMP_TYPES = {"TOTAL", "MES", "SEMANA"}
+
+# FUNCTIONS FOR SENDING MESSAGES
 
 
 async def send_message_with_buttons(self, ctx, content):
@@ -82,6 +76,8 @@ async def send_error_message(self, ctx, content):
         name="❌", value=content, inline=False)
     await ctx.send(embed=embed, delete_after=10.0)
 
+# FUNCTIONS RELATED WITH LOGS
+
 
 async def remove_log(db, userid, logid):
     users = db.users
@@ -98,37 +94,6 @@ async def create_user(db, userid, username):
         'logs': []
     }
     users.insert_one(newuser)
-
-
-async def get_user_data(db, userid, timelapse, media="TOTAL"):
-    logs = await get_user_logs(db, userid, timelapse.upper(), media.upper())
-    points = {
-        "LIBRO": 0,
-        "MANGA": 0,
-        "ANIME": 0,
-        "VN": 0,
-        "LECTURA": 0,
-        "TIEMPOLECTURA": 0,
-        "AUDIO": 0,
-        "VIDEO": 0,
-        "total": 0
-    }
-    parameters = {
-        "LIBRO": 0,
-        "MANGA": 0,
-        "ANIME": 0,
-        "VN": 0,
-        "LECTURA": 0,
-        "TIEMPOLECTURA": 0,
-        "AUDIO": 0,
-        "VIDEO": 0
-    }
-
-    for log in logs:
-        points[log["medio"]] += log["puntos"]
-        parameters[log["medio"]] += int(log["parametro"])
-        points["total"] += log["puntos"]
-    return points, parameters
 
 
 async def get_user_logs(db, userid, timelapse, media=None):
@@ -280,11 +245,6 @@ async def get_user_logs(db, userid, timelapse, media=None):
     return ""
 
 
-async def check_user(db, userid):
-    users = db.users
-    return users.find({'userId': userid}).count() > 0
-
-
 async def add_log(db, userid, log):
     users = db.users
     user = users.find_one({'userId': userid})
@@ -295,6 +255,8 @@ async def add_log(db, userid, log):
         {'$push': {"logs": log}}
     )
     return newid
+
+# GENERAL FUNCTIONS
 
 
 def calc_points(log):
@@ -364,6 +326,44 @@ def get_media_element(num, media):
         elif int(num) < 120:
             return f"1 hora y {int(num)%60} minutos"
         return f"{int(int(num)/60)} horas y {int(num)%60} minutos"
+
+
+async def get_user_data(db, userid, timelapse, media="TOTAL"):
+    logs = await get_user_logs(db, userid, timelapse.upper(), media.upper())
+    points = {
+        "LIBRO": 0,
+        "MANGA": 0,
+        "ANIME": 0,
+        "VN": 0,
+        "LECTURA": 0,
+        "TIEMPOLECTURA": 0,
+        "AUDIO": 0,
+        "VIDEO": 0,
+        "total": 0
+    }
+    parameters = {
+        "LIBRO": 0,
+        "MANGA": 0,
+        "ANIME": 0,
+        "VN": 0,
+        "LECTURA": 0,
+        "TIEMPOLECTURA": 0,
+        "AUDIO": 0,
+        "VIDEO": 0
+    }
+
+    for log in logs:
+        points[log["medio"]] += log["puntos"]
+        parameters[log["medio"]] += int(log["parametro"])
+        points["total"] += log["puntos"]
+    return points, parameters
+
+
+async def check_user(db, userid):
+    users = db.users
+    return users.find({'userId': userid}).count() > 0
+
+# BOT'S COMMANDS
 
 
 class Logs(commands.Cog):
