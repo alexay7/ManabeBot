@@ -376,15 +376,15 @@ def get_ranking_title(timelapse, media):
 
 def get_media_element(num, media):
     if media in {"MANGA", "LIBRO"}:
-        if num == 1:
+        if int(num) == 1:
             return "1 página"
         return f"{num} páginas"
     if media in {"VN", "LECTURA"}:
-        if num == 1:
+        if int(num) == 1:
             return "1 caracter"
         return f"{num} caracteres"
     if media == "ANIME":
-        if num == 1:
+        if int(num) == 1:
             return "1 episodio"
         return f"{num} episodios"
     if media in {"TIEMPOLECTURA", "AUDIO", "VIDEO"}:
