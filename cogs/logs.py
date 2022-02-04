@@ -390,12 +390,20 @@ class Logs(commands.Cog):
                 else:
                     message += "\n"
                 position += 1
-
-        title = "Ranking " + \
-            get_ranking_title(timelapse.upper(), media.upper())
-        embed = Embed(color=0x5842ff)
-        embed.add_field(name=title, value=message, inline=True)
-        await ctx.send(embed=embed)
+            else:
+                sortedlist.remove(user)
+        if len(sortedlist)>0:
+            title = "Ranking " + \
+                get_ranking_title(timelapse.upper(), media.upper())
+            embed = Embed(color=0x5842ff)
+            embed.add_field(name=title, value=message, inline=True)
+            await ctx.send(embed=embed)
+        else:
+            nousers = Embed(color=0xff2929)
+            nousers.add_field(
+                name="❌", value="Ningún usuario ha inmersado con este medio en el periodo de tiempo indicado.", inline=False)
+            await ctx.send(embed=nousers, delete_after=10.0)
+            return
 
     @ commands.command()
     async def logs(self, ctx, timelapse="TOTAL", user=None):
