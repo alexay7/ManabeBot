@@ -24,7 +24,7 @@ with open("cogs/myguild.json") as json_file:
 #############################################################
 
 MEDIA_TYPES = {"LIBRO", "MANGA", "VN", "ANIME",
-               "LECTURA", "TIEMPOLECTURA", "AUDIO"}
+               "LECTURA", "TIEMPOLECTURA", "AUDIO", "VIDEO"}
 
 TIMESTAMP_TYPES = {"TOTAL", "MES", "SEMANA"}
 
@@ -56,6 +56,7 @@ async def get_user_data(db, userid, timelapse, media="TOTAL"):
         "LECTURA": 0,
         "TIEMPOLECTURA": 0,
         "AUDIO": 0,
+        "VIDEO": 0,
         "total": 0
     }
     parameters = {
@@ -65,31 +66,13 @@ async def get_user_data(db, userid, timelapse, media="TOTAL"):
         "VN": 0,
         "LECTURA": 0,
         "TIEMPOLECTURA": 0,
-        "AUDIO": 0
+        "AUDIO": 0,
+        "VIDEO": 0
     }
 
     for log in logs:
-        if log["medio"] == "LIBRO":
-            points["LIBRO"] += log["puntos"]
-            parameters["LIBRO"] += int(log["parametro"])
-        elif log["medio"] == "MANGA":
-            points["MANGA"] += log["puntos"]
-            parameters["MANGA"] += int(log["parametro"])
-        elif log["medio"] == "ANIME":
-            points["ANIME"] += log["puntos"]
-            parameters["ANIME"] += int(log["parametro"])
-        elif log["medio"] == "VN":
-            points["VN"] += log["puntos"]
-            parameters["VN"] += int(log["parametro"])
-        elif log["medio"] == "LECTURA":
-            points["LECTURA"] += log["puntos"]
-            parameters["LECTURA"] += int(log["parametro"])
-        elif log["medio"] == "TIEMPOLECTURA":
-            points["TIEMPOLECTURA"] += log["puntos"]
-            parameters["TIEMPOLECTURA"] += int(log["parametro"])
-        elif log["medio"] == "AUDIO":
-            points["AUDIO"] += log["puntos"]
-            parameters["AUDIO"] += int(log["parametro"])
+        points[log["medio"]] += log["puntos"]
+        parameters[log["medio"]] += int(log["parametro"])
         points["total"] += log["puntos"]
     return points, parameters
 
@@ -270,32 +253,22 @@ def calc_points(log):
         return -2
     if log["medio"] == "LIBRO":
         puntos = round(int(log["parametro"]), 1)
-        log["puntos"] = puntos
-        return puntos
     elif log["medio"] == "MANGA":
         puntos = round(int(log["parametro"]) / 5, 1)
-        log["puntos"] = puntos
-        return puntos
     elif log["medio"] == "VN":
         puntos = round(int(log["parametro"]) / 350, 1)
-        log["puntos"] = puntos
-        return puntos
     elif log["medio"] == "ANIME":
         puntos = round(int(log["parametro"]) * 95 / 10, 1)
-        log["puntos"] = puntos
-        return puntos
     elif log["medio"] == "LECTURA":
         puntos = round(int(log["parametro"]) / 350, 1)
-        log["puntos"] = puntos
-        return puntos
     elif log["medio"] == "TIEMPOLECTURA":
         puntos = round(int(log["parametro"]) * 45 / 100, 1)
-        log["puntos"] = puntos
-        return puntos
     elif log["medio"] == "AUDIO":
         puntos = round(int(log["parametro"]) * 45 / 100, 1)
-        log["puntos"] = puntos
-        return puntos
+    elif log["medio"] == "VIDEO":
+        puntos = round(int(log["parametro"]) * 45 / 100, 1)
+    log["puntos"] = puntos
+    return puntos
 
 
 def get_ranking_title(timelapse, media):
@@ -307,7 +280,7 @@ def get_ranking_title(timelapse, media):
     else:
         tiempo = "total"
     medio = ""
-    if media in {"MANGA", "ANIME", "AUDIO", "LECTURA"}:
+    if media in {"MANGA", "ANIME", "AUDIO", "LECTURA", "VIDEO"}:
         medio = "de " + media.lower()
     elif media in {"LIBRO"}:
         medio = "de " + media.lower() + "s"
@@ -319,11 +292,11 @@ def get_ranking_title(timelapse, media):
 
 
 def get_media_element(num, media):
-    if media == "MANGA" or media == "LIBRO":
+    if media in {"MANGA", "LIBRO"}:
         if num == 1:
             return "1 página"
         return f"{num} páginas"
-    if media == "VN" or media == "LECTURA":
+    if media in {"VN", "LECTURA"}:
         if num == 1:
             return "1 caracter"
         return f"{num} caracteres"
@@ -331,7 +304,7 @@ def get_media_element(num, media):
         if num == 1:
             return "1 episodio"
         return f"{num} episodios"
-    if media == "TIEMPOLECTURA" or media == "AUDIO":
+    if media in {"TIEMPOLECTURA", "AUDIO", "VIDEO"}:
         if int(num) < 60:
             return f"{int(num)%60} minutos"
         elif int(num) < 120:
@@ -455,67 +428,52 @@ class Logs(commands.Cog):
             return
         logs = await get_user_logs(self.db, ctx.author.id, timelapse.upper())
         points = {
-            "book": 0,
-            "manga": 0,
-            "anime": 0,
-            "vn": 0,
-            "read": 0,
-            "readtime": 0,
-            "listentime": 0,
+            "LIBRO": 0,
+            "MANGA": 0,
+            "ANIME": 0,
+            "VN": 0,
+            "LECTURA": 0,
+            "TIEMPOLECTURA": 0,
+            "AUDIO": 0,
+            "VIDEO": 0,
             "total": 0
         }
         parameters = {
-            "book": 0,
-            "manga": 0,
-            "anime": 0,
-            "vn": 0,
-            "read": 0,
-            "readtime": 0,
-            "listentime": 0
+            "LIBRO": 0,
+            "MANGA": 0,
+            "ANIME": 0,
+            "VN": 0,
+            "LECTURA": 0,
+            "TIEMPOLECTURA": 0,
+            "AUDIO": 0,
+            "VIDEO": 0
         }
 
         output = ""
         for log in logs:
-            if log["medio"] == "LIBRO":
-                points["book"] += log["puntos"]
-                parameters["book"] += int(log["parametro"])
-            elif log["medio"] == "MANGA":
-                points["manga"] += log["puntos"]
-                parameters["manga"] += int(log["parametro"])
-            elif log["medio"] == "ANIME":
-                points["anime"] += log["puntos"]
-                parameters["anime"] += int(log["parametro"])
-            elif log["medio"] == "VN":
-                points["vn"] += log["puntos"]
-                parameters["vn"] += int(log["parametro"])
-            elif log["medio"] == "LECTURA":
-                points["read"] += log["puntos"]
-                parameters["read"] += int(log["parametro"])
-            elif log["medio"] == "TIEMPOLECTURA":
-                points["readtime"] += log["puntos"]
-                parameters["readtime"] += int(log["parametro"])
-            elif log["medio"] == "AUDIO":
-                points["listentime"] += log["puntos"]
-                parameters["listentime"] += int(log["parametro"])
+            points[log["medio"]] += log["puntos"]
+            parameters[log["medio"]] += int(log["parametro"])
             points["total"] += log["puntos"]
 
         if points["total"] == 0:
             output = "No se han encontrado logs"
         else:
-            if points["book"] > 0:
-                output += f"**LIBROS:** {get_media_element(parameters['book'],'LIBRO')} -> {points['book']} pts\n"
-            if points["manga"] > 0:
-                output += f"**MANGA:** {get_media_element(parameters['manga'],'MANGA')} -> {points['manga']} pts\n"
-            if points["anime"] > 0:
-                output += f"**ANIME:** {get_media_element(parameters['anime'],'ANIME')} -> {points['anime']} pts\n"
-            if points["vn"] > 0:
-                output += f"**VN:** {get_media_element(parameters['vn'],'VN')} -> {points['vn']} pts\n"
-            if points["read"] > 0:
-                output += f"**LECTURA:** {get_media_element(parameters['read'],'LECTURA')} -> {points['read']} pts\n"
-            if points["readtime"] > 0:
-                output += f"**LECTURA:** {get_media_element(parameters['readtime'],'TIEMPOLECTURA')} -> {points['readtime']} pts\n"
-            if points["listentime"] > 0:
-                output += f"**AUDIO:** {get_media_element(parameters['listentime'],'AUDIO')} -> {points['listentime']} pts\n"
+            if points["LIBRO"] > 0:
+                output += f"**LIBROS:** {get_media_element(parameters['LIBRO'],'LIBRO')} -> {points['LIBRO']} pts\n"
+            if points["MANGA"] > 0:
+                output += f"**MANGA:** {get_media_element(parameters['MANGA'],'MANGA')} -> {points['MANGA']} pts\n"
+            if points["ANIME"] > 0:
+                output += f"**ANIME:** {get_media_element(parameters['ANIME'],'ANIME')} -> {points['ANIME']} pts\n"
+            if points["VN"] > 0:
+                output += f"**VN:** {get_media_element(parameters['VN'],'VN')} -> {points['VN']} pts\n"
+            if points["LECTURA"] > 0:
+                output += f"**LECTURA:** {get_media_element(parameters['LECTURA'],'LECTURA')} -> {points['LECTURA']} pts\n"
+            if points["TIEMPOLECTURA"] > 0:
+                output += f"**LECTURA:** {get_media_element(parameters['TIEMPOLECTURA'],'TIEMPOLECTURA')} -> {points['TIEMPOLECTURA']} pts\n"
+            if points["AUDIO"] > 0:
+                output += f"**AUDIO:** {get_media_element(parameters['AUDIO'],'AUDIO')} -> {points['AUDIO']} pts\n"
+            if points["VIDEO"] > 0:
+                output += f"**VIDEO:** {get_media_element(parameters['VIDEO'],'VIDEO')} -> {points['VIDEO']} pts\n"
 
         embed = discord.Embed(
             title=f"Vista {get_ranking_title(timelapse.upper(),'ALL')}")
@@ -593,7 +551,7 @@ class Logs(commands.Cog):
         elif output == 0:
             somethingbad = Embed(color=0xff2929)
             somethingbad.add_field(
-                name="❌", value="Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura y audio", inline=False)
+                name="❌", value="Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, audio y video", inline=False)
             await ctx.send(embed=somethingbad, delete_after=10.0)
             return
         elif output == -1:
@@ -651,7 +609,7 @@ class Logs(commands.Cog):
         elif output == 0:
             somethingbad = Embed(color=0xff2929)
             somethingbad.add_field(
-                name="❌", value="Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura y audio", inline=False)
+                name="❌", value="Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, audio y video", inline=False)
             await ctx.send(embed=somethingbad, delete_after=10.0)
         elif output == -1:
             somethingbad = Embed(color=0xff2929)
