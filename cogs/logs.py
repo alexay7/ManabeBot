@@ -9,6 +9,7 @@ from discord.ext import commands
 from discord import Embed
 import discord.errors
 from time import sleep
+from .fun import intToMonth
 
 #############################################################
 # Variables (Temporary)
@@ -21,6 +22,7 @@ MEDIA_TYPES = {"LIBRO", "MANGA", "VN", "ANIME",
                "LECTURA", "TIEMPOLECTURA", "AUDIO", "VIDEO"}
 
 TIMESTAMP_TYPES = {"TOTAL", "MES", "SEMANA"}
+
 
 # FUNCTIONS FOR SENDING MESSAGES
 
@@ -186,7 +188,7 @@ async def get_user_logs(db, userid, timelapse, media=None):
                 for elem in result:
                     # Only one document should be found so no problem returning data
                     return elem["logs"]
-    else:
+    elif timelapse == "MES":
         start = int(
             (datetime(datetime.today().year, datetime.today().month, 1)).timestamp())
         end = int(datetime.today().timestamp())
@@ -243,7 +245,71 @@ async def get_user_logs(db, userid, timelapse, media=None):
                 for elem in result:
                     # Only one document should be found so no problem returning data
                     return elem["logs"]
+    else:
+        split_time = timelapse.split("/")
+        if len(split_time) == 1:
+            # TOTAL VIEW
+            start = int(
+                (datetime(int(split_time[0]), 1, 1)).timestamp())
+            end = int(
+                (datetime(int(split_time[0]), 12, 31)).timestamp())
+
+        else:
+            # MONTHLY VIEW
+            month = int(split_time[1])
+            year = int(split_time[0])
+            start = int(
+                (datetime(int(year), month, 1)).timestamp())
+            if month+1 > 12:
+                month = 0
+                year += 1
+            end = int(
+                (datetime(int(year), month+1, 1)-timedelta(days=1)).timestamp())
+        query = [{"$match": {"userId": userid}},
+                 {
+            "$project": {
+                "logs": {
+                    "$filter": {
+                        "input": "$logs",
+                        "as": "log",
+                        "cond": {"$and": [
+                                {"$gte": ["$$log.timestamp", start]},
+                                {"$lte": ["$$log.timestamp", end]}
+                        ]}
+                    }
+                }
+            }
+        }]
+        if media in MEDIA_TYPES:
+            query[1]["$project"]["logs"]["$filter"]["cond"]["$and"].append(
+                {"$eq": ["$$log.medio", media]})
+        result = users.aggregate(query)
+        if result:
+            for elem in result:
+                # Only one document should be found so no problem returning data
+                return elem["logs"]
     return ""
+
+
+async def get_best_user_of_range(db, media, timelapse):
+    aux = None
+    users = db.users.find({}, {"userId", "username"})
+    points = 0
+    parameternum = 0
+    for user in users:
+        userpoints, parameters = await get_user_data(db, user["userId"], timelapse, media)
+        newuser = {
+            "username": user["username"],
+            "points": userpoints[media.upper()],
+            "parameters": parameters[media.upper()]
+        }
+        if newuser["points"] > points:
+            points = newuser["points"]
+            parameternum = newuser["parameters"]
+            aux = newuser
+    if(not(aux is None)):
+        return aux
+    return None
 
 
 async def add_log(db, userid, log):
@@ -340,7 +406,7 @@ async def get_user_data(db, userid, timelapse, media="TOTAL"):
         "TIEMPOLECTURA": 0,
         "AUDIO": 0,
         "VIDEO": 0,
-        "total": 0
+        "TOTAL": 0
     }
     parameters = {
         "LIBRO": 0,
@@ -350,13 +416,14 @@ async def get_user_data(db, userid, timelapse, media="TOTAL"):
         "LECTURA": 0,
         "TIEMPOLECTURA": 0,
         "AUDIO": 0,
-        "VIDEO": 0
+        "VIDEO": 0,
+        "TOTAL": 0
     }
 
     for log in logs:
         points[log["medio"]] += log["puntos"]
         parameters[log["medio"]] += int(log["parametro"])
-        points["total"] += log["puntos"]
+        points["TOTAL"] += log["puntos"]
     return points, parameters
 
 
@@ -387,7 +454,51 @@ class Logs(commands.Cog):
 
         # await self.private_admin_channel.send("Connected to db successfully")
 
-    @commands.command(aliases=["ranking", "podio"])
+    @ commands.command(aliases=["halloffame", "salondelafama", "salonfama", "mvp"])
+    async def hallofame(self, ctx, timelapse=f"{datetime.today().year}", media="TOTAL"):
+        """Uso:: $hallofame <tiempo (week/month/all)/tipo de inmersión> <tipo de inmersión>"""
+        output = ""
+        if timelapse.upper() in MEDIA_TYPES:
+            media = timelapse.upper()
+            timelapse = f"{datetime.today().year}"
+
+        if timelapse.upper() != "TOTAL":
+            # Calcular lo que es el start y el end aquí, mandarlos como argumento
+            domain = range(1, 13)
+            for x in domain:
+                winner = await get_best_user_of_range(self.db, media, f"{timelapse}/{x}")
+                if(not(winner is None)):
+                    output += f"**{intToMonth(x)}:** {winner['username']} - {winner['points']} puntos"
+                    if media.upper() in MEDIA_TYPES:
+                        output += f" -> {get_media_element(winner['parameters'],media.upper())}\n"
+                    else:
+                        output += "\n"
+            title = f"🏆 Usuarios del mes ({datetime.today().year})"
+            if media.upper() in MEDIA_TYPES:
+                title += f" [{media.upper()}]"
+
+        else:
+            # Iterate from 2020 until current year
+            end = datetime.today().year
+            domain = range(2020, end+1)
+            for x in domain:
+                winner = await get_best_user_of_range(self.db, media, f"{x}")
+                if(not(winner is None)):
+                    output += f"**{x}:** {winner['username']} - {winner['points']} puntos"
+                    if media.upper() in MEDIA_TYPES:
+                        output += f" -> {get_media_element(winner['parameters'],media.upper())}\n"
+                    else:
+                        output += "\n"
+            title = f"🏆 Usuarios del año"
+            if media.upper() in MEDIA_TYPES:
+                title += f" [{media.upper()}]"
+
+        embed = Embed(title=title, color=0xd400ff)
+        embed.add_field(name="---------------------",
+                        value=output, inline=True)
+        await ctx.send(embed=embed)
+
+    @ commands.command(aliases=["ranking", "podio"])
     async def leaderboard(self, ctx, timelapse="MES", media="TOTAL"):
         """Uso:: $leaderboard <tiempo (week/month/all)/tipo de inmersión> <tipo de inmersión>"""
         leaderboard = []
@@ -401,7 +512,7 @@ class Logs(commands.Cog):
                 self.db, user["userId"], timelapse.upper(), media.upper())
             leaderboard.append({
                 "username": user["username"],
-                "points": points["total"]})
+                "points": points["TOTAL"]})
             if media.upper() in MEDIA_TYPES:
                 leaderboard[counter]["param"] = parameters[media.upper()]
             counter += 1
@@ -481,7 +592,7 @@ class Logs(commands.Cog):
             "TIEMPOLECTURA": 0,
             "AUDIO": 0,
             "VIDEO": 0,
-            "total": 0
+            "TOTAL": 0
         }
         parameters = {
             "LIBRO": 0,
@@ -498,9 +609,9 @@ class Logs(commands.Cog):
         for log in logs:
             points[log["medio"]] += log["puntos"]
             parameters[log["medio"]] += int(log["parametro"])
-            points["total"] += log["puntos"]
+            points["TOTAL"] += log["puntos"]
 
-        if points["total"] == 0:
+        if points["TOTAL"] == 0:
             output = "No se han encontrado logs"
         else:
             if points["LIBRO"] > 0:
@@ -521,9 +632,9 @@ class Logs(commands.Cog):
                 output += f"**VIDEO:** {get_media_element(parameters['VIDEO'],'VIDEO')} -> {points['VIDEO']} pts\n"
 
         embed = discord.Embed(
-            title=f"Vista {get_ranking_title(timelapse.upper(),'ALL')}")
+            title=f"Vista {get_ranking_title(timelapse.upper(),'ALL')}", color=0xeeff00)
         embed.add_field(name="Usuario", value=ctx.author.name, inline=True)
-        embed.add_field(name="Puntos", value=points["total"], inline=True)
+        embed.add_field(name="Puntos", value=points["TOTAL"], inline=True)
         embed.add_field(name="Medios", value=output, inline=False)
         await ctx.send(embed=embed)
 
