@@ -1,6 +1,6 @@
 [x] Opción de borrar y editar logs (dado el identificador del log y solo puede hacerlo el usuario del que sea propio)
 [x] Mensaje de confirmación una vez emitido un log, tendrá un emote para eliminar el log por si hubiera habido un error.
-[] Crear gráficas (librería externa?)
+[x] Crear gráficas (librería externa?)
 [x] Hacer output de leaderboard bonito
 [x] Hacer output de logs bonito (con su correspondiente id)
 [x] Permitir el uso de descripciones largas en backfill
@@ -11,4 +11,4 @@
 [] Función exports que genere csv con todos los logs del usuario
 [x] Mejorar output función me
 [x] Ranking que en lugar de puntos tenga páginas
-[] Hall of fame con las personas que más han logueado durante un mes/año
+[x] Hall of fame con las personas que más han logueado durante un mes/año

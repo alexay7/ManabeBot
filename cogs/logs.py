@@ -1,6 +1,7 @@
 """Cog responsible for immersion logs."""
 
 import asyncio
+from turtle import color
 from pymongo import MongoClient, errors
 import os
 import json
@@ -10,6 +11,7 @@ from discord import Embed
 import discord.errors
 from time import sleep
 from .fun import intToMonth
+import matplotlib.pyplot as plt
 
 #############################################################
 # Variables (Temporary)
@@ -431,6 +433,56 @@ async def check_user(db, userid):
     users = db.users
     return users.find({'userId': userid}).count() > 0
 
+
+def generate_graph(points, type, timelapse=None):
+    aux = dict(points)
+    if(type == "piechart"):
+        for elem in list(aux):
+            if(aux[elem] == 0):
+                aux.pop(elem)
+        aux.pop("TOTAL")
+
+        labels = []
+        values = []
+
+        for x, y in aux.items():
+            labels.append(x),
+            values.append(y)
+
+        fig1, ax1 = plt.subplots()
+        ax1.pie(values, labels=labels, autopct='%1.1f%%',
+                shadow=True, startangle=90, textprops={'color': "w"})
+        fig1.set_facecolor("#2F3136")
+        # Equal aspect ratio ensures that pie is drawn as a circle.
+        ax1.axis('equal')
+
+        plt.savefig("temp/image.png")
+        file = discord.File("temp/image.png", filename="image.png")
+        return file
+    else:
+        labels = []
+        values = []
+        if timelapse.upper() == "SEMANA":
+            start = datetime.today()-timedelta(days=7)
+            for x in range(0, 7):
+                auxdate = str(start+timedelta(days=x)
+                              ).replace("-", "/").split(" ")[0]
+                labels.append(auxdate)
+                if auxdate in points:
+                    values.append(points[auxdate])
+                else:
+                    values.append(0)
+            fig, ax = plt.subplots()
+            ax.bar(labels, values, color='#24B14D')
+            ax.set_ylabel('Puntos', color="white")
+            ax.tick_params(axis='both', colors='white')
+            fig.set_facecolor("#2F3136")
+            fig.autofmt_xdate()
+            plt.savefig("temp/image.png")
+            file = discord.File("temp/image.png", filename="image.png")
+            return file
+
+
 # BOT'S COMMANDS
 
 
@@ -577,7 +629,7 @@ class Logs(commands.Cog):
             await send_error_message(self, ctx, errmsg)
 
     @ commands.command(aliases=["yo"])
-    async def me(self, ctx, timelapse="MES"):
+    async def me(self, ctx, timelapse="MES", graph=0):
         """Uso:: $me <tiempo (semana/mes/all)>"""
         if(not await check_user(self.db, ctx.author.id)):
             await ctx.send("No tienes ningún log.")
@@ -605,11 +657,20 @@ class Logs(commands.Cog):
             "VIDEO": 0
         }
 
+        graphlogs = {}
+
         output = ""
         for log in logs:
             points[log["medio"]] += log["puntos"]
             parameters[log["medio"]] += int(log["parametro"])
             points["TOTAL"] += log["puntos"]
+            logdate = str(datetime.fromtimestamp(
+                log["timestamp"])).replace("-", "/").split(" ")[0]
+
+            if logdate in graphlogs:
+                graphlogs[logdate] += log["puntos"]
+            else:
+                graphlogs[logdate] = 1
 
         if points["TOTAL"] == 0:
             output = "No se han encontrado logs"
@@ -631,12 +692,22 @@ class Logs(commands.Cog):
             if points["VIDEO"] > 0:
                 output += f"**VIDEO:** {get_media_element(parameters['VIDEO'],'VIDEO')} -> {points['VIDEO']} pts\n"
 
-        embed = discord.Embed(
+        normal = discord.Embed(
             title=f"Vista {get_ranking_title(timelapse.upper(),'ALL')}", color=0xeeff00)
-        embed.add_field(name="Usuario", value=ctx.author.name, inline=True)
-        embed.add_field(name="Puntos", value=points["TOTAL"], inline=True)
-        embed.add_field(name="Medios", value=output, inline=False)
-        await ctx.send(embed=embed)
+        normal.add_field(name="Usuario", value=ctx.author.name, inline=True)
+        normal.add_field(name="Puntos", value=round(
+            points["TOTAL"], 2), inline=True)
+        normal.add_field(name="Medios", value=output, inline=False)
+        if graph == 2:
+            piedoc = generate_graph(points, "piechart")
+            normal.set_image(url="attachment://image.png")
+            await ctx.send(embed=normal, file=piedoc)
+        elif graph == 1:
+            bardoc = generate_graph(graphlogs, "bars", timelapse)
+            normal.set_image(url="attachment://image.png")
+            await ctx.send(embed=normal, file=bardoc)
+        else:
+            await ctx.send(embed=normal)
 
     @ commands.command(aliases=["backlog"])
     async def backfill(self, ctx, fecha, medio, cantidad, descripcion):

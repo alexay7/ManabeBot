@@ -10,3 +10,4 @@ cogs/__pycache__
 
 .env
 /.vscode
+temp/*
