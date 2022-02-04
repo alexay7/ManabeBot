@@ -77,7 +77,7 @@ class Extra(commands.Cog):
                     de {intToMonth(local_japan.month)} de {local_japan.year}")
 
     @commands.command(aliases=['canigotojapan', 'quieroirajapon'])
-    async def japonabierto(self, ctx):
+    async def japonabierto(self, ctx, countdown=False):
         "Te dice si las fronteras de Japón están abiertas para el turismo o no"
         url = "https://canigotojapan.com"
 
@@ -94,15 +94,18 @@ class Extra(commands.Cog):
 
         # Parse the html content
         soup = BeautifulSoup(req.content, 'html.parser')
-        countdown = 5
-        message = await ctx.send(f"La respuesta será revelada en {countdown}...")
-        while(countdown > 0):
+        if countdown:
+            countdown = 5
+            message = await ctx.send(f"La respuesta será revelada en {countdown}...")
+            while(countdown > 0):
+                sleep(1)
+                countdown -= 1
+                await message.edit(
+                    content=f"La respuesta será revelada en {countdown}...")
             sleep(1)
-            countdown -= 1
-            await message.edit(
-                content=f"La respuesta será revelada en {countdown}...")
-        sleep(1)
-        await message.edit(content=soup.find("h2").text)
+            await message.edit(content=soup.find("h2").text)
+        else:
+            await ctx.send(soup.find("h2").text)
 
     @commands.command(aliases=['jpytoeuro', 'yentoeuro', 'jpyaeuro', 'y2e', 'yte', 'yae'])
     async def yenaeuro(self, ctx, yenes):
