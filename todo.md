@@ -10,4 +10,5 @@
 [x] Mover el token a .env
 [] Función exports que genere csv con todos los logs del usuario
 [x] Mejorar output función me
-[] Ranking que en lugar de puntos tenga páginas
+[x] Ranking que en lugar de puntos tenga páginas
+[] Hall of fame con las personas que más han logueado durante un mes/año

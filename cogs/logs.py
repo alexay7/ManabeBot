@@ -1,5 +1,6 @@
 """Cog responsible for immersion logs."""
 
+import asyncio
 from pymongo import MongoClient, errors
 import os
 from dotenv import load_dotenv
@@ -27,6 +28,59 @@ MEDIA_TYPES = {"LIBRO", "MANGA", "VN", "ANIME",
                "LECTURA", "TIEMPOLECTURA", "AUDIO", "VIDEO"}
 
 TIMESTAMP_TYPES = {"TOTAL", "MES", "SEMANA"}
+
+
+async def send_message_with_buttons(self, ctx, content):
+    pages = len(content)
+    cur_page = 1
+    message = await ctx.send(f"```{content[cur_page-1]}\nPág {cur_page} de {pages}```")
+    if(pages > 1):
+        await message.add_reaction("◀️")
+        await message.add_reaction("▶️")
+        while True:
+            try:
+                reaction, user = await self.bot.wait_for("reaction_add", timeout=30)
+                if(not user.bot):
+                    # waiting for a reaction to be added - times out after x seconds, 60 in this
+                    # example
+
+                    if str(reaction.emoji) == "▶️" and cur_page != pages:
+                        cur_page += 1
+                        await message.edit(content=f"```{content[cur_page-1]}\nPág {cur_page} de {pages}```")
+                        try:
+                            await message.remove_reaction(reaction, user)
+                        except discord.errors.Forbidden:
+                            await ctx.send("‼️ Los mensajes con páginas no funcionan bien en DM!")
+
+                    elif str(reaction.emoji) == "◀️" and cur_page > 1:
+                        cur_page -= 1
+                        await message.edit(content=f"```{content[cur_page-1]}\nPág {cur_page} de {pages}```")
+                        try:
+                            await message.remove_reaction(reaction, user)
+                        except discord.errors.Forbidden:
+                            await ctx.send("‼️ Los mensajes con páginas no funcionan bien en DM!")
+
+                    else:
+                        try:
+                            await message.remove_reaction(reaction, user)
+                        except discord.errors.Forbidden:
+                            await ctx.send("‼️ Los mensajes con páginas no funcionan bien en DM!")
+                        # removes reactions if the user tries to go forward on the last page or
+                        # backwards on the first page
+            except asyncio.TimeoutError:
+                try:
+                    await message.delete()
+                except discord.errors.Forbidden:
+                    await ctx.send("‼️ Los mensajes con páginas no funcionan bien en DM!")
+                break
+                # ending the loop if user doesn't react after x seconds
+
+
+async def send_error_message(self, ctx, content):
+    embed = Embed(color=0xff2929)
+    embed.add_field(
+        name="❌", value=content, inline=False)
+    await ctx.send(embed=embed, delete_after=10.0)
 
 
 async def remove_log(db, userid, logid):
@@ -372,10 +426,7 @@ class Logs(commands.Cog):
             embed.add_field(name=title, value=message, inline=True)
             await ctx.send(embed=embed)
         else:
-            nousers = Embed(color=0xff2929)
-            nousers.add_field(
-                name="❌", value="Ningún usuario ha inmersado con este medio en el periodo de tiempo indicado.", inline=False)
-            await ctx.send(embed=nousers, delete_after=10.0)
+            await send_error_message(self, ctx, "Ningún usuario ha inmersado con este medio en el periodo de tiempo indicado")
             return
 
     @ commands.command()
@@ -391,34 +442,27 @@ class Logs(commands.Cog):
             user = ctx.author.id
 
         if(not await check_user(self.db, user)):
-            logdeleted = Embed(color=0xff2929)
-            logdeleted.add_field(
-                name="❌", value=errmsg, inline=False)
-            await ctx.send(embed=logdeleted, delete_after=10.0)
+            await send_error_message(self, ctx, errmsg)
             return
 
         result = await get_user_logs(self.db, user, timelapse)
         sorted_res = sorted(result, key=lambda x: x["timestamp"])
 
-        output = ""
+        output = [""]
         overflow = 0
         for log in sorted_res:
             timestring = datetime.fromtimestamp(
                 log["timestamp"]).strftime('%d/%m/%Y')
             line = f"#{log['id']} | {timestring}: {log['medio']} {get_media_element(log['parametro'],log['medio'])} -> {log['puntos']} puntos: {log['descripcion']}\n"
-            if len(output) + len(line) < 1000:
-                output += line
+            if len(output[overflow]) + len(line) < 1000:
+                output[overflow] += line
             else:
                 overflow += 1
-        if(overflow > 0):
-            output += f"y {overflow} logs más..."
-        if len(output) > 0:
-            await ctx.send("```" + output + "```")
+                output.append(line)
+        if len(output[0]) > 0:
+            await send_message_with_buttons(self, ctx, output)
         else:
-            logdeleted = Embed(color=0xff2929)
-            logdeleted.add_field(
-                name="❌", value=errmsg, inline=False)
-            await ctx.send(embed=logdeleted, delete_after=10.0)
+            await send_error_message(self, ctx, errmsg)
 
     @ commands.command(aliases=["yo"])
     async def me(self, ctx, timelapse="MES"):
@@ -490,32 +534,21 @@ class Logs(commands.Cog):
 
         date = fecha.split("/")
         if(len(date) < 3):
-            somethingbad = Embed(color=0xff2929)
-            somethingbad.add_field(
-                name="❌", value="Formato de fecha no válido", inline=False)
-            await ctx.send(embed=somethingbad, delete_after=10.0)
+            await send_error_message(self, ctx, "Formato de fecha no válido")
             return
         try:
             datets = int(datetime(int(date[2]), int(
                 date[1]), int(date[0])).timestamp())
         except ValueError:
-            somethingbad = Embed(color=0xff2929)
-            somethingbad.add_field(
-                name="❌", value="Formato de fecha no válido", inline=False)
-            await ctx.send(embed=somethingbad, delete_after=10.0)
+            await send_error_message(self, ctx, "Formato de fecha no válido")
             return
         except OSError:
-            somethingbad = Embed(color=0xff2929)
-            somethingbad.add_field(
-                name="❌", value="Formato de fecha no válido", inline=False)
-            await ctx.send(embed=somethingbad, delete_after=10.0)
+            await send_error_message(self, ctx, "Formato de fecha no válido")
             return
+
         strdate = datetime.fromtimestamp(datets)
         if(datetime.today().timestamp() - datets < 0):
-            somethingbad = Embed(color=0xff2929)
-            somethingbad.add_field(
-                name="❌", value="Prohibido viajar en el tiempo", inline=False)
-            await ctx.send(embed=somethingbad, delete_after=10.0)
+            await send_error_message(self, ctx, "Prohibido viajar en el tiempo")
             return
 
         message = ""
@@ -549,22 +582,13 @@ class Logs(commands.Cog):
             message = await ctx.send(embed=embed)
             await message.add_reaction("❌")
         elif output == 0:
-            somethingbad = Embed(color=0xff2929)
-            somethingbad.add_field(
-                name="❌", value="Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, audio y video", inline=False)
-            await ctx.send(embed=somethingbad, delete_after=10.0)
+            await send_error_message(self, ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, audio y video")
             return
         elif output == -1:
-            somethingbad = Embed(color=0xff2929)
-            somethingbad.add_field(
-                name="❌", value="La cantidad de inmersión solo puede expresarse en números", inline=False)
-            await ctx.send(embed=somethingbad, delete_after=10.0)
+            await send_error_message(self, ctx, "La cantidad de inmersión solo puede expresarse en números")
             return
         elif output == -2:
-            somethingbad = Embed(color=0xff2929)
-            somethingbad.add_field(
-                name="❌", value="Cantidad de inmersión exagerada", inline=False)
-            await ctx.send(embed=somethingbad, delete_after=10.0)
+            await send_error_message(self, ctx, "Cantidad de inmersión exagerada")
             return
 
     @ commands.command()
@@ -607,20 +631,14 @@ class Logs(commands.Cog):
             await message.add_reaction("❌")
 
         elif output == 0:
-            somethingbad = Embed(color=0xff2929)
-            somethingbad.add_field(
-                name="❌", value="Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, audio y video", inline=False)
-            await ctx.send(embed=somethingbad, delete_after=10.0)
+            await send_error_message(self, ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, audio y video")
+            return
         elif output == -1:
-            somethingbad = Embed(color=0xff2929)
-            somethingbad.add_field(
-                name="❌", value="La cantidad de inmersión solo puede expresarse en números", inline=False)
-            await ctx.send(embed=somethingbad, delete_after=10.0)
+            await send_error_message(self, ctx, "La cantidad de inmersión solo puede expresarse en números")
+            return
         elif output == -2:
-            somethingbad = Embed(color=0xff2929)
-            somethingbad.add_field(
-                name="❌", value="Cantidad de inmersión exagerada", inline=False)
-            await ctx.send(embed=somethingbad, delete_after=10.0)
+            await send_error_message(self, ctx, "Cantidad de inmersión exagerada")
+            return
 
     @ commands.command(aliases=["dellog"])
     async def remlog(self, ctx, logid):
@@ -635,10 +653,7 @@ class Logs(commands.Cog):
                 name="✅", value="Log eliminado con éxito", inline=False)
             await ctx.send(embed=logdeleted, delete_after=10.0)
         else:
-            somethingbad = Embed(color=0xff2929)
-            somethingbad.add_field(
-                name="❌", value="Ese log no existe", inline=False)
-            await ctx.send(embed=somethingbad, delete_after=10.0)
+            await send_error_message(self, ctx, "Ese log no existe")
 
     @ commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
