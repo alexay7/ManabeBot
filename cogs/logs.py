@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from discord.ext import commands
 from discord import Embed
 import discord.errors
+from time import sleep
 
 #############################################################
 # Variables (Temporary)
@@ -629,6 +630,8 @@ class Logs(commands.Cog):
                 text=ctx.author.id)
             message = await ctx.send(embed=embed)
             await message.add_reaction("❌")
+            sleep(10)
+            await message.clear_reaction("❌")
 
         elif output == 0:
             await send_error_message(self, ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, audio y video")
