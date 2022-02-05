@@ -12,6 +12,7 @@ import discord.errors
 from time import sleep
 from .fun import intToMonth
 import matplotlib.pyplot as plt
+import csv
 
 #############################################################
 # Variables (Temporary)
@@ -134,7 +135,7 @@ async def get_user_logs(db, userid, timelapse, media=None):
             if result:
                 return result["logs"]
 
-    elif timelapse == "SEMANA":
+    elif timelapse.upper() == "SEMANA":
         start = int((datetime.today() - timedelta(weeks=1)).timestamp())
         end = int(datetime.today().timestamp())
         if media in MEDIA_TYPES:
@@ -190,7 +191,7 @@ async def get_user_logs(db, userid, timelapse, media=None):
                 for elem in result:
                     # Only one document should be found so no problem returning data
                     return elem["logs"]
-    elif timelapse == "MES":
+    elif timelapse.upper() == "MES":
         start = int(
             (datetime(datetime.today().year, datetime.today().month, 1)).timestamp())
         end = int(datetime.today().timestamp())
@@ -508,7 +509,7 @@ class Logs(commands.Cog):
 
     @ commands.command(aliases=["halloffame", "salondelafama", "salonfama", "mvp"])
     async def hallofame(self, ctx, timelapse=f"{datetime.today().year}", media="TOTAL"):
-        """Uso:: $hallofame <tiempo (week/month/all)/tipo de inmersión> <tipo de inmersión>"""
+        """Uso:: $hallofame <tiempo (semana/mes/total)/tipo de inmersión> <tipo de inmersión>"""
         output = ""
         if timelapse.upper() in MEDIA_TYPES:
             media = timelapse.upper()
@@ -552,7 +553,7 @@ class Logs(commands.Cog):
 
     @ commands.command(aliases=["ranking", "podio"])
     async def leaderboard(self, ctx, timelapse="MES", media="TOTAL"):
-        """Uso:: $leaderboard <tiempo (week/month/all)/tipo de inmersión> <tipo de inmersión>"""
+        """Uso:: $leaderboard <tiempo (semana/mes/total)/tipo de inmersión> <tipo de inmersión>"""
         leaderboard = []
         if timelapse.upper() in MEDIA_TYPES:
             media = timelapse
@@ -595,7 +596,7 @@ class Logs(commands.Cog):
 
     @ commands.command()
     async def logs(self, ctx, timelapse="TOTAL", user=None):
-        """Uso:: $logs <tiempo (week/month/all)/Id usuario> <Id usuario>"""
+        """Uso:: $logs <tiempo (semana/mes/total)/Id usuario> <Id usuario>"""
         if timelapse.isnumeric():
             user = int(timelapse)
             timelapse = "TOTAL"
@@ -628,11 +629,33 @@ class Logs(commands.Cog):
         else:
             await send_error_message(self, ctx, errmsg)
 
+    @commands.command()
+    async def export(self, ctx, timelapse="TOTAL"):
+        """Uso:: $export <tiempo (semana/mes/total)>"""
+        if(not await check_user(self.db, ctx.author.id)):
+            await send_error_message(self, ctx, "No tiene ningún log")
+            return
+
+        result = await get_user_logs(self.db, ctx.author.id, timelapse)
+        sorted_res = sorted(result, key=lambda x: x["timestamp"])
+        header = ["fecha", "medio", "cantidad", "descripcion", "puntos"]
+        data = []
+        for log in sorted_res:
+            date = datetime.fromtimestamp(log["timestamp"])
+            aux = [f"{date.day}/{date.month}/{date.year}", log["medio"],
+                   log["parametro"], log["descripcion"][:-1], log["puntos"]]
+            data.append(aux)
+        with open('temp/user.csv', 'w', encoding='UTF8', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(header)
+            writer.writerows(data)
+        await ctx.send(file=discord.File("temp/user.csv"))
+
     @ commands.command(aliases=["yo"])
     async def me(self, ctx, timelapse="MES", graph=1):
-        """Uso:: $me <tiempo (semana/mes/all)>"""
+        """Uso:: $me <tiempo (semana/mes/total)>"""
         if(not await check_user(self.db, ctx.author.id)):
-            await ctx.send("No tienes ningún log.")
+            await ctx.send("No tienes ningún log")
             return
         if timelapse.isnumeric():
             graph = int(timelapse)
