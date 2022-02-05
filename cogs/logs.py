@@ -645,7 +645,7 @@ class Logs(commands.Cog):
             aux = [f"{date.day}/{date.month}/{date.year}", log["medio"],
                    log["parametro"], log["descripcion"][:-1], log["puntos"]]
             data.append(aux)
-        with open('temp/user.csv', 'w', encoding='UTF8', newline='') as f:
+        with open('temp/user.csv', 'w', encoding='utf-8-sig', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(header)
             writer.writerows(data)

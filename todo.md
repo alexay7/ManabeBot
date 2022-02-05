@@ -8,7 +8,7 @@
 [] Mejorar (mucho) el comando de ayuda, diferentes categorías. (botones?)
 [] Comando de ayuda para las diferentes secciones del bot (kotoba/logs/otros)
 [x] Mover el token a .env
-[] Función exports que genere csv con todos los logs del usuario
+[x] Función exports que genere csv con todos los logs del usuario
 [x] Mejorar output función me
 [x] Ranking que en lugar de puntos tenga páginas
 [x] Hall of fame con las personas que más han logueado durante un mes/año
