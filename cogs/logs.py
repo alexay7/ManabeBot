@@ -679,21 +679,21 @@ class Logs(commands.Cog):
             output = "No se han encontrado logs"
         else:
             if points["LIBRO"] > 0:
-                output += f"**LIBROS:** {get_media_element(parameters['LIBRO'],'LIBRO')} -> {points['LIBRO']} pts\n"
+                output += f"**LIBROS:** {get_media_element(parameters['LIBRO'],'LIBRO')} -> {round(points['LIBRO'],2)} pts\n"
             if points["MANGA"] > 0:
-                output += f"**MANGA:** {get_media_element(parameters['MANGA'],'MANGA')} -> {points['MANGA']} pts\n"
+                output += f"**MANGA:** {get_media_element(parameters['MANGA'],'MANGA')} -> {round(points['MANGA'],2)} pts\n"
             if points["ANIME"] > 0:
-                output += f"**ANIME:** {get_media_element(parameters['ANIME'],'ANIME')} -> {points['ANIME']} pts\n"
+                output += f"**ANIME:** {get_media_element(parameters['ANIME'],'ANIME')} -> {round(points['ANIME'],2)} pts\n"
             if points["VN"] > 0:
-                output += f"**VN:** {get_media_element(parameters['VN'],'VN')} -> {points['VN']} pts\n"
+                output += f"**VN:** {get_media_element(parameters['VN'],'VN')} -> {round(points['VN'],2)} pts\n"
             if points["LECTURA"] > 0:
-                output += f"**LECTURA:** {get_media_element(parameters['LECTURA'],'LECTURA')} -> {points['LECTURA']} pts\n"
+                output += f"**LECTURA:** {get_media_element(parameters['LECTURA'],'LECTURA')} -> {round(points['LECTURA'],2)} pts\n"
             if points["TIEMPOLECTURA"] > 0:
-                output += f"**LECTURA:** {get_media_element(parameters['TIEMPOLECTURA'],'TIEMPOLECTURA')} -> {points['TIEMPOLECTURA']} pts\n"
+                output += f"**LECTURA:** {get_media_element(parameters['TIEMPOLECTURA'],'TIEMPOLECTURA')} -> {round(points['TIEMPOLECTURA'],2)} pts\n"
             if points["AUDIO"] > 0:
-                output += f"**AUDIO:** {get_media_element(parameters['AUDIO'],'AUDIO')} -> {points['AUDIO']} pts\n"
+                output += f"**AUDIO:** {get_media_element(parameters['AUDIO'],'AUDIO')} -> {round(points['AUDIO'],2)} pts\n"
             if points["VIDEO"] > 0:
-                output += f"**VIDEO:** {get_media_element(parameters['VIDEO'],'VIDEO')} -> {points['VIDEO']} pts\n"
+                output += f"**VIDEO:** {get_media_element(parameters['VIDEO'],'VIDEO')} -> {round(points['VIDEO'],2)} pts\n"
 
         normal = discord.Embed(
             title=f"Vista {get_ranking_title(timelapse.upper(),'ALL')}", color=0xeeff00)
