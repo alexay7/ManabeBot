@@ -629,7 +629,7 @@ class Logs(commands.Cog):
             await send_error_message(self, ctx, errmsg)
 
     @ commands.command(aliases=["yo"])
-    async def me(self, ctx, timelapse="MES", graph=0):
+    async def me(self, ctx, timelapse="MES", graph=1):
         """Uso:: $me <tiempo (semana/mes/all)>"""
         if(not await check_user(self.db, ctx.author.id)):
             await ctx.send("No tienes ningún log.")
@@ -701,6 +701,8 @@ class Logs(commands.Cog):
         normal.add_field(name="Puntos", value=round(
             points["TOTAL"], 2), inline=True)
         normal.add_field(name="Medios", value=output, inline=False)
+        normal.set_footer(
+            text="Escribe este comando seguido de '2' para ver la distribución de tu inmersión o seguido de '0' para ocultar los gráficos.")
         if graph == 2:
             piedoc = generate_graph(points, "piechart")
             normal.set_image(url="attachment://image.png")
