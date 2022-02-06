@@ -73,9 +73,7 @@ class Extra(commands.Cog):
             int(local_japan.hour) * 3600 + int(local_japan.minute) * 60))
 
         await ctx.send(
-            f"Hora Local: {localtime} del {local.day} de {intToMonth(local.month)} \
-                de {local.year}\nHora Japonesa: {japantime} del {local_japan.day} \
-                    de {intToMonth(local_japan.month)} de {local_japan.year}")
+            f"Hora Local: {localtime} del {local.day} de {intToMonth(local.month)} de {local.year}\nHora Japonesa: {japantime} del {local_japan.day} de {intToMonth(local_japan.month)} de {local_japan.year}")
 
     @commands.command(aliases=['canigotojapan', 'quieroirajapon'])
     async def japonabierto(self, ctx, countdown=False):
