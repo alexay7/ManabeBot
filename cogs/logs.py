@@ -26,7 +26,7 @@ with open("cogs/myguild.json") as json_file:
 MEDIA_TYPES = {"LIBRO", "MANGA", "VN", "ANIME",
                "LECTURA", "TIEMPOLECTURA", "AUDIO", "VIDEO"}
 
-TIMESTAMP_TYPES = {"TOTAL", "MES", "SEMANA"}
+TIMESTAMP_TYPES = {"TOTAL", "MES", "SEMANA", "HOY"}
 
 
 # FUNCTIONS FOR SENDING MESSAGES
@@ -136,163 +136,69 @@ async def get_user_logs(db, userid, timelapse, media=None):
             result = users.find_one({"userId": userid}, {"logs"})
             if result:
                 return result["logs"]
+        return ""
 
-    elif timelapse.upper() == "SEMANA":
-        start = int((datetime.today() - timedelta(weeks=1)).timestamp())
-        end = int(datetime.today().timestamp())
-        if media in MEDIA_TYPES:
-            # SEVEN-DAY LOGS OF A MEDIA TYPE FROM USER
-            result = users.aggregate([
-                {
-                    "$match": {
-                        "userId": userid
-                    }
-                }, {
-                    "$project": {
-                        "logs": {
-                            "$filter": {
-                                "input": "$logs",
-                                "as": "log",
-                                "cond": {"$and": [
-                                    {"$gte": ["$$log.timestamp", start]},
-                                    {"$lte": ["$$log.timestamp", end]},
-                                    {"$eq": ["$$log.medio", media]}
-                                ]}
-                            }
-                        }
-                    }
-                }
-            ])
-            if result:
-                for elem in result:
-                    # Only one document should be found so no problem returning data
-                    return elem["logs"]
-        else:
-            # SEVEN-DAY LOGS OF ALL MEDIA TYPES FROM USER
-            result = users.aggregate([
-                {
-                    "$match": {
-                        "userId": userid
-                    }
-                }, {
-                    "$project": {
-                        "logs": {
-                            "$filter": {
-                                "input": "$logs",
-                                "as": "log",
-                                "cond": {"$and": [
-                                    {"$gte": ["$$log.timestamp", start]},
-                                    {"$lte": ["$$log.timestamp", end]}
-                                ]}
-                            }
-                        }
-                    }
-                }
-            ])
-            if result:
-                for elem in result:
-                    # Only one document should be found so no problem returning data
-                    return elem["logs"]
+    if timelapse.upper() == "SEMANA":
+        start = int((datetime.today() - timedelta(weeks=1)
+                     ).replace(hour=0, minute=0, second=0).timestamp())
+        end = int(datetime.today().replace(
+            hour=23, minute=59, second=59).timestamp())
+        # SEVEN-DAY LOGS OF A MEDIA TYPE FROM USER
+
     elif timelapse.upper() == "MES":
         start = int(
-            (datetime(datetime.today().year, datetime.today().month, 1)).timestamp())
-        end = int(datetime.today().timestamp())
-        if media in MEDIA_TYPES:
-            # MONTHLY LOGS OF A MEDIA TYPE FROM USER
-            result = users.aggregate([
-                {
-                    "$match": {
-                        "userId": userid
-                    }
-                }, {
-                    "$project": {
-                        "logs": {
-                            "$filter": {
-                                "input": "$logs",
-                                "as": "log",
-                                "cond": {"$and": [
-                                    {"$gte": ["$$log.timestamp", start]},
-                                    {"$lte": ["$$log.timestamp", end]},
-                                    {"$eq": ["$$log.medio", media]}
-                                ]}
-                            }
-                        }
-                    }
-                }
-            ])
-            if result:
-                for elem in result:
-                    # Only one document should be found so no problem returning data
-                    return elem["logs"]
-        else:
-            # MONTHLY LOGS OF ALL MEDIA TYPES FROM USER
-            result = users.aggregate([
-                {
-                    "$match": {
-                        "userId": userid
-                    }
-                }, {
-                    "$project": {
-                        "logs": {
-                            "$filter": {
-                                "input": "$logs",
-                                "as": "log",
-                                "cond": {"$and": [
-                                    {"$gte": ["$$log.timestamp", start]},
-                                    {"$lte": ["$$log.timestamp", end]}
-                                ]}
-                            }
-                        }
-                    }
-                }
-            ])
-            if result:
-                for elem in result:
-                    # Only one document should be found so no problem returning data
-                    return elem["logs"]
+            (datetime(datetime.today().year, datetime.today().month, 1)).replace(hour=0, minute=0, second=0).timestamp())
+        end = int(datetime.today().replace(
+            hour=23, minute=59, second=59).timestamp())
+
+    elif timelapse.upper() == "HOY":
+        start = int(datetime.today().replace(
+            hour=0, minute=0, second=0).timestamp())
+        end = int(datetime.today().replace(
+            hour=23, minute=59, second=59).timestamp())
     else:
         split_time = timelapse.split("/")
         if len(split_time) == 1:
             # TOTAL VIEW
             start = int(
-                (datetime(int(split_time[0]), 1, 1)).timestamp())
+                (datetime(int(split_time[0]), 1, 1)).replace(hour=0, minute=0, second=0).timestamp())
             end = int(
-                (datetime(int(split_time[0]), 12, 31)).timestamp())
+                (datetime(int(split_time[0]), 12, 31)).replace(hour=23, minute=59, second=59).timestamp())
 
         else:
             # MONTHLY VIEW
             month = int(split_time[1])
             year = int(split_time[0])
             start = int(
-                (datetime(int(year), month, 1)).timestamp())
+                (datetime(int(year), month, 1)).replace(hour=0, minute=0, second=0).timestamp())
             if month+1 > 12:
                 month = 0
                 year += 1
             end = int(
-                (datetime(int(year), month+1, 1)-timedelta(days=1)).timestamp())
-        query = [{"$match": {"userId": userid}},
-                 {
-            "$project": {
-                "logs": {
-                    "$filter": {
-                        "input": "$logs",
-                        "as": "log",
-                        "cond": {"$and": [
-                                {"$gte": ["$$log.timestamp", start]},
-                                {"$lte": ["$$log.timestamp", end]}
-                        ]}
-                    }
+                (datetime(int(year), month+1, 1)-timedelta(days=1)).replace(hour=23, minute=59, second=59).timestamp())
+    query = [{"$match": {"userId": userid}},
+             {
+        "$project": {
+            "logs": {
+                "$filter": {
+                    "input": "$logs",
+                    "as": "log",
+                    "cond": {"$and": [
+                            {"$gte": ["$$log.timestamp", start]},
+                            {"$lte": ["$$log.timestamp", end]}
+                    ]}
                 }
             }
-        }]
-        if media in MEDIA_TYPES:
-            query[1]["$project"]["logs"]["$filter"]["cond"]["$and"].append(
-                {"$eq": ["$$log.medio", media]})
-        result = users.aggregate(query)
-        if result:
-            for elem in result:
-                # Only one document should be found so no problem returning data
-                return elem["logs"]
+        }
+    }]
+    if media in MEDIA_TYPES:
+        query[1]["$project"]["logs"]["$filter"]["cond"]["$and"].append(
+            {"$eq": ["$$log.medio", media]})
+    result = users.aggregate(query)
+    if result:
+        for elem in result:
+            # Only one document should be found so no problem returning data
+            return elem["logs"]
     return ""
 
 
