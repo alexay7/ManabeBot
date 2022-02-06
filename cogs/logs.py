@@ -388,11 +388,12 @@ def generate_graph(points, type, timelapse=None):
         labels = []
         values = []
         if timelapse.upper() == "SEMANA":
-            start = datetime.today()-timedelta(days=7)
+            start = datetime.today().replace(hour=0, minute=0, second=0)-timedelta(days=6)
             for x in range(0, 7):
                 auxdate = str(start+timedelta(days=x)
                               ).replace("-", "/").split(" ")[0]
                 labels.append(auxdate)
+                print(auxdate)
                 if auxdate in points:
                     values.append(points[auxdate])
                 else:
@@ -628,12 +629,18 @@ class Logs(commands.Cog):
                 output += f"**AUDIO:** {get_media_element(parameters['AUDIO'],'AUDIO')} -> {round(points['AUDIO'],2)} pts\n"
             if points["VIDEO"] > 0:
                 output += f"**VIDEO:** {get_media_element(parameters['VIDEO'],'VIDEO')} -> {round(points['VIDEO'],2)} pts\n"
+        ranking = await get_sorted_ranking(self.db, timelapse, "TOTAL")
+        for user in ranking:
+            if user["username"] == ctx.author.name:
+                position = ranking.index(user)
 
         normal = discord.Embed(
             title=f"Vista {get_ranking_title(timelapse.upper(),'ALL')}", color=0xeeff00)
         normal.add_field(name="Usuario", value=ctx.author.name, inline=True)
         normal.add_field(name="Puntos", value=round(
             points["TOTAL"], 2), inline=True)
+        normal.add_field(name="Posición ranking",
+                         value=f"{position+1}º", inline=True)
         normal.add_field(name="Medios", value=output, inline=False)
         normal.set_footer(
             text="Escribe este comando seguido de '2' para ver la distribución de tu inmersión o seguido de '0' para ocultar los gráficos.")
