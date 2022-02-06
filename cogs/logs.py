@@ -702,18 +702,35 @@ class Logs(commands.Cog):
         output = calc_points(newlog)
 
         if output > 0:
+            ranking = await get_sorted_ranking(self.db, "MES", "TOTAL")
+            for user in ranking:
+                if user["username"] == ctx.author.name:
+                    position = ranking.index(user)
             logid = await add_log(self.db, ctx.author.id, newlog)
+            ranking[position]["points"] += output
+
+            newranking = sorted(
+                ranking, key=lambda x: x["points"], reverse=True)
+
+            for user in newranking:
+                if user["username"] == ctx.author.name:
+                    newposition = newranking.index(user)
+                    current_points = user["points"]
 
             embed = Embed(title="Log registrado con éxito",
                           description=f"Log #{logid} || {strdate.strftime('%d/%m/%Y')}", color=0x24b14d)
             embed.add_field(
                 name="Usuario", value=ctx.author.name, inline=True)
             embed.add_field(name="Medio", value=medio.upper(), inline=True)
-            embed.add_field(name="Puntos", value=output, inline=True)
+            embed.add_field(
+                name="Puntos", value=f"{round(current_points,2)} (+{output})", inline=True)
             embed.add_field(name="Inmersado",
                             value=get_media_element(cantidad, medio.upper()), inline=True)
             embed.add_field(name="Inmersión",
                             value=message, inline=False)
+            if newposition < position:
+                embed.add_field(
+                    name="🎉 Has subido en el ranking del mes! 🎉", value=f"**{position+1}º** ---> **{newposition+1}º**", inline=False)
             embed.set_footer(
                 text=ctx.author.id)
             message = await ctx.send(embed=embed)
@@ -773,13 +790,15 @@ class Logs(commands.Cog):
             for user in newranking:
                 if user["username"] == ctx.author.name:
                     newposition = newranking.index(user)
+                    current_points = user["points"]
 
             embed = Embed(title="Log registrado con éxito",
                           description=f"Log #{logid} || {today.strftime('%d/%m/%Y')}", color=0x24b14d)
             embed.add_field(
                 name="Usuario", value=ctx.author.name, inline=True)
             embed.add_field(name="Medio", value=medio.upper(), inline=True)
-            embed.add_field(name="Puntos", value=output, inline=True)
+            embed.add_field(
+                name="Puntos", value=f"{round(current_points,2)} (+{output})", inline=True)
             embed.add_field(name="Inmersado",
                             value=get_media_element(cantidad, medio.upper()), inline=True)
             embed.add_field(name="Inmersión",
