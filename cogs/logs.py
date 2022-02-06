@@ -19,6 +19,8 @@ import csv
 with open("cogs/myguild.json") as json_file:
     data_dict = json.load(json_file)
     guild_id = data_dict["guild_id"]
+    join_quiz_channel_ids = [
+        data_dict["join_quiz_1_id"]]
 #############################################################
 
 MEDIA_TYPES = {"LIBRO", "MANGA", "VN", "ANIME",
@@ -740,8 +742,16 @@ class Logs(commands.Cog):
     @ commands.command(aliases=["backlog"])
     async def backfill(self, ctx, fecha, medio, cantidad, descripcion):
         """Uso:: $backfill <fecha (dd/mm/yyyy)> <tipo de inmersión> <cantidad inmersada>"""
+
+        # Check if the user has logs
         if(not await check_user(self.db, ctx.author.id)):
             await create_user(self.db, ctx.author.id, ctx.author.name)
+
+        # Verify the user is in the correct channel
+        if ctx.channel.id not in join_quiz_channel_ids:
+            await ctx.send(
+                "Este comando solo puede ser usado en <#796084920790679612>.")
+            return
 
         date = fecha.split("/")
         if(len(date) < 3):
@@ -805,8 +815,16 @@ class Logs(commands.Cog):
     @ commands.command()
     async def log(self, ctx, medio, cantidad, descripcion):
         """Uso:: $log <tipo de inmersión> <cantidad inmersada>"""
+
+        # Check if the user has logs
         if(not await check_user(self.db, ctx.author.id)):
             await create_user(self.db, ctx.author.id, ctx.author.name)
+
+        # Verify the user is in the correct channel
+        if ctx.channel.id not in join_quiz_channel_ids:
+            await ctx.send(
+                "Este comando solo puede ser usado en <#796084920790679612>.")
+            return
 
         message = ""
         for word in ctx.message.content.split(" ")[3:]:
@@ -856,9 +874,17 @@ class Logs(commands.Cog):
     @ commands.command(aliases=["dellog"])
     async def remlog(self, ctx, logid):
         """Uso:: $remlog <Id log a borrar>"""
+        # Verify the user has logs
         if(not await check_user(self.db, ctx.author.id)):
             await ctx.send("No tienes ningún log.")
             return
+
+        # Verify the user is in the correct channel
+        if ctx.channel.id not in join_quiz_channel_ids:
+            await ctx.send(
+                "Este comando solo puede ser usado en <#796084920790679612>.")
+            return
+
         result = await remove_log(self.db, ctx.author.id, logid)
         if(result == 1):
             logdeleted = Embed(color=0x24b14d)
