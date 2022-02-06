@@ -19,8 +19,7 @@ import csv
 with open("cogs/myguild.json") as json_file:
     data_dict = json.load(json_file)
     guild_id = data_dict["guild_id"]
-    join_quiz_channel_ids = [
-        data_dict["join_quiz_1_id"]]
+    join_quiz_channel_ids = data_dict["join_quiz_1_id"]
 #############################################################
 
 MEDIA_TYPES = {"LIBRO", "MANGA", "VN", "ANIME",
@@ -30,6 +29,12 @@ TIMESTAMP_TYPES = {"TOTAL", "MES", "SEMANA", "HOY"}
 
 
 # FUNCTIONS FOR SENDING MESSAGES
+
+async def send_error_message(self, ctx, content):
+    embed = Embed(color=0xff2929)
+    embed.add_field(
+        name="❌", value=content, inline=False)
+    await ctx.send(embed=embed, delete_after=10.0)
 
 
 async def send_message_with_buttons(self, ctx, content):
@@ -52,7 +57,7 @@ async def send_message_with_buttons(self, ctx, content):
                         try:
                             await message.remove_reaction(reaction, user)
                         except discord.errors.Forbidden:
-                            await ctx.send("‼️ Los mensajes con páginas no funcionan bien en DM!")
+                            await send_error_message(self, ctx, "‼️ Los mensajes con páginas no funcionan bien en DM!")
 
                     elif str(reaction.emoji) == "◀️" and cur_page > 1:
                         cur_page -= 1
@@ -60,29 +65,22 @@ async def send_message_with_buttons(self, ctx, content):
                         try:
                             await message.remove_reaction(reaction, user)
                         except discord.errors.Forbidden:
-                            await ctx.send("‼️ Los mensajes con páginas no funcionan bien en DM!")
+                            await send_error_message(self, ctx, "‼️ Los mensajes con páginas no funcionan bien en DM!")
 
                     else:
                         try:
                             await message.remove_reaction(reaction, user)
                         except discord.errors.Forbidden:
-                            await ctx.send("‼️ Los mensajes con páginas no funcionan bien en DM!")
+                            await send_error_message(self, ctx, "‼️ Los mensajes con páginas no funcionan bien en DM!")
                         # removes reactions if the user tries to go forward on the last page or
                         # backwards on the first page
             except asyncio.TimeoutError:
                 try:
                     await message.delete()
                 except discord.errors.Forbidden:
-                    await ctx.send("‼️ Los mensajes con páginas no funcionan bien en DM!")
+                    await send_error_message(self, ctx, "‼️ Los mensajes con páginas no funcionan bien en DM!")
                 break
                 # ending the loop if user doesn't react after x seconds
-
-
-async def send_error_message(self, ctx, content):
-    embed = Embed(color=0xff2929)
-    embed.add_field(
-        name="❌", value=content, inline=False)
-    await ctx.send(embed=embed, delete_after=10.0)
 
 # FUNCTIONS RELATED WITH LOGS
 
@@ -233,6 +231,24 @@ async def add_log(db, userid, log):
         {'$push': {"logs": log}}
     )
     return newid
+
+
+async def get_sorted_ranking(db, timelapse, media):
+    leaderboard = []
+    users = db.users.find({}, {"userId", "username"})
+    counter = 0
+    for user in users:
+        points, parameters = await get_user_data(
+            db, user["userId"], timelapse.upper(), media.upper())
+        leaderboard.append({
+            "username": user["username"],
+            "points": points["TOTAL"]})
+        if media.upper() in MEDIA_TYPES:
+            leaderboard[counter]["param"] = parameters[media.upper()]
+        counter += 1
+
+    return sorted(
+        leaderboard, key=lambda x: x["points"], reverse=True)
 
 # GENERAL FUNCTIONS
 
@@ -466,20 +482,7 @@ class Logs(commands.Cog):
         if timelapse.upper() in MEDIA_TYPES:
             media = timelapse
             timelapse = "MES"
-        users = self.db.users.find({}, {"userId", "username"})
-        counter = 0
-        for user in users:
-            points, parameters = await get_user_data(
-                self.db, user["userId"], timelapse.upper(), media.upper())
-            leaderboard.append({
-                "username": user["username"],
-                "points": points["TOTAL"]})
-            if media.upper() in MEDIA_TYPES:
-                leaderboard[counter]["param"] = parameters[media.upper()]
-            counter += 1
-
-        sortedlist = sorted(
-            leaderboard, key=lambda x: x["points"], reverse=True)
+        sortedlist = await get_sorted_ranking(self.db, timelapse, media)
         message = ""
         position = 1
         for user in sortedlist[0:10]:
@@ -563,7 +566,7 @@ class Logs(commands.Cog):
     async def me(self, ctx, timelapse="MES", graph=1):
         """Uso:: $me <tiempo (semana/mes/total)>"""
         if(not await check_user(self.db, ctx.author.id)):
-            await ctx.send("No tienes ningún log")
+            await send_error_message(self, ctx, "No tienes ningún log")
             return
         if timelapse.isnumeric():
             graph = int(timelapse)
@@ -748,7 +751,21 @@ class Logs(commands.Cog):
         output = calc_points(newlog)
 
         if output > 0:
+            ranking = await get_sorted_ranking(self.db, "MES", "TOTAL")
+            for user in ranking:
+                if user["username"] == ctx.author.name:
+                    position = ranking.index(user)
+
             logid = await add_log(self.db, ctx.author.id, newlog)
+
+            ranking[position]["points"] += output
+
+            newranking = sorted(
+                ranking, key=lambda x: x["points"], reverse=True)
+
+            for user in newranking:
+                if user["username"] == ctx.author.name:
+                    newposition = newranking.index(user)
 
             embed = Embed(title="Log registrado con éxito",
                           description=f"Log #{logid} || {today.strftime('%d/%m/%Y')}", color=0x24b14d)
@@ -760,6 +777,9 @@ class Logs(commands.Cog):
                             value=get_media_element(cantidad, medio.upper()), inline=True)
             embed.add_field(name="Inmersión",
                             value=message, inline=False)
+            if newposition < position:
+                embed.add_field(
+                    name="🎉 Has subido en el ranking del mes! 🎉", value=f"**{position+1}º** ---> **{newposition+1}º**", inline=False)
             embed.set_footer(
                 text=ctx.author.id)
             message = await ctx.send(embed=embed)
@@ -782,7 +802,7 @@ class Logs(commands.Cog):
         """Uso:: $remlog <Id log a borrar>"""
         # Verify the user has logs
         if(not await check_user(self.db, ctx.author.id)):
-            await ctx.send("No tienes ningún log.")
+            await send_error_message(self, ctx, "No tienes ningún log.")
             return
 
         # Verify the user is in the correct channel

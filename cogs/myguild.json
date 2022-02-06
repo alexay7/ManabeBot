@@ -75,7 +75,10 @@
         892868404132843560,
         892868429877485598
     ],
-    "join_quiz_1_id": 796084920790679612,
+    "join_quiz_1_id": [
+        796084920790679612,
+        751076716168085589
+    ],
     "mycommands": {
         "654352144664887297": "Lucha por el N5:\n`k!quiz n5 nodelay atl=8 15 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=1`",
         "892868169729986600": "Lucha por el N4:\n`k!quiz n4 nodelay atl=8 15 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=1`",
