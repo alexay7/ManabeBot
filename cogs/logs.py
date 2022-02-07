@@ -169,11 +169,11 @@ async def get_user_logs(db, userid, timelapse, media=None):
             year = int(split_time[0])
             start = int(
                 (datetime(int(year), month, 1)).replace(hour=0, minute=0, second=0).timestamp())
-            if month+1 > 12:
+            if month + 1 > 12:
                 month = 0
                 year += 1
             end = int(
-                (datetime(int(year), month+1, 1)-timedelta(days=1)).replace(hour=23, minute=59, second=59).timestamp())
+                (datetime(int(year), month + 1, 1) - timedelta(days=1)).replace(hour=23, minute=59, second=59).timestamp())
     query = [{"$match": {"userId": userid}},
              {
         "$project": {
@@ -287,6 +287,8 @@ def get_ranking_title(timelapse, media):
         tiempo = "mensual"
     elif timelapse == "SEMANA":
         tiempo = "semanal"
+    elif timelapse == "HOY":
+        tiempo = "diario"
     else:
         tiempo = "total"
     medio = ""
@@ -388,9 +390,9 @@ def generate_graph(points, type, timelapse=None):
         labels = []
         values = []
         if timelapse.upper() == "SEMANA":
-            start = datetime.today().replace(hour=0, minute=0, second=0)-timedelta(days=6)
+            start = datetime.today().replace(hour=0, minute=0, second=0) - timedelta(days=6)
             for x in range(0, 7):
-                auxdate = str(start+timedelta(days=x)
+                auxdate = str(start + timedelta(days=x)
                               ).replace("-", "/").split(" ")[0]
                 labels.append(auxdate)
                 print(auxdate)
@@ -458,7 +460,7 @@ class Logs(commands.Cog):
         else:
             # Iterate from 2020 until current year
             end = datetime.today().year
-            domain = range(2020, end+1)
+            domain = range(2020, end + 1)
             for x in domain:
                 winner = await get_best_user_of_range(self.db, media, f"{x}")
                 if(not(winner is None)):
