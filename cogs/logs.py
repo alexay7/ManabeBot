@@ -14,6 +14,8 @@ import matplotlib.animation as animation
 from .fun import intToMonth
 import matplotlib.pyplot as plt
 import csv
+import bar_chart_race as bcr
+import pandas as pd
 
 #############################################################
 # Variables (Temporary)
@@ -21,6 +23,7 @@ with open("cogs/myguild.json") as json_file:
     data_dict = json.load(json_file)
     guild_id = data_dict["guild_id"]
     join_quiz_channel_ids = data_dict["join_quiz_1_id"]
+    admin_id = data_dict["kaigen_user_id"]
 #############################################################
 
 MEDIA_TYPES = {"LIBRO", "MANGA", "VN", "ANIME",
@@ -217,6 +220,7 @@ async def get_best_user_of_range(db, media, timelapse):
     for user in users:
         userpoints, parameters = await get_user_data(db, user["userId"], timelapse, media)
         newuser = {
+            "id": user["userId"],
             "username": user["username"],
             "points": userpoints[media.upper()],
             "parameters": parameters[media.upper()]
@@ -422,13 +426,31 @@ def generate_graph(points, type, timelapse=None):
 
 async def get_logs_animation(db, day):
     # Esta función va a tener como parámetro el día, lo pasará a la función get logs y a partir de ahí generará el ranking pertinente
+    header = []
+    data = []
+    header.append("date")
+    users = db.users.find({}, {"username"})
+    for user in users:
+        header.append(user["username"])
     total = dict()
     date = datetime.today()
-    while day > 0:
-        total[str(day)] = await get_sorted_ranking(
-            db, f"{date.year}/{date.month}/{day}", "TOTAL")
-        day -= 1
-    return total
+    if int(day) > date.day:
+        day = date.day
+    counter = 1
+    while counter < int(day) + 1:
+        total[str(counter)] = await get_sorted_ranking(
+            db, f"{date.year}/{date.month}/{counter}", "TOTAL")
+        aux = [0 for i in range(len(header))]
+        aux[0] = f"{date.month}/{counter}/{date.year}"
+        for user in total[str(counter)]:
+            aux[header.index(user["username"])] = user["points"]
+        counter += 1
+        data.append(aux)
+    with open('temp/test.csv', 'w', encoding='utf-8-sig', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        writer.writerows(data)
+    return
 
 
 # BOT'S COMMANDS
@@ -866,17 +888,51 @@ class Logs(commands.Cog):
         else:
             await send_error_message(self, ctx, "Ese log no existe")
 
-    def update_animation(self, day, df, ax):
-        dff = df[str(day)]
-
     @commands.command()
-    async def testanimation(self, ctx):
-        fig, ax = plt.subplots(figsize=(15, 8))
-        result = await get_logs_animation(self.db, 7)
-        animator = animation.FuncAnimation(
-            fig, self.update_animation, frames=range(1, 7), fargs=(result, ax))
+    async def findemes(self, ctx, month=None, day=None):
+        if ctx.message.author.id != int(admin_id):
+            await send_error_message(self, ctx, "You have no power here!")
+        today = datetime.today()
+        if month is None:
+            month = today.month
+        if day is None:
+            day = (datetime(today.year, int(month) + 1, 1) - timedelta(days=1)
+                   ).day
+        message = await ctx.send("Procesando datos del mes, espere por favor...")
+        await get_logs_animation(self.db, day)
+        # Generate monthly ranking animation
+        df = pd.read_csv('temp/test.csv', index_col='date',
+                         parse_dates=['date'])
+        df.tail()
+        plt.rcParams['text.color'] = "#FFFFFF"
+        plt.rcParams['axes.labelcolor'] = "#FFFFFF"
+        plt.rcParams['xtick.color'] = "#FFFFFF"
+        plt.rcParams['ytick.color'] = "#FFFFFF"
+        plt.rcParams.update({'figure.autolayout': True})
+        fig, ax = plt.subplots(figsize=(10, 5), dpi=300)
+        ax.set_title(f"Ranking {intToMonth(int(month))} AJR")
+        ax.set_facecolor("#36393F")
+        fig.set_facecolor("#36393F")
+        ax.set_xlabel('Puntos', color="white")
+        ax.tick_params(axis='both', colors='white')
+        bcr.bar_chart_race(df, 'temp/video.mp4', figsize=(20, 12), fig=fig,
+                           period_fmt="%d/%m/%Y", period_length=1000, steps_per_period=50, bar_size=0.7, interpolate_period=True)
+        file = discord.File("temp/video.mp4", filename="ranking.mp4")
+        await message.delete()
+        mvp = await get_best_user_of_range(self.db, "TOTAL", "MES")
+        mvpuser = ctx.message.guild.get_member(mvp["id"])
 
-        print(animator.to_jshtml())
+        embed = Embed(
+            title=f"🎌 AJR mes de {intToMonth(int(month))} 🎌", color=0x1302ff, description="-----------------")
+        embed.add_field(name="Usuario del mes",
+                        value=mvp["username"], inline=False)
+        if mvpuser is not None:
+            embed.set_thumbnail(
+                url=mvpuser.avatar)
+        embed.add_field(name="Puntos conseguidos",
+                        value=mvp["points"], inline=False)
+        message = f"🎉 Felicidades a <@{mvp['id']}> por ser el usuario del mes de {intToMonth(int(month))}!"
+        await ctx.send(embed=embed, content=message, file=file)
 
     @ commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
