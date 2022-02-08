@@ -565,7 +565,7 @@ class Logs(commands.Cog):
             return
 
         result = await get_user_logs(self.db, user, timelapse)
-        sorted_res = sorted(result, key=lambda x: x["timestamp"])
+        sorted_res = sorted(result, key=lambda x: x["timestamp"], reverse=True)
 
         output = [""]
         overflow = 0
@@ -591,7 +591,7 @@ class Logs(commands.Cog):
             return
 
         result = await get_user_logs(self.db, ctx.author.id, timelapse)
-        sorted_res = sorted(result, key=lambda x: x["timestamp"])
+        sorted_res = sorted(result, key=lambda x: x["timestamp"], reverse=True)
         header = ["fecha", "medio", "cantidad", "descripcion", "puntos"]
         data = []
         for log in sorted_res:
