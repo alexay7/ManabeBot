@@ -936,8 +936,8 @@ class Logs(commands.Cog):
 
         if video:
             await ctx.send(embed=embed, content=message, file=file)
-        else
-        await ctx.send(embed=embed, content=message)
+        else:
+            await ctx.send(embed=embed, content=message)
 
     @ commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
