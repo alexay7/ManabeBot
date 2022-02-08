@@ -889,7 +889,7 @@ class Logs(commands.Cog):
             await send_error_message(self, ctx, "Ese log no existe")
 
     @commands.command()
-    async def findemes(self, ctx, month=None, day=None, video=False):
+    async def findemes(self, ctx, video=False, month=None, day=None):
         if ctx.message.author.id != int(admin_id):
             await send_error_message(self, ctx, "You have no power here!")
         today = datetime.today()
