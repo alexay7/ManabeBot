@@ -10,6 +10,7 @@ from discord.ext import commands
 from discord import Embed
 import discord.errors
 from time import sleep
+import matplotlib.animation as animation
 from .fun import intToMonth
 import matplotlib.pyplot as plt
 import csv
@@ -163,7 +164,7 @@ async def get_user_logs(db, userid, timelapse, media=None):
             end = int(
                 (datetime(int(split_time[0]), 12, 31)).replace(hour=23, minute=59, second=59).timestamp())
 
-        else:
+        elif len(split_time) == 2:
             # MONTHLY VIEW
             month = int(split_time[1])
             year = int(split_time[0])
@@ -174,6 +175,14 @@ async def get_user_logs(db, userid, timelapse, media=None):
                 year += 1
             end = int(
                 (datetime(int(year), month + 1, 1) - timedelta(days=1)).replace(hour=23, minute=59, second=59).timestamp())
+        else:
+            day = int(split_time[2])
+            month = int(split_time[1])
+            year = int(split_time[0])
+            start = int((datetime(int(year), month, 1)).replace(
+                hour=0, minute=0, second=0).timestamp())
+            end = int((datetime(int(year), month, day)).replace(
+                hour=23, minute=59, second=59).timestamp())
     query = [{"$match": {"userId": userid}},
              {
         "$project": {
@@ -257,7 +266,7 @@ def calc_points(log):
     # Mejor prevenir que curar
     if log["medio"] not in MEDIA_TYPES:
         return 0
-    if not log["parametro"].isnumeric():
+    if not log["parametro"].isdecimal():
         return -1
     if int(log["parametro"]) > 9999999:
         return -2
@@ -411,9 +420,18 @@ def generate_graph(points, type, timelapse=None):
             return file
 
 
+async def get_logs_animation(db, day):
+    # Esta función va a tener como parámetro el día, lo pasará a la función get logs y a partir de ahí generará el ranking pertinente
+    total = dict()
+    date = datetime.today()
+    while day > 0:
+        total[str(day)] = await get_sorted_ranking(
+            db, f"{date.year}/{date.month}/{day}", "TOTAL")
+        day -= 1
+    return total
+
+
 # BOT'S COMMANDS
-
-
 class Logs(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -741,7 +759,7 @@ class Logs(commands.Cog):
             await send_error_message(self, ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, audio y video")
             return
         elif output == -1:
-            await send_error_message(self, ctx, "La cantidad de inmersión solo puede expresarse en números")
+            await send_error_message(self, ctx, "La cantidad de inmersión solo puede expresarse en números enteros")
             return
         elif output == -2:
             await send_error_message(self, ctx, "Cantidad de inmersión exagerada")
@@ -819,7 +837,7 @@ class Logs(commands.Cog):
             await send_error_message(self, ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, audio y video")
             return
         elif output == -1:
-            await send_error_message(self, ctx, "La cantidad de inmersión solo puede expresarse en números")
+            await send_error_message(self, ctx, "La cantidad de inmersión solo puede expresarse en números enteros")
             return
         elif output == -2:
             await send_error_message(self, ctx, "Cantidad de inmersión exagerada")
@@ -847,6 +865,18 @@ class Logs(commands.Cog):
             await ctx.send(embed=logdeleted, delete_after=10.0)
         else:
             await send_error_message(self, ctx, "Ese log no existe")
+
+    def update_animation(self, day, df, ax):
+        dff = df[str(day)]
+
+    @commands.command()
+    async def testanimation(self, ctx):
+        fig, ax = plt.subplots(figsize=(15, 8))
+        result = await get_logs_animation(self.db, 7)
+        animator = animation.FuncAnimation(
+            fig, self.update_animation, frames=range(1, 7), fargs=(result, ax))
+
+        print(animator.to_jshtml())
 
     @ commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
