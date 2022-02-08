@@ -930,9 +930,11 @@ class Logs(commands.Cog):
             embed.set_thumbnail(
                 url=mvpuser.avatar)
         embed.add_field(name="Puntos conseguidos",
-                        value=mvp["points"], inline=False)
+                        value=round(mvp["points"], 2), inline=False)
         message = f"🎉 Felicidades a <@{mvp['id']}> por ser el usuario del mes de {intToMonth(int(month))}!"
-        await ctx.send(embed=embed, content=message, file=file)
+        # await ctx.send(embed=embed, content=message, file=file)
+        # File disabled temporarily due to slow server
+        await ctx.send(embed=embed, content=message)
 
     @ commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
