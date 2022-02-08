@@ -915,8 +915,9 @@ class Logs(commands.Cog):
         fig.set_facecolor("#36393F")
         ax.set_xlabel('Puntos', color="white")
         ax.tick_params(axis='both', colors='white')
-        bcr.bar_chart_race(df, 'temp/video.mp4', figsize=(20, 12), fig=fig,
-                           period_fmt="%d/%m/%Y", period_length=1000, steps_per_period=50, bar_size=0.7, interpolate_period=True)
+        # File disabled temporarily due to slow server
+        # bcr.bar_chart_race(df, 'temp/video.mp4', figsize=(20, 12), fig=fig,
+        #                    period_fmt="%d/%m/%Y", period_length=1000, steps_per_period=50, bar_size=0.7, interpolate_period=True)
         file = discord.File("temp/video.mp4", filename="ranking.mp4")
         await message.delete()
         mvp = await get_best_user_of_range(self.db, "TOTAL", "MES")
@@ -933,6 +934,7 @@ class Logs(commands.Cog):
                         value=round(mvp["points"], 2), inline=False)
         message = f"🎉 Felicidades a <@{mvp['id']}> por ser el usuario del mes de {intToMonth(int(month))}!"
         # await ctx.send(embed=embed, content=message, file=file)
+
         # File disabled temporarily due to slow server
         await ctx.send(embed=embed, content=message)
 
