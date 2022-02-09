@@ -101,7 +101,8 @@ async def create_user(db, userid, username):
     newuser = {
         'userId': userid,
         'username': username,
-        'logs': []
+        'logs': [],
+        'lastlog': -1
     }
     users.insert_one(newuser)
 
@@ -238,12 +239,13 @@ async def add_log(db, userid, log):
     users = db.users
     user = users.find_one({'userId': userid})
     newid = len(user["logs"])
-    log["id"] = newid
+    log["id"] = user["lastlog"] + 1
     users.update_one(
         {'userId': userid},
-        {'$push': {"logs": log}}
+        {'$push': {"logs": log},
+         '$set': {"lastlog": log["id"]}}
     )
-    return newid
+    return log["id"]
 
 
 async def get_sorted_ranking(db, timelapse, media):
