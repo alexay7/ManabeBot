@@ -869,6 +869,8 @@ class Logs(commands.Cog):
     async def remlog(self, ctx, logid):
         """Uso:: $remlog <Id log a borrar>"""
         # Verify the user has logs
+        await send_error_message(self, ctx, "Desactivado temporalmente porque alexay7 no sabe programar")
+        return
         if(not await check_user(self.db, ctx.author.id)):
             await send_error_message(self, ctx, "No tienes ningún log.")
             return
