@@ -31,8 +31,19 @@ class Sauce(commands.Cog):
     @commands.command()
     async def sauce(self, ctx, url=None):
         sauce = SauceNao(os.getenv("SAUCE_TOKEN"))
-        if len(ctx.message.attachments) > 0:
-            url = ctx.message.attachments[0].url
+
+        if(ctx.message.reference):
+            msg = await ctx.fetch_message(ctx.message.reference.message_id)
+            if len(msg.attachments) > 0:
+                url = msg.attachments[0].url
+            else:
+                url = msg.content.replace("$sauce ", "")
+        else:
+            if len(ctx.message.attachments) > 0:
+                url = ctx.message.attachments[0].url
+
+        if url is None:
+            await ctx.send("Nada encontrado")
 
         best = sauce.from_url(url)[0]
 
