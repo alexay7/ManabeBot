@@ -4,8 +4,9 @@ import json
 import discord
 import os
 from discord.ext import commands
-from saucenao_api import SauceNao
+from saucenao_api import SauceNao, errors
 from discord import Embed
+from .logs import send_error_message
 
 #############################################################
 # Variables (Temporary)
@@ -42,22 +43,26 @@ class Sauce(commands.Cog):
             if len(ctx.message.attachments) > 0:
                 url = ctx.message.attachments[0].url
 
-        if url is None:
-            await ctx.send("Nada encontrado")
-
-        best = sauce.from_url(url)[0]
+        try:
+            best = sauce.from_url(url)[0]
+        except errors.UnknownClientError:
+            return await send_error_message(self, ctx, "Nada encontrado")
 
         if best:
-            embed = Embed(color=0x5842ff)
+            if best.similarity > 60:
+                embed = Embed(color=0x5842ff, title="✅ He encontrado algo!")
+            else:
+                embed = Embed(
+                    color=0x5842ff, title="🤨 No estoy muy seguro, buscas esto?")
             embed.set_thumbnail(url=best.thumbnail)
-            embed.add_field(name="Parecido",
-                            value=best.similarity, inline=False)
             embed.add_field(name="Nombre", value=best.title, inline=True)
             embed.add_field(name="Autor", value=best.author, inline=True)
-            embed.add_field(name="Enlace", value=best.urls[0], inline=True)
-            await ctx.send(embed=embed)
+            embed.add_field(name="Parecido",
+                            value=best.similarity, inline=False)
+            embed.add_field(name="Enlace", value=best.urls[0], inline=False)
+            return await ctx.send(embed=embed)
         else:
-            await ctx.send("Nada encontrado")
+            return await send_error_message(self, ctx, "Nada encontrado")
 
 
 def setup(bot):
