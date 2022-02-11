@@ -38,7 +38,7 @@ class Sauce(commands.Cog):
             if len(msg.attachments) > 0:
                 url = msg.attachments[0].url
             else:
-                url = msg.content.replace("$sauce ", "")
+                url = msg.content.replace(".sauce ", "")
         else:
             if len(ctx.message.attachments) > 0:
                 url = ctx.message.attachments[0].url
