@@ -48,7 +48,7 @@ class Sauce(commands.Cog):
         except errors.UnknownClientError:
             return await send_error_message(self, ctx, "Nada encontrado")
 
-        if best:
+        if best and len(best.urls) > 0:
             if best.similarity > 60:
                 embed = Embed(color=0x5842ff, title="✅ He encontrado algo!")
             else:

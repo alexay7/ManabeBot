@@ -22,9 +22,10 @@ with open("cogs/myguild.json") as json_file:
 @djtbot.event
 async def on_message(message):
     """Activates when message detected"""
-    if(message.content[0] == "$"):
-        channel = message.channel
-        await channel.send("Ahora mis comandos empiezan por .", delete_after=10.0)
+    if(len(message.content) > 0):
+        if(message.content[0] == "$"):
+            channel = message.channel
+            await channel.send("Ahora mis comandos empiezan por .", delete_after=10.0)
     for cog in djtbot.cogs:
         cog = djtbot.get_cog(cog)
         try:
