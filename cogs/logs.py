@@ -2,6 +2,7 @@
 
 import asyncio
 from turtle import color
+from numpy import isin
 from pymongo import MongoClient, errors
 import os
 import json
@@ -551,22 +552,31 @@ class Logs(commands.Cog):
             return
 
     @ commands.command()
-    async def logs(self, ctx, timelapse="TOTAL", user=None):
+    async def logs(self, ctx, timelapse="TOTAL", user=None, media="TOTAL"):
         """Uso:: $logs <tiempo (semana/mes/total)/Id usuario> <Id usuario>"""
         if timelapse.isnumeric():
             user = int(timelapse)
             timelapse = "TOTAL"
 
-        errmsg = "No se han encontrado logs asociados a esa Id."
+        if timelapse.upper() in MEDIA_TYPES:
+            media = timelapse.upper()
+            timelapse = "TOTAL"
+
         if user is None:
-            errmsg = "No has registrado ningún log"
             user = ctx.author.id
+
+        if not isinstance(user, int):
+            if user.upper() in MEDIA_TYPES:
+                media = user.upper()
+                user = None
+
+        errmsg = "No se han encontrado logs asociados a esa Id."
 
         if(not await check_user(self.db, user)):
             await send_error_message(self, ctx, errmsg)
             return
 
-        result = await get_user_logs(self.db, user, timelapse)
+        result = await get_user_logs(self.db, user, timelapse, media)
         sorted_res = sorted(result, key=lambda x: x["timestamp"], reverse=True)
 
         output = [""]
