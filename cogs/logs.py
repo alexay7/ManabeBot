@@ -562,6 +562,10 @@ class Logs(commands.Cog):
             media = timelapse.upper()
             timelapse = "TOTAL"
 
+        if user.upper() in MEDIA_TYPES:
+            media = user.upper()
+            user = None
+
         if user is None:
             user = ctx.author.id
 
