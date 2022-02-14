@@ -956,10 +956,11 @@ class Logs(commands.Cog):
         try:
             channel = await self.bot.fetch_channel(payload.channel_id)
             message = await channel.fetch_message(payload.message_id)
+            reaction = discord.utils.get(message.reactions, emoji="❌")
         except discord.errors.NotFound:
             print("todo en orden")
 
-        if(len(message.embeds) > 0):
+        if(len(message.embeds) > 0 and reaction):
             if(message.embeds[0].title == "Log registrado con éxito" and int(message.embeds[0].footer.text) == payload.user_id):
                 # TODO: función para borrar logs dado el id del log y el id del usuario
                 await remove_log(self.db, payload.user_id, message.embeds[0].description.split(" ")[1].replace("#", ""))
