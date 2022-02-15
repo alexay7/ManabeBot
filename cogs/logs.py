@@ -565,7 +565,7 @@ class Logs(commands.Cog):
         if user is None:
             user = ctx.author.id
 
-        if not isinstance(user, int):
+        if not isinstance(user, int) and user:
             if user.upper() in MEDIA_TYPES:
                 media = user.upper()
                 user = None
