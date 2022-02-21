@@ -374,7 +374,7 @@ async def get_user_data(db, userid, timelapse, media="TOTAL"):
 
 async def check_user(db, userid):
     users = db.users
-    return users.find({'userId': userid}).count() > 0
+    return users.find({'userId': int(userid)}).count() > 0
 
 
 def generate_graph(points, type, timelapse=None):
@@ -562,11 +562,6 @@ class Logs(commands.Cog):
             media = timelapse.upper()
             timelapse = "TOTAL"
 
-        if user:
-            if user.upper() in MEDIA_TYPES:
-                media = user.upper()
-                user = None
-
         if user is None:
             user = ctx.author.id
 
@@ -577,11 +572,11 @@ class Logs(commands.Cog):
 
         errmsg = "No se han encontrado logs asociados a esa Id."
 
-        if(not await check_user(self.db, user)):
+        if(await check_user(self.db, user) is False):
             await send_error_message(self, ctx, errmsg)
             return
 
-        result = await get_user_logs(self.db, user, timelapse, media)
+        result = await get_user_logs(self.db, int(user), timelapse.upper(), media.upper())
         sorted_res = sorted(result, key=lambda x: x["timestamp"], reverse=True)
 
         output = [""]
