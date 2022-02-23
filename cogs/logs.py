@@ -411,7 +411,7 @@ def generate_graph(points, type, timelapse=None):
                 normaldate = start + timedelta(days=x)
                 auxdate = str(normaldate
                               ).replace("-", "/").split(" ")[0]
-                labels.append(auxdate + intToWeekday(normaldate.weekday))
+                labels.append(auxdate + intToWeekday(normaldate.weekday()))
                 if auxdate in points:
                     values.append(points[auxdate])
                 else:
