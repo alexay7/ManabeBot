@@ -5,7 +5,6 @@ import json
 import discord
 from dotenv import load_dotenv
 from discord.ext import commands
-from pymongo import MongoClient, errors
 
 load_dotenv()
 intents = discord.Intents.default()
@@ -45,19 +44,20 @@ def check_guild(ctx):
         return True
 
 
-def connect_db():
-    try:
-        client = MongoClient(os.getenv("MONGOURL"),
-                             serverSelectionTimeoutMS=10000)
-        client.server_info()
-        return client
-    except errors.ServerSelectionTimeoutError:
-        print("Ha ocurrido un error intentando conectar con la base de datos.")
-        exit(1)
+# def connect_db():
+#     try:
+#         client = MongoClient(os.getenv("MONGOURL"),
+#                              serverSelectionTimeoutMS=10000)
+#         client.server_info()
+#         return client
+#     except errors.ServerSelectionTimeoutError:
+#         print("Ha ocurrido un error intentando conectar con la base de datos.")
+#         exit(1)
 
 
 for filename in os.listdir('./cogs'):
     if filename.endswith('.py') and not filename.startswith("nocog"):
+        print(filename)
         djtbot.load_extension(f'cogs.{filename[:-3]}')
         print(f"Loaded cog {filename}")
 

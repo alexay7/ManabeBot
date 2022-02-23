@@ -1,4 +1,4 @@
-"""Cog responsible for sauce."""
+"""Cog responsible for tests."""
 
 import asyncio
 import json
@@ -6,11 +6,9 @@ from time import sleep, time
 import discord
 import os
 from discord.ext import commands
-from saucenao_api import SauceNao, errors
 from discord import Embed
-
-from main import connect_db
 from .logs import send_error_message
+from pymongo import MongoClient, errors
 
 #############################################################
 # Variables (Temporary)
@@ -81,8 +79,15 @@ class Test(commands.Cog):
     async def on_ready(self):
         self.myguild = self.bot.get_guild(guild_id)
         if(self.myguild):
-            self.db = connect_db().Migii
-            print("Obtenida colección de ejercicios de MongoDB")
+            try:
+                client = MongoClient(os.getenv("MONGOURL"),
+                                     serverSelectionTimeoutMS=10000)
+                client.server_info()
+                print("Obtenida colección de logs de MongoDB")
+                self.db = client.Migii
+            except errors.ServerSelectionTimeoutError:
+                print("Ha ocurrido un error intentando conectar con la base de datos.")
+                exit(1)
         # await self.private_admin_channel.send("Connected to db successfully")
 
     # @commands.Cog.listener()

@@ -12,13 +12,12 @@ from discord import Embed
 import discord.errors
 from time import sleep
 import matplotlib.animation as animation
-
-from main import connect_db
 from .fun import intToMonth, intToWeekday
 import matplotlib.pyplot as plt
 import csv
 import bar_chart_race as bcr
 import pandas as pd
+from pymongo import MongoClient, errors
 
 #############################################################
 # Variables (Temporary)
@@ -468,8 +467,15 @@ class Logs(commands.Cog):
     async def on_ready(self):
         self.myguild = self.bot.get_guild(guild_id)
         if(self.myguild):
-            print("Obtenida colección de logs de MongoDB")
-            self.db = connect_db().ajrlogs
+            try:
+                client = MongoClient(os.getenv("MONGOURL"),
+                                     serverSelectionTimeoutMS=10000)
+                client.server_info()
+                print("Obtenida colección de logs de MongoDB")
+                self.db = client.ajrlogs
+            except errors.ServerSelectionTimeoutError:
+                print("Ha ocurrido un error intentando conectar con la base de datos.")
+                exit(1)
 
         # await self.private_admin_channel.send("Connected to db successfully")
 
