@@ -155,6 +155,7 @@ class Test(commands.Cog):
             return await send_error_message(self, ctx, "Categorías admitidas: VOCABULARIO, GRAMATICA\nTipos admitidos: KANJI, CONTEXTO, PARAFRASES, USO, GRAMATICAFRASES, ORDENAR\nComandos especiales admitidos: RANDOM, HELP, STOP")
 
         points = 0
+        question_counter = 1
         for question in questions:
             qname, explain, timemax = question_params(question.get("type"))
             if(timed.lower() == "false"):
@@ -171,7 +172,8 @@ class Test(commands.Cog):
             answer = question.get("correct")
             # embed = discord.Embed(
             #     title="", color=0x00e1ff, description=qs)
-            embed = discord.Embed(color=0x00e1ff, title=qname)
+            embed = discord.Embed(color=0x00e1ff, title=qname, description="Pregunta " +
+                                  str(question_counter) + " de " + str(questionnum) + ".")
             embed.add_field(
                 name="Pregunta", value=qs, inline=True)
             embed.add_field(name="Posibles Respuestas",
