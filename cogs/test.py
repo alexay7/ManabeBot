@@ -92,23 +92,6 @@ class Test(commands.Cog):
                 exit(1)
         # await self.private_admin_channel.send("Connected to db successfully")
 
-    # @commands.Cog.listener()
-    # async def on_message(self,message):
-    #     if(message.autor==self.bot):
-    #         return
-
-    #     if(message.conte)
-
-    # @commands.command()
-    # async def stop(self, ctx):
-    #     try:
-    #         self.tasks[ctx.message.author.id].close()
-    #         embed = discord.Embed(
-    #             title="‼️ El test ha sido detenido.", color=0xffff00)
-    #         await ctx.send(embed=embed)
-    #     except KeyError:
-    #         await send_error_message(self, ctx, "No has iniciado ningún test.")
-
     @commands.command()
     async def test(self, ctx, param, questionnum=None, timed="false"):
         if ctx.message.author == self.bot:
@@ -221,6 +204,7 @@ class Test(commands.Cog):
                 await ctx.send(embed=incorrect)
                 # await onlyUserReaction(userans)
                 sleep(3)
+            question_counter += 1
 
         if(points == questionnum):
             emoji = "🏆"
