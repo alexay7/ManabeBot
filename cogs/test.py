@@ -208,15 +208,15 @@ class Test(commands.Cog):
 
         if(points == questionnum):
             emoji = "🏆"
-        elif(points > questionnum * 0.7):
+        elif(points > float(questionnum) * 0.7):
             emoji = "🎖️"
-        elif(points > questionnum * 0.5):
+        elif(points > float(questionnum) * 0.5):
             emoji = "😐"
         else:
             emoji = "⚠️"
         embed = discord.Embed(color=0x3344dd, title="Quiz terminado")
         embed.add_field(
-            name=" Preguntas acertadas: ", value=emoji + " " + str(points) + "/" + str(questionnum) + " (" + str(points * 100 / questionnum) + "%)", inline=True)
+            name=" Preguntas acertadas: ", value=emoji + " " + str(points) + "/" + str(questionnum) + " (" + str(round(int(points) * 100 / int(questionnum), 2)) + "%)", inline=True)
         output = await ctx.send(embed=embed)
 
 
