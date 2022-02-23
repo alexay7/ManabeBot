@@ -3,7 +3,7 @@
 import asyncio
 from turtle import color
 from numpy import isin
-from pymongo import MongoClient, errors
+
 import os
 import json
 from datetime import datetime, timedelta
@@ -12,6 +12,8 @@ from discord import Embed
 import discord.errors
 from time import sleep
 import matplotlib.animation as animation
+
+from main import connect_db
 from .fun import intToMonth, intToWeekday
 import matplotlib.pyplot as plt
 import csv
@@ -39,7 +41,7 @@ async def send_error_message(self, ctx, content):
     embed = Embed(color=0xff2929)
     embed.add_field(
         name="❌", value=content, inline=False)
-    await ctx.send(embed=embed, delete_after=5.0)
+    await ctx.send(embed=embed, delete_after=10.0)
 
 
 async def send_message_with_buttons(self, ctx, content):
@@ -466,15 +468,8 @@ class Logs(commands.Cog):
     async def on_ready(self):
         self.myguild = self.bot.get_guild(guild_id)
         if(self.myguild):
-            try:
-                client = MongoClient(os.getenv("MONGOURL"),
-                                     serverSelectionTimeoutMS=10000)
-                client.server_info()
-            except errors.ServerSelectionTimeoutError:
-                print("Ha ocurrido un error intentando conectar con la base de datos.")
-                exit(1)
-            print("Conexión con base de datos ha sido un éxito.")
-            self.db = client.ajrlogs
+            print("Obtenida colección de logs de MongoDB")
+            self.db = connect_db().ajrlogs
 
         # await self.private_admin_channel.send("Connected to db successfully")
 
@@ -803,7 +798,6 @@ class Logs(commands.Cog):
     @ commands.command()
     async def log(self, ctx, medio, cantidad, descripcion):
         """Uso:: $log <tipo de inmersión> <cantidad inmersada>"""
-
         # Check if the user has logs
         if(not await check_user(self.db, ctx.author.id)):
             await create_user(self.db, ctx.author.id, ctx.author.name)
