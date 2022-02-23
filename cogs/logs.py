@@ -39,7 +39,7 @@ async def send_error_message(self, ctx, content):
     embed = Embed(color=0xff2929)
     embed.add_field(
         name="❌", value=content, inline=False)
-    await ctx.send(embed=embed, delete_after=10.0)
+    await ctx.send(embed=embed, delete_after=5.0)
 
 
 async def send_message_with_buttons(self, ctx, content):
@@ -278,21 +278,21 @@ def calc_points(log):
     if int(log["parametro"]) > 9999999:
         return -2
     if log["medio"] == "LIBRO":
-        puntos = round(int(log["parametro"]), 1)
+        puntos = round(int(log["parametro"]), 2)
     elif log["medio"] == "MANGA":
-        puntos = round(int(log["parametro"]) / 5, 1)
+        puntos = round(int(log["parametro"]) / 5, 2)
     elif log["medio"] == "VN":
-        puntos = round(int(log["parametro"]) / 350, 1)
+        puntos = round(int(log["parametro"]) / 350, 2)
     elif log["medio"] == "ANIME":
-        puntos = round(int(log["parametro"]) * 95 / 10, 1)
+        puntos = round(int(log["parametro"]) * 95 / 10, 2)
     elif log["medio"] == "LECTURA":
-        puntos = round(int(log["parametro"]) / 350, 1)
+        puntos = round(int(log["parametro"]) / 350, 2)
     elif log["medio"] == "TIEMPOLECTURA":
-        puntos = round(int(log["parametro"]) * 45 / 100, 1)
+        puntos = round(int(log["parametro"]) * 45 / 100, 2)
     elif log["medio"] == "AUDIO":
-        puntos = round(int(log["parametro"]) * 45 / 100, 1)
+        puntos = round(int(log["parametro"]) * 45 / 100, 2)
     elif log["medio"] == "VIDEO":
-        puntos = round(int(log["parametro"]) * 45 / 100, 1)
+        puntos = round(int(log["parametro"]) * 45 / 100, 2)
     log["puntos"] = puntos
     return puntos
 
@@ -468,7 +468,7 @@ class Logs(commands.Cog):
         if(self.myguild):
             try:
                 client = MongoClient(os.getenv("MONGOURL"),
-                                     serverSelectionTimeoutMS=1000)
+                                     serverSelectionTimeoutMS=10000)
                 client.server_info()
             except errors.ServerSelectionTimeoutError:
                 print("Ha ocurrido un error intentando conectar con la base de datos.")

@@ -22,6 +22,22 @@ with open("cogs/myguild.json") as json_file:
 # BOT'S COMMANDS
 
 
+def checkanswer(reaction, answer):
+    return reaction == answer
+
+
+def emojiToInt(reaction):
+    if reaction == "1️⃣":
+        return 1
+    if reaction == "2️⃣":
+        return 2
+    if reaction == "3️⃣":
+        return 3
+    if reaction == "4️⃣":
+        return 4
+    return 0
+
+
 class Test(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -39,17 +55,70 @@ class Test(commands.Cog):
 
         if message.content.startswith('.test') and not self.busy:
             self.busy = True
-            questions = [
+            questions = [{
+                "_id": {
+                    "$oid": "6214f6ac43dc570f7b9e2c47"
+                },
+                "question": "酒を__醸す__蔵を建てる予定です。",
+                "answers": ["ひかす", "かもす", "かかす", "わかす"],
+                "correct": 2,
+                "category": "vocab",
+                "type": "kanji",
+                "template": 4
+            }, {
+                "_id": {
+                    "$oid": "6214f6ac43dc570f7b9e2c47"
+                },
+                "question": "酒を__醸す__蔵を建てる予定です。",
+                "answers": ["ひかす", "かもす", "かかす", "わかす"],
+                "correct": 2,
+                "category": "vocab",
+                "type": "kanji",
+                "template": 4
+            }, {
+                "_id": {
+                    "$oid": "6214f6ac43dc570f7b9e2c47"
+                },
+                "question": "酒を__醸す__蔵を建てる予定です。",
+                "answers": ["ひかす", "かもす", "かかす", "わかす"],
+                "correct": 2,
+                "category": "vocab",
+                "type": "kanji",
+                "template": 4
+            }
             ]
+
+            tipos = {"文字・語彙": [
+                {"name": "漢字読み (kanjis)",
+                 "desc": "_____の言葉の読み方として最も良いものを、１・２・３・４から一つ選びなさい。"},
+                "文脈規定 (contexto)",
+                "言い換え類義 (parafrases)",
+                "用法 (uso)"
+            ], "文法": [
+                "文法形式の判断 (gramática)",
+                "文の組み立て (ordenar)",
+                "文章の文法 (texto)"
+            ]}
+
             points = 0
             for question in questions:
                 qs = question.get("question") + "\n"
                 counter = 1
+                anwserArr = ""
                 for elem in question.get("answers"):
-                    qs += str(counter) + ") " + elem + "\n"
+                    anwserArr += str(counter) + ") " + elem + "\n"
                     counter += 1
                 answer = question.get("correct")
-                output = await message.channel.send(qs)
+                embed = discord.Embed(
+                    title="文字・語彙", description="\_\_\_\_\_の言葉の読み方として最も良いものを、１・２・３・４から一つ選びなさい。", color=0x00e1ff)
+                embed.set_author(name="N1 Quiz")
+                embed.add_field(
+                    name="Pregunta", value=qs, inline=True)
+                embed.add_field(name="Posibles Respuestas",
+                                value=anwserArr, inline=False)
+                embed.set_footer(
+                    text="Reacciona con la respuesta que creas más adecuada")
+                output = await message.channel.send(embed=embed)
                 await output.add_reaction("1️⃣")
                 await output.add_reaction("2️⃣")
                 await output.add_reaction("3️⃣")
@@ -64,27 +133,32 @@ class Test(commands.Cog):
                 except asyncio.TimeoutError:
                     return await message.channel.send('Mensaje de tardar', delete_after=3)
 
-                def checkanswer(reaction, answer):
-                    if reaction == "1️⃣" and answer == 1:
-                        return True
-                    if reaction == "2️⃣" and answer == 2:
-                        return True
-                    if reaction == "3️⃣" and answer == 3:
-                        return True
-                    if reaction == "4️⃣" and answer == 4:
-                        return True
-                    return False
-
-                if checkanswer(guess[0].emoji, answer):
-                    await message.channel.send('Mensaje de correcto', delete_after=3)
+                userans = emojiToInt(guess[0].emoji)
+                if checkanswer(userans, answer):
+                    correct = discord.Embed(
+                        title="✅ Respuesta Correcta: "+str(answer)+") " + question.get("answers")[answer-1]+".", color=0x24b14d)
+                    await message.channel.send(embed=correct)
                     points += 1
+                    # userans = await onlyUserReaction(userans)
                     sleep(3)
                 else:
-                    await message.channel.send('Mensaje de error', delete_after=3)
-                    sleep(3)
+                    incorrect = discord.Embed(
+                        title="❌ Respuesta Correcta: "+str(answer)+") " + question.get("answers")[answer-1]+".", color=0xff2929, description="Tu Respuesta: "+str(userans)+") " + question.get("answers")[userans-1]+".")
+                    await message.channel.send(embed=incorrect)
+                    # await onlyUserReaction(userans)
+                    sleep(5)
+
             await message.channel.send("Resultado final: " + str(points) + " respuestas correctas.")
             self.busy = False
 
 
 def setup(bot):
     bot.add_cog(Test(bot))
+
+# Ideas:
+# Comando para crear un test de una categoría (vocabulario/gramatica)
+# Comando para crear un test de un tipo (kanjis/uso/parafrases/...)
+# Argumento para los tests anteriores que defina el tiempo limite
+# Argumento para los tests anteriores que defina el numero de preguntas
+# Comando para crear un test que imite un examen del N1
+# Comando para salir de un test no finalizado
