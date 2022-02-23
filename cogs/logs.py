@@ -45,7 +45,7 @@ async def send_error_message(self, ctx, content):
 async def send_message_with_buttons(self, ctx, content):
     pages = len(content)
     cur_page = 1
-    message = await ctx.send(f"```{content[cur_page-1]}\nPág {cur_page} de {pages}```")
+    message = await ctx.send(f"```\n{content[cur_page-1]}\nPág {cur_page} de {pages}\n```")
     if(pages > 1):
         await message.add_reaction("◀️")
         await message.add_reaction("▶️")
@@ -411,7 +411,6 @@ def generate_graph(points, type, timelapse=None):
                 auxdate = str(start + timedelta(days=x)
                               ).replace("-", "/").split(" ")[0]
                 labels.append(auxdate)
-                print(auxdate)
                 if auxdate in points:
                     values.append(points[auxdate])
                 else:
@@ -662,7 +661,7 @@ class Logs(commands.Cog):
             if logdate in graphlogs:
                 graphlogs[logdate] += log["puntos"]
             else:
-                graphlogs[logdate] = 1
+                graphlogs[logdate] = log["puntos"]
 
         if points["TOTAL"] == 0:
             output = "No se han encontrado logs"
@@ -701,11 +700,11 @@ class Logs(commands.Cog):
         if graph == 2:
             piedoc = generate_graph(points, "piechart")
             normal.set_image(url="attachment://image.png")
-            await ctx.send(embed=normal, file=piedoc)
+            await ctx.send(embed=normal, file=piedoc, delete_after=30.0)
         elif graph == 1:
             bardoc = generate_graph(graphlogs, "bars", timelapse)
             normal.set_image(url="attachment://image.png")
-            await ctx.send(embed=normal, file=bardoc)
+            await ctx.send(embed=normal, file=bardoc, delete_after=30.0)
         else:
             await ctx.send(embed=normal)
 
