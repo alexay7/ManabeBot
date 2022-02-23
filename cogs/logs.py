@@ -40,7 +40,7 @@ async def send_error_message(self, ctx, content):
     embed = Embed(color=0xff2929)
     embed.add_field(
         name="❌", value=content, inline=False)
-    await ctx.send(embed=embed, delete_after=10.0)
+    await ctx.send(embed=embed, delete_after=15.0)
 
 
 async def send_message_with_buttons(self, ctx, content):

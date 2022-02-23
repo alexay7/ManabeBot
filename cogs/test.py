@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import random
 from time import sleep, time
 import discord
 import os
@@ -21,8 +22,9 @@ with open("cogs/myguild.json") as json_file:
 
 # BOT'S COMMANDS
 
-CATEGORIES = ["VOCAB", "GRAM"]
-TYPES = ["KANJI", "CONTEXTO", "PARAF", "USO", "GRAMFRASE", "ORDENAR"]
+CATEGORIES = ["VOCABULARIO", "GRAMATICA"]
+TYPES = ["KANJI", "CONTEXTO", "PARAFRASES",
+         "USO", "GRAMATICAFRASES", "ORDENAR"]
 
 
 def checkanswer(reaction, answer):
@@ -50,7 +52,7 @@ def question_params(question):
         name = "Contexto (文脈規定)"
         description = "_____に入れるのに最もよいものを、１・２・３・４から一つ選びなさい。"
         time = 20
-    if question == "paraf":
+    if question == "parafrases":
         name = "Parafraseo (言い換え類義)"
         description = "_____の言葉に意味が最も近ものを、１・２・３・４から一つ選びなさい。"
         time = 20
@@ -58,7 +60,7 @@ def question_params(question):
         name = "Uso de palabras (用法)"
         description = "次の言葉の使い方として最もよいものを、１・２・３・４から一つ選びなさい。"
         time = 30
-    if question == "gramfrase":
+    if question == "gramaticafrases":
         name = "Gramática (文法形式の判断)"
         description = "次の文の_____に入れるのに最もよいものを、１・２・３・４から一つ選びなさい。"
         time = 15
@@ -83,7 +85,7 @@ class Test(commands.Cog):
                 client = MongoClient(os.getenv("MONGOURL"),
                                      serverSelectionTimeoutMS=10000)
                 client.server_info()
-                print("Obtenida colección de logs de MongoDB")
+                print("Obtenida colección de ejercicios de MongoDB")
                 self.db = client.Migii
             except errors.ServerSelectionTimeoutError:
                 print("Ha ocurrido un error intentando conectar con la base de datos.")
@@ -97,49 +99,65 @@ class Test(commands.Cog):
 
     #     if(message.conte)
 
-    @commands.command()
-    async def stop(self, ctx):
-        try:
-            self.tasks[ctx.message.author.id].close()
-            embed = discord.Embed(
-                title="‼️ El test ha sido detenido.", color=0xffff00)
-            await ctx.send(embed=embed)
-        except KeyError:
-            await send_error_message(self, ctx, "No has iniciado ningún test.")
+    # @commands.command()
+    # async def stop(self, ctx):
+    #     try:
+    #         self.tasks[ctx.message.author.id].close()
+    #         embed = discord.Embed(
+    #             title="‼️ El test ha sido detenido.", color=0xffff00)
+    #         await ctx.send(embed=embed)
+    #     except KeyError:
+    #         await send_error_message(self, ctx, "No has iniciado ningún test.")
 
     @commands.command()
-    async def test(self, ctx, param, questionnum=5, timed=False):
+    async def test(self, ctx, param, questionnum=None, timed="false"):
         if ctx.message.author == self.bot:
             return
-
         if(param == "help"):
             embed = discord.Embed(color=0x00e1ff, title="Tipos de quiz",
                                   description="Uso: .test [tipo] [número de preguntas (def: 5)] [modo veloz (def: false)]")
             embed.add_field(
-                name="Vocabulario *[.test vocab]*", value="**Lectura de Kanjis** *[.test kanji]*: Debes seleccionar la respuesta con la lectura del kanji entre paréntesis.\n**Contexto** *[.test contexto]*: Debes llenar el hueco en la frase con la palabra más adecuada.\n**Parafrases** *[.test paraf]*: Debes seleccionar la palabra con el significado más parecido a la palabra entre paréntesis dentro de la frase.\n**Uso** *[.test uso]*: Debes seleccionar la frase donde la palabra indicada esté bien utilizada.", inline=False)
+                name="Vocabulario *[.test vocabulario]*", value="**Lectura de Kanjis** *[.test kanji]*: Debes seleccionar la respuesta con la lectura del kanji entre paréntesis.\n**Contexto** *[.test contexto]*: Debes llenar el hueco en la frase con la palabra más adecuada.\n**Parafrases** *[.test parafrases]*: Debes seleccionar la palabra con el significado más parecido a la palabra entre paréntesis dentro de la frase.\n**Uso** *[.test uso]*: Debes seleccionar la frase donde la palabra indicada esté bien utilizada.", inline=False)
             embed.add_field(
-                name="Gramática *[.test gram]*", value="**Gramática de frases** *[.test gramfrase]*: Debes seleccionar la forma gramatical más adecuada en el hueco de la frase.\n**Ordenar frases** *[.test ordenar]*: Debes seleccionar la parte de la frase que encaja en el hueco señalado con una estrella.", inline=False)
+                name="Gramática *[.test gramatica]*", value="**Gramática de frases** *[.test gramaticafrases]*: Debes seleccionar la forma gramatical más adecuada en el hueco de la frase.\n**Ordenar frases** *[.test ordenar]*: Debes seleccionar la parte de la frase que encaja en el hueco señalado con una estrella.", inline=False)
             embed.add_field(
                 name="Modo veloz", value="Activar este modo hará que tengas menos tiempo para responder a las preguntas. (def: 1 min)")
             embed.set_footer(
                 text="Puedes ver de nuevo esta información escribiendo [.test help]")
             return await ctx.send(embed=embed)
+        elif(param == "random"):
+            param = random.choice(TYPES).lower()
+        elif(param == "stop"):
+            try:
+                self.tasks[ctx.message.author.id].close()
+                embed = discord.Embed(
+                    title="‼️ El test ha sido detenido.", color=0xffff00)
+                return await ctx.send(embed=embed)
+            except KeyError:
+                return await send_error_message(self, ctx, "No has iniciado ningún test.")
+
+        if(questionnum):
+            if questionnum.lower() == "true":
+                questionnum = 5
+                timed = "true"
+        elif questionnum is None:
+            questionnum = 5
 
         exercises = self.db.exercises
         questions = []
         if param.upper() in CATEGORIES:
-            for elem in exercises.aggregate([{"$match": {"category": param.lower()}}, {"$sample": {"size": questionnum}}]):
+            for elem in exercises.aggregate([{"$match": {"category": param.lower()}}, {"$sample": {"size": int(questionnum)}}]):
                 questions.append(elem)
         elif param.upper() in TYPES:
-            for elem in exercises.aggregate([{"$match": {"type": param.lower()}}, {"$sample": {"size": questionnum}}]):
+            for elem in exercises.aggregate([{"$match": {"type": param.lower()}}, {"$sample": {"size": int(questionnum)}}]):
                 questions.append(elem)
         else:
-            return await send_error_message(self, ctx, "Los tipos de ejercicio admitidos son: GRAM, VOCAB para las categorías y KANJI, CONTEXTO, PARAF, USO y GRAMFRASE, ORDENAR para las subcategorías")
+            return await send_error_message(self, ctx, "Categorías admitidas: VOCABULARIO, GRAMATICA\nTipos admitidos: KANJI, CONTEXTO, PARAFRASES, USO, GRAMATICAFRASES, ORDENAR\nComandos especiales admitidos: RANDOM, HELP, STOP")
 
         points = 0
         for question in questions:
             qname, explain, timemax = question_params(question.get("type"))
-            if(not timed):
+            if(timed.lower() == "false"):
                 timemax = 60
             ""
             qs = question.get("question").replace("＿", " ＿ ").replace(
@@ -153,7 +171,7 @@ class Test(commands.Cog):
             answer = question.get("correct")
             # embed = discord.Embed(
             #     title="", color=0x00e1ff, description=qs)
-            embed = discord.Embed(color=0x00e1ff, title="(" + qname + ")")
+            embed = discord.Embed(color=0x00e1ff, title=qname)
             embed.add_field(
                 name="Pregunta", value=qs, inline=True)
             embed.add_field(name="Posibles Respuestas",
@@ -175,7 +193,6 @@ class Test(commands.Cog):
                     'reaction_add', timeout=timemax, check=check)
                 guess = await self.tasks[ctx.message.author.id]
             except asyncio.TimeoutError:
-                await ctx.send('Mensaje de tardar', delete_after=3)
                 timeout = True
             except RuntimeError:
                 return
@@ -185,7 +202,7 @@ class Test(commands.Cog):
 
             if timeout:
                 incorrect = discord.Embed(
-                    title="❌ Respuesta Correcta: " + str(answer) + ") " + question.get("answers")[answer - 1] + ".", color=0xff2929)
+                    title="⌛ Muy lento!", description="Respuesta Correcta: " + str(answer) + ") " + question.get("answers")[answer - 1] + ".", color=0xff2929)
                 await ctx.send(embed=incorrect)
                 # await onlyUserReaction(userans)
                 sleep(3)
