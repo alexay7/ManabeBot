@@ -407,16 +407,16 @@ def generate_graph(points, type, timelapse=None):
         values = []
         if timelapse.upper() == "SEMANA":
             start = datetime.today().replace(hour=0, minute=0, second=0) - timedelta(days=6)
-            weekday = datetime.today().weekday
             for x in range(0, 7):
-                auxdate = str(start + timedelta(days=x)
+                normaldate = start + timedelta(days=x)
+                auxdate = str(normaldate
                               ).replace("-", "/").split(" ")[0]
-                labels.append(auxdate + intToWeekday(weekday))
+                labels.append(auxdate + intToWeekday(normaldate.weekday))
                 if auxdate in points:
                     values.append(points[auxdate])
                 else:
                     values.append(0)
-            plt.rc('font', family='Noto Sans JP')
+            plt.rc('font', family='Noto Sans CJK JP')
             fig, ax = plt.subplots()
             ax.bar(labels, values, color='#24B14D')
             ax.set_ylabel('Puntos', color="white")
