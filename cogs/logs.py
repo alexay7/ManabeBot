@@ -12,7 +12,7 @@ from discord import Embed
 import discord.errors
 from time import sleep
 import matplotlib.animation as animation
-from .fun import intToMonth
+from .fun import intToMonth, intToWeekday
 import matplotlib.pyplot as plt
 import csv
 import bar_chart_race as bcr
@@ -407,14 +407,16 @@ def generate_graph(points, type, timelapse=None):
         values = []
         if timelapse.upper() == "SEMANA":
             start = datetime.today().replace(hour=0, minute=0, second=0) - timedelta(days=6)
+            weekday = datetime.today().weekday
             for x in range(0, 7):
                 auxdate = str(start + timedelta(days=x)
                               ).replace("-", "/").split(" ")[0]
-                labels.append(auxdate)
+                labels.append(auxdate + intToWeekday(weekday))
                 if auxdate in points:
                     values.append(points[auxdate])
                 else:
                     values.append(0)
+            plt.rc('font', family='Noto Sans JP')
             fig, ax = plt.subplots()
             ax.bar(labels, values, color='#24B14D')
             ax.set_ylabel('Puntos', color="white")

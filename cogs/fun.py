@@ -46,6 +46,22 @@ def intToMonth(number):
     return "Diciembre"
 
 
+def intToWeekday(number):
+    if number == 1:
+        return "火"
+    if number == 2:
+        return "水"
+    if number == 3:
+        return "木"
+    if number == 4:
+        return "金"
+    if number == 5:
+        return "土"
+    if number == 6:
+        return "日"
+    return "月"
+
+
 class Extra(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
