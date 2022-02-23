@@ -76,6 +76,11 @@ class Extra(commands.Cog):
                 message += word + " "
             await channel.send(message)
 
+    @commands.command()
+    async def kalise(self, ctx):
+        "Para veri, pesao"
+        await ctx.send("https://pbs.twimg.com/profile_images/446190654356324352/nFIIKVXx_400x400.jpeg")
+
     @commands.command(aliases=['tiempojapon', 'horajapon', 'japonhora', 'japontiempo'])
     async def japantime(self, ctx):
         "Muestra la hora actual y la de Japón."
