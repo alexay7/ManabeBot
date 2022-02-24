@@ -98,6 +98,13 @@ async def remove_log(db, userid, logid):
     return result.modified_count
 
 
+async def remove_last_log(db, userid):
+    users = db.users
+    result = users.update_one(
+        {"userId": userid}, {"$pop": {"logs": 1}})
+    return result.modified_count
+
+
 async def create_user(db, userid, username):
     users = db.users
     newuser = {
@@ -877,6 +884,28 @@ class Logs(commands.Cog):
         elif output == -2:
             await send_error_message(self, ctx, "Cantidad de inmersión exagerada")
             return
+
+    @ commands.command(aliases=["deshacer"])
+    async def undo(self, ctx):
+        """Uso:: $undo"""
+        # Verify the user has logs
+        if(not await check_user(self.db, ctx.author.id)):
+            await send_error_message(self, ctx, "No tienes ningún log.")
+            return
+
+        # Verify the user is in the correct channel
+        if ctx.channel.id not in join_quiz_channel_ids:
+            await ctx.send(
+                "Este comando solo puede ser usado en <#796084920790679612>.")
+            return
+        result = await remove_last_log(self.db, ctx.author.id)
+        if(result == 1):
+            logdeleted = Embed(color=0x24b14d)
+            logdeleted.add_field(
+                name="✅", value="Log eliminado con éxito", inline=False)
+            await ctx.send(embed=logdeleted, delete_after=10.0)
+        else:
+            await send_error_message(self, ctx, "Ese log no existe")
 
     @ commands.command(aliases=["dellog"])
     async def remlog(self, ctx, logid):
