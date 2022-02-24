@@ -142,10 +142,10 @@ class Test(commands.Cog):
         if not preset_questions:
             questions = []
             if param.upper() in CATEGORIES:
-                for elem in exercises.aggregate([{"$match": {"category": param.lower()}}, {"$sample": {"size": int(questionnum)}}]):
+                for elem in exercises.aggregate([{"$match": {"category": param.lower(), "level": "N1"}}, {"$sample": {"size": int(questionnum)}}]):
                     questions.append(elem)
             elif param.upper() in TYPES:
-                for elem in exercises.aggregate([{"$match": {"type": param.lower()}}, {"$sample": {"size": int(questionnum)}}]):
+                for elem in exercises.aggregate([{"$match": {"type": param.lower(), "level": "N1"}}, {"$sample": {"size": int(questionnum)}}]):
                     questions.append(elem)
         else:
             if len(questions) < questionnum:
