@@ -99,7 +99,7 @@ class Test(commands.Cog):
         users = self.db.users
         exercises = self.db.exercises
         preset_questions = False
-        if(param == "help"):
+        if(param.lower() == "help"):
             embed = discord.Embed(color=0x00e1ff, title="Tipos de quiz",
                                   description="Uso: .test [tipo] [número de preguntas (def: 5)] [modo veloz (def: false)]")
             embed.add_field(
@@ -111,9 +111,9 @@ class Test(commands.Cog):
             embed.set_footer(
                 text="Puedes ver de nuevo esta información escribiendo [.test help]")
             return await ctx.send(embed=embed)
-        elif(param == "random"):
+        elif(param.lower() == "random"):
             param = random.choice(TYPES).lower()
-        elif(param == "stop"):
+        elif(param.lower() == "stop"):
             try:
                 self.tasks[ctx.message.author.id].close()
                 embed = discord.Embed(
@@ -121,7 +121,7 @@ class Test(commands.Cog):
                 return await ctx.send(embed=embed)
             except KeyError:
                 return await send_error_message(self, ctx, "No has iniciado ningún test.")
-        elif(param == "retry"):
+        elif(param.lower() == "retry"):
             foundUser = users.find_one({"user_id": ctx.message.author.id})
             questions = []
             for elem in foundUser["questions_failed"]:
