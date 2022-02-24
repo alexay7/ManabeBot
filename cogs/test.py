@@ -124,11 +124,11 @@ class Test(commands.Cog):
         elif(param == "retry"):
             foundUser = users.find_one({"user_id": ctx.message.author.id})
             questions = []
-            print(foundUser)
             for elem in foundUser["questions_failed"]:
                 questions.append(exercises.find_one({"_id": elem}))
-                preset_questions = True
-            print(questions)
+            preset_questions = True
+            if(len(questions) == 0):
+                return await send_error_message(self, ctx, "No tienes preguntas falladas!")
 
         if(questionnum):
             if questionnum.lower() == "true":
@@ -147,6 +147,9 @@ class Test(commands.Cog):
             elif param.upper() in TYPES:
                 for elem in exercises.aggregate([{"$match": {"type": param.lower()}}, {"$sample": {"size": int(questionnum)}}]):
                     questions.append(elem)
+        else:
+            if len(questions) < questionnum:
+                questionnum = len(questions)
 
         points = 0
         question_counter = 1
@@ -207,10 +210,13 @@ class Test(commands.Cog):
                 user_data["questions_failed"].append(question.get("_id"))
                 await ctx.send(embed=incorrect)
                 users.update_one({"user_id": ctx.message.author.id}, {
-                                 "$addToSet": {"questions_failed": question.get["_id"]}})
+                                 "$addToSet": {"questions_failed": question.get("_id")}})
                 # await onlyUserReaction(userans)
                 sleep(3)
             elif checkanswer(userans, answer):
+                if(preset_questions):
+                    users.update_one({"user_id": ctx.message.author.id}, {
+                                     "$pull": {"questions_failed": question.get("id")}})
                 correct = discord.Embed(
                     title="✅ Respuesta Correcta: " + str(answer) + ") " + question.get("answers")[answer - 1] + ".", color=0x24b14d)
                 await ctx.send(embed=correct)
