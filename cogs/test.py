@@ -96,6 +96,9 @@ class Test(commands.Cog):
     async def test(self, ctx, param, questionnum=None, timed="false"):
         if ctx.message.author == self.bot:
             return
+        users = self.db.users
+        exercises = self.db.exercises
+        preset_questions = False
         if(param == "help"):
             embed = discord.Embed(color=0x00e1ff, title="Tipos de quiz",
                                   description="Uso: .test [tipo] [número de preguntas (def: 5)] [modo veloz (def: false)]")
@@ -118,6 +121,14 @@ class Test(commands.Cog):
                 return await ctx.send(embed=embed)
             except KeyError:
                 return await send_error_message(self, ctx, "No has iniciado ningún test.")
+        elif(param == "retry"):
+            foundUser = users.find_one({"user_id": ctx.message.author.id})
+            questions = []
+            print(foundUser)
+            for elem in foundUser["questions_failed"]:
+                questions.append(exercises.find_one({"_id": elem}))
+                preset_questions = True
+            print(questions)
 
         if(questionnum):
             if questionnum.lower() == "true":
@@ -125,20 +136,26 @@ class Test(commands.Cog):
                 timed = "true"
         elif questionnum is None:
             questionnum = 5
-
-        exercises = self.db.exercises
-        questions = []
-        if param.upper() in CATEGORIES:
-            for elem in exercises.aggregate([{"$match": {"category": param.lower()}}, {"$sample": {"size": int(questionnum)}}]):
-                questions.append(elem)
-        elif param.upper() in TYPES:
-            for elem in exercises.aggregate([{"$match": {"type": param.lower()}}, {"$sample": {"size": int(questionnum)}}]):
-                questions.append(elem)
         else:
-            return await send_error_message(self, ctx, "Categorías admitidas: VOCABULARIO, GRAMATICA\nTipos admitidos: KANJI, CONTEXTO, PARAFRASES, USO, GRAMATICAFRASES, ORDENAR\nComandos especiales admitidos: RANDOM, HELP, STOP")
+            return await send_error_message(self, ctx, "Categorías admitidas: VOCABULARIO, GRAMATICA\nTipos admitidos: KANJI, CONTEXTO, PARAFRASES, USO, GRAMATICAFRASES, ORDENAR\nComandos especiales admitidos: RANDOM, HELP, STOP, RETRY")
+
+        if not preset_questions:
+            questions = []
+            if param.upper() in CATEGORIES:
+                for elem in exercises.aggregate([{"$match": {"category": param.lower()}}, {"$sample": {"size": int(questionnum)}}]):
+                    questions.append(elem)
+            elif param.upper() in TYPES:
+                for elem in exercises.aggregate([{"$match": {"type": param.lower()}}, {"$sample": {"size": int(questionnum)}}]):
+                    questions.append(elem)
 
         points = 0
         question_counter = 1
+        user_data = {
+            "user_id": ctx.message.author.id,
+            "questions_failed": []
+        }
+        users.update({"user_id": ctx.message.author.id},
+                     user_data, upsert=True)
         for question in questions:
             qname, explain, timemax = question_params(question.get("type"))
             if(timed.lower() == "false"):
@@ -149,8 +166,7 @@ class Test(commands.Cog):
             counter = 1
             anwserArr = ""
             for elem in question.get("answers"):
-                anwserArr += str(counter) + ") " + \
-                    elem + "\n"
+                anwserArr += str(counter) + ") " + elem + "\n"
                 counter += 1
             answer = question.get("correct")
             # embed = discord.Embed(
@@ -188,7 +204,10 @@ class Test(commands.Cog):
             if timeout:
                 incorrect = discord.Embed(
                     title="⌛ Muy lento!", description="Respuesta Correcta: " + str(answer) + ") " + question.get("answers")[answer - 1] + ".", color=0xff2929)
+                user_data["questions_failed"].append(question.get("_id"))
                 await ctx.send(embed=incorrect)
+                users.update_one({"user_id": ctx.message.author.id}, {
+                                 "$addToSet": {"questions_failed": question.get["_id"]}})
                 # await onlyUserReaction(userans)
                 sleep(3)
             elif checkanswer(userans, answer):
@@ -201,9 +220,13 @@ class Test(commands.Cog):
             else:
                 incorrect = discord.Embed(
                     title="❌ Respuesta Correcta: " + str(answer) + ") " + question.get("answers")[answer - 1] + ".", color=0xff2929, description="Tu Respuesta: " + str(userans) + ") " + question.get("answers")[userans - 1] + ".")
+                user_data["questions_failed"].append(question.get("_id"))
                 await ctx.send(embed=incorrect)
+                users.update_one({"user_id": ctx.message.author.id}, {
+                    "$addToSet": {"questions_failed": question.get("_id")}})
                 # await onlyUserReaction(userans)
                 sleep(3)
+
             question_counter += 1
 
         if(points == questionnum):
