@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+from pydoc import describe
 import random
 from time import sleep, time
 import discord
@@ -23,8 +24,14 @@ with open("cogs/myguild.json") as json_file:
 # BOT'S COMMANDS
 
 CATEGORIES = ["VOCABULARIO", "GRAMATICA"]
-TYPES = ["KANJI", "CONTEXTO", "PARAFRASES",
-         "USO", "GRAMATICAFRASES", "ORDENAR"]
+TYPES = ["KANJI", "CONTEXTO", "PARAFRASES", "USO",
+         "GRAMATICAFRASES", "ORDENAR", "ORTOGRAFIA", "FORMACION"]
+LEVELS = {
+    "N5": {"TYPES": ["KANJI", "CONTEXTO", "PARAFRASES", "USO", "GRAMATICAFRASES", "ORDENAR"]},
+    "N4": {"TYPES": ["KANJI", "CONTEXTO", "PARAFRASES", "USO", "GRAMATICAFRASES", "ORDENAR", "ORTOGRAFIA"]},
+    "N3": {"TYPES": ["KANJI", "CONTEXTO", "PARAFRASES", "USO", "GRAMATICAFRASES", "ORDENAR", "ORTOGRAFIA"]},
+    "N2": {"TYPES": ["KANJI", "CONTEXTO", "PARAFRASES", "USO", "GRAMATICAFRASES", "ORDENAR", "ORTOGRAFIA", "FORMACION"]},
+    "N1": {"TYPES": ["KANJI", "CONTEXTO", "PARAFRASES", "USO", "GRAMATICAFRASES", "ORDENAR"]}}
 
 
 def checkanswer(reaction, answer):
@@ -48,26 +55,38 @@ def question_params(question):
         name = "Lectura de Kanjis (漢字読み)"
         description = "_____の言葉の読み方として最もよいものを、１・２・３・４から一つ選びなさい。"
         time = 10
-    if question == "contexto":
+    elif question == "contexto":
         name = "Contexto (文脈規定)"
         description = "_____に入れるのに最もよいものを、１・２・３・４から一つ選びなさい。"
         time = 20
-    if question == "parafrases":
+    elif question == "parafrases":
         name = "Parafraseo (言い換え類義)"
         description = "_____の言葉に意味が最も近ものを、１・２・３・４から一つ選びなさい。"
         time = 20
-    if question == "uso":
+    elif question == "uso":
         name = "Uso de palabras (用法)"
         description = "次の言葉の使い方として最もよいものを、１・２・３・４から一つ選びなさい。"
         time = 30
-    if question == "gramaticafrases":
+    elif question == "gramaticafrases":
         name = "Gramática (文法形式の判断)"
         description = "次の文の_____に入れるのに最もよいものを、１・２・３・４から一つ選びなさい。"
         time = 15
-    if question == "ordenar":
+    elif question == "ordenar":
         name = "Ordenar frases (文の組み立て)"
         description = "次の文の＿★＿に入れる最も良いものを、１・２・３・４から一つ選びなさい。"
         time = 40
+    elif question == "ortografia":
+        name = "Ortografía ()",
+        description = "問題＿＿＿の言葉を漢字で書くとき、最もよいものを１・２・３・４から一つ選びなさい。"
+        time = 30
+    elif question == "formacion":
+        name = "Formación de palabras ()"
+        description = "問題（　　　）に入れるのに最もよいものを、１・２・３・４から一つ選びなさい。"
+        time = 20
+    else:
+        name = "No implementado",
+        description = "no implementado"
+        time = 60
     return name, description, time
 
 
@@ -93,13 +112,14 @@ class Test(commands.Cog):
         # await self.private_admin_channel.send("Connected to db successfully")
 
     @commands.command()
-    async def test(self, ctx, param, questionnum=None, timed="false"):
+    async def test(self, ctx, level, param=None, questionnum=None, timed="false"):
         if ctx.message.author == self.bot:
             return
         users = self.db.users
         exercises = self.db.exercises
         preset_questions = False
-        if(param.lower() == "help"):
+        questions = []
+        if(level.lower() == "help"):
             embed = discord.Embed(color=0x00e1ff, title="Tipos de quiz",
                                   description="Uso: .test [tipo] [número de preguntas (def: 5)] [modo veloz (def: false)]")
             embed.add_field(
@@ -111,9 +131,11 @@ class Test(commands.Cog):
             embed.set_footer(
                 text="Puedes ver de nuevo esta información escribiendo [.test help]")
             return await ctx.send(embed=embed)
-        elif(param.lower() == "random"):
-            param = random.choice(TYPES).lower()
-        elif(param.lower() == "stop"):
+        elif(level.lower() == "random"):
+            return await send_error_message(self, ctx, "Tienes que concretar el nivel!")
+        elif(level.upper() in TYPES):
+            return await send_error_message(self, ctx, "Tienes que concretar el nivel!")
+        elif(level.lower() == "stop"):
             try:
                 self.tasks[ctx.message.author.id].close()
                 embed = discord.Embed(
@@ -121,35 +143,38 @@ class Test(commands.Cog):
                 return await ctx.send(embed=embed)
             except KeyError:
                 return await send_error_message(self, ctx, "No has iniciado ningún test.")
-        elif(param.lower() == "retry"):
+        elif(level.lower() == "retry"):
             foundUser = users.find_one({"user_id": ctx.message.author.id})
-            questions = []
             for elem in foundUser["questions_failed"]:
                 questions.append(exercises.find_one({"_id": elem}))
             preset_questions = True
+            questionnum = len(questions)
             if(len(questions) == 0):
                 return await send_error_message(self, ctx, "No tienes preguntas falladas!")
-
-        if(questionnum):
-            if questionnum.lower() == "true":
+        elif(level.upper() in LEVELS and param):
+            if(questionnum):
+                if questionnum.lower() == "true":
+                    questionnum = 5
+                    timed = "true"
+            else:
                 questionnum = 5
-                timed = "true"
-        elif questionnum is None:
-            questionnum = 5
-        else:
-            return await send_error_message(self, ctx, "Categorías admitidas: VOCABULARIO, GRAMATICA\nTipos admitidos: KANJI, CONTEXTO, PARAFRASES, USO, GRAMATICAFRASES, ORDENAR\nComandos especiales admitidos: RANDOM, HELP, STOP, RETRY")
 
-        if not preset_questions:
-            questions = []
-            if param.upper() in CATEGORIES:
-                for elem in exercises.aggregate([{"$match": {"category": param.lower(), "level": "N1"}}, {"$sample": {"size": int(questionnum)}}]):
+            if(param.lower() == "random"):
+                param = random.choice(LEVELS[level.upper()]["TYPES"]).lower()
+                for elem in exercises.aggregate([{"$match": {"type": param.lower(), "level": level.upper()}}, {"$sample": {"size": int(questionnum)}}]):
                     questions.append(elem)
-            elif param.upper() in TYPES:
-                for elem in exercises.aggregate([{"$match": {"type": param.lower(), "level": "N1"}}, {"$sample": {"size": int(questionnum)}}]):
+            elif(param.upper() in LEVELS[level.upper()]["TYPES"]):
+                for elem in exercises.aggregate([{"$match": {"type": param.lower(), "level": level.upper()}}, {"$sample": {"size": int(questionnum)}}]):
                     questions.append(elem)
-        else:
-            if len(questions) < questionnum:
-                questionnum = len(questions)
+            elif param.upper() in CATEGORIES:
+                for elem in exercises.aggregate([{"$match": {"category": param.lower(), "level": level.upper()}}, {"$sample": {"size": int(questionnum)}}]):
+                    questions.append(elem)
+            else:
+                categories = ""
+                for elem in LEVELS[level.upper()]["TYPES"]:
+                    categories += elem + ", "
+                categories = categories[:-2]
+                return await send_error_message(self, ctx, "Categorías admitidas para el " + level.upper() + ": " + categories + ".")
 
         points = 0
         question_counter = 1
@@ -206,7 +231,7 @@ class Test(commands.Cog):
 
             if timeout:
                 incorrect = discord.Embed(
-                    title="⌛ Muy lento!", description="Respuesta Correcta: " + str(answer) + ") " + question.get("answers")[answer - 1] + ".", color=0xff2929)
+                    title="⌛ Muy lento!", description=question.get("explanation"), color=0xff2929)
                 user_data["questions_failed"].append(question.get("_id"))
                 await ctx.send(embed=incorrect)
                 users.update_one({"user_id": ctx.message.author.id}, {
@@ -225,7 +250,7 @@ class Test(commands.Cog):
                 sleep(2)
             else:
                 incorrect = discord.Embed(
-                    title="❌ Respuesta Correcta: " + str(answer) + ") " + question.get("answers")[answer - 1] + ".", color=0xff2929, description="Tu Respuesta: " + str(userans) + ") " + question.get("answers")[userans - 1] + ".")
+                    title="❌ Tu Respuesta: " + str(userans) + ") " + question.get("answers")[userans - 1] + ".", color=0xff2929, description="Respuesta Correcta: " + str(answer) + ") " + question.get("answers")[answer - 1] + ".\n\n" + question.get("explanation"))
                 user_data["questions_failed"].append(question.get("_id"))
                 await ctx.send(embed=incorrect)
                 users.update_one({"user_id": ctx.message.author.id}, {
