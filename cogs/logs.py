@@ -181,6 +181,8 @@ async def get_user_logs(db, userid, timelapse, media=None):
             # MONTHLY VIEW
             month = int(split_time[1])
             year = int(split_time[0])
+            print(year)
+            print(month)
             start = int(
                 (datetime(int(year), month, 1)).replace(hour=0, minute=0, second=0).timestamp())
             if month + 1 > 12:
@@ -211,6 +213,7 @@ async def get_user_logs(db, userid, timelapse, media=None):
             }
         }
     }]
+    print(query)
     if media in MEDIA_TYPES:
         query[1]["$project"]["logs"]["$filter"]["cond"]["$and"].append(
             {"$eq": ["$$log.medio", media]})
@@ -446,18 +449,22 @@ async def get_logs_animation(db, day):
         header.append(user["username"])
     total = dict()
     date = datetime.today()
-    if int(day) > date.day:
-        day = date.day
+    # if int(day) > date.day:
+    #     day = date.day
     counter = 1
+    day = 28
+    print("DIAAAA")
+    print(day)
     while counter < int(day) + 1:
         total[str(counter)] = await get_sorted_ranking(
-            db, f"{date.year}/{date.month}/{counter}", "TOTAL")
+            db, f"{date.year}/2/{counter}", "TOTAL")
         aux = [0 for i in range(len(header))]
-        aux[0] = f"{date.month}/{counter}/{date.year}"
+        aux[0] = f"2/{counter}/{date.year}"
         for user in total[str(counter)]:
             aux[header.index(user["username"])] = user["points"]
         counter += 1
         data.append(aux)
+    print(data)
     with open('temp/test.csv', 'w', encoding='utf-8-sig', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(header)
@@ -931,9 +938,10 @@ class Logs(commands.Cog):
             await send_error_message(self, ctx, "Ese log no existe")
 
     @commands.command()
-    async def findemes(self, ctx, video=False, month=None, day=None):
+    async def findemes(self, ctx, month=None, day=None):
+        video = True
         if ctx.message.author.id != int(admin_id):
-            await send_error_message(self, ctx, "You have no power here!")
+            return await send_error_message(self, ctx, "Vuelve a hacer eso y te mato")
         today = datetime.today()
         if month is None:
             month = today.month
@@ -941,11 +949,12 @@ class Logs(commands.Cog):
             day = (datetime(today.year, int(month) + 1, 1) - timedelta(days=1)
                    ).day
         message = await ctx.send("Procesando datos del mes, espere por favor...")
-        await get_logs_animation(self.db, day)
+        await get_logs_animation(self.db, 28)
         # Generate monthly ranking animation
         df = pd.read_csv('temp/test.csv', index_col='date',
                          parse_dates=['date'])
         df.tail()
+        plt.rc('font', family='Noto Sans CJK JP')
         plt.rcParams['text.color'] = "#FFFFFF"
         plt.rcParams['axes.labelcolor'] = "#FFFFFF"
         plt.rcParams['xtick.color'] = "#FFFFFF"
@@ -959,10 +968,10 @@ class Logs(commands.Cog):
         ax.tick_params(axis='both', colors='white')
         if video:
             bcr.bar_chart_race(df, 'temp/video.mp4', figsize=(20, 12), fig=fig,
-                               period_fmt="%d/%m/%Y", period_length=1000, steps_per_period=50, bar_size=0.7, interpolate_period=True)
+                               period_fmt="%d/%m/%Y", period_length=2000, steps_per_period=75, bar_size=0.7, interpolate_period=True)
         file = discord.File("temp/video.mp4", filename="ranking.mp4")
         await message.delete()
-        mvp = await get_best_user_of_range(self.db, "TOTAL", "MES")
+        mvp = await get_best_user_of_range(self.db, "TOTAL", f"{today.year}/{month}")
         mvpuser = ctx.message.guild.get_member(mvp["id"])
 
         embed = Embed(
@@ -975,7 +984,7 @@ class Logs(commands.Cog):
         embed.add_field(name="Puntos conseguidos",
                         value=round(mvp["points"], 2), inline=False)
         message = f"🎉 Felicidades a <@{mvp['id']}> por ser el usuario del mes de {intToMonth(int(month))}!"
-
+        video = True
         if video:
             await ctx.send(embed=embed, content=message, file=file)
         else:
