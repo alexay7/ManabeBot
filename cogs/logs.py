@@ -717,11 +717,11 @@ class Logs(commands.Cog):
         if graph == 2:
             piedoc = generate_graph(points, "piechart")
             normal.set_image(url="attachment://image.png")
-            await ctx.send(embed=normal, file=piedoc, delete_after=30.0)
+            await ctx.send(embed=normal, file=piedoc)
         elif graph == 1:
             bardoc = generate_graph(graphlogs, "bars", timelapse)
             normal.set_image(url="attachment://image.png")
-            await ctx.send(embed=normal, file=bardoc, delete_after=30.0)
+            await ctx.send(embed=normal, file=bardoc)
         else:
             await ctx.send(embed=normal)
 
