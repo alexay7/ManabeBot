@@ -181,8 +181,10 @@ class Test(commands.Cog):
         user_data = {
             "user_id": ctx.message.author.id
         }
-        users.update({"user_id": ctx.message.author.id},
-                     user_data, upsert=True)
+        try:
+            users.insert(user_data)
+        except:
+            print("Ya existe")
         for question in questions:
             qname, explain, timemax = question_params(question.get("type"))
             if(timed.lower() == "false"):
