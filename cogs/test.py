@@ -179,8 +179,7 @@ class Test(commands.Cog):
         points = 0
         question_counter = 1
         user_data = {
-            "user_id": ctx.message.author.id,
-            "questions_failed": []
+            "user_id": ctx.message.author.id
         }
         users.update({"user_id": ctx.message.author.id},
                      user_data, upsert=True)
