@@ -8,7 +8,7 @@
     "receivepetitionsid": 934452089009078282,
     "rank_structure": {
         "JLPT N5 Reading Quiz": [
-            15,
+            10,
             8001,
             40,
             [
@@ -18,7 +18,7 @@
             0
         ],
         "JLPT N4 Reading Quiz": [
-            15,
+            10,
             8001,
             40,
             [
@@ -28,7 +28,7 @@
             0
         ],
         "JLPT N3 Reading Quiz": [
-            15,
+            10,
             8001,
             40,
             [
@@ -38,7 +38,7 @@
             0
         ],
         "JLPT N2 Reading Quiz": [
-            20,
+            10,
             8001,
             40,
             [
@@ -48,13 +48,13 @@
             0
         ],
         "JLPT N1 Reading Quiz": [
-            20,
+            10,
             8001,
             40,
             [
                 "Noto Sans CJK"
             ],
-            892868429877485598,
+            949051810797203498,
             0
         ]
     },
@@ -73,19 +73,19 @@
         892868325724524594,
         892868371396296724,
         892868404132843560,
-        892868429877485598
+        949051810797203498
     ],
     "join_quiz_1_id": [
         796084920790679612,
         751076716168085589
     ],
     "mycommands": {
-        "654352144664887297": "Lucha por el N5:\n`k!quiz n5 nodelay atl=8 15 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=1`",
-        "892868169729986600": "Lucha por el N4:\n`k!quiz n4 nodelay atl=8 15 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=1`",
-        "892868325724524594": "Lucha por el N3:\n`k!quiz n3 nodelay atl=8 15 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=1`",
-        "892868371396296724": "Lucha por el N2:\n`k!quiz n2 nodelay atl=8 20 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=1`",
-        "892868404132843560": "Lucha por el N1:\n`k!quiz n1 nodelay atl=8 20 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=1`",
-        "892868429877485598": ":\n`Nivel mas alto`"
+        "654352144664887297": "Lucha por el N5:\n`k!quiz n5 nodelay atl=8 10 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=1`",
+        "892868169729986600": "Lucha por el N4:\n`k!quiz n4 nodelay atl=8 10 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=1`",
+        "892868325724524594": "Lucha por el N3:\n`k!quiz n3 nodelay atl=8 10 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=1`",
+        "892868371396296724": "Lucha por el N2:\n`k!quiz n2 nodelay atl=8 10 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=1`",
+        "892868404132843560": "Lucha por el N1:\n`k!quiz n1 nodelay atl=8 10 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=1`",
+        "949051810797203498": ":\n`Nivel mas alto`"
     },
     "kaigen_user_id": 615896601554190346
 }
