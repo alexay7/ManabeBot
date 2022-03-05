@@ -179,11 +179,12 @@ class Test(commands.Cog):
         points = 0
         question_counter = 1
         user_data = {
-            "user_id": ctx.message.author.id,
-            "questions_failed": []
+            "user_id": ctx.message.author.id
         }
-        users.update({"user_id": ctx.message.author.id},
-                     user_data, upsert=True)
+        try:
+            users.insert(user_data)
+        except:
+            print("Ya existe")
         for question in questions:
             qname, explain, timemax = question_params(question.get("type"))
             if(timed.lower() == "false"):
@@ -232,7 +233,6 @@ class Test(commands.Cog):
             if timeout:
                 incorrect = discord.Embed(
                     title="⌛ Muy lento!", description=question.get("explanation"), color=0xff2929)
-                user_data["questions_failed"].append(question.get("_id"))
                 await ctx.send(embed=incorrect)
                 users.update_one({"user_id": ctx.message.author.id}, {
                                  "$addToSet": {"questions_failed": question.get("_id")}})
@@ -251,7 +251,6 @@ class Test(commands.Cog):
             else:
                 incorrect = discord.Embed(
                     title="❌ Tu Respuesta: " + str(userans) + ") " + question.get("answers")[userans - 1] + ".", color=0xff2929, description="Respuesta Correcta: " + str(answer) + ") " + question.get("answers")[answer - 1] + ".\n\n" + question.get("explanation"))
-                user_data["questions_failed"].append(question.get("_id"))
                 await ctx.send(embed=incorrect)
                 users.update_one({"user_id": ctx.message.author.id}, {
                     "$addToSet": {"questions_failed": question.get("_id")}})
