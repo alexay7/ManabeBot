@@ -26,6 +26,7 @@ with open("cogs/myguild.json") as json_file:
     guild_id = data_dict["guild_id"]
     join_quiz_channel_ids = data_dict["join_quiz_1_id"]
     admin_id = data_dict["kaigen_user_id"]
+    mvp_role = data_dict["mvp_role"]
 #############################################################
 
 MEDIA_TYPES = {"LIBRO", "MANGA", "VN", "ANIME",
@@ -940,8 +941,7 @@ class Logs(commands.Cog):
             await send_error_message(self, ctx, "Ese log no existe")
 
     @commands.command()
-    async def findemes(self, ctx, month=None, day=None):
-        video = True
+    async def findemes(self, ctx, video=False, month=None, day=None):
         if ctx.message.author.id != int(admin_id):
             return await send_error_message(self, ctx, "Vuelve a hacer eso y te mato")
         today = datetime.today()
@@ -951,7 +951,7 @@ class Logs(commands.Cog):
             day = (datetime(today.year, int(month) + 1, 1) - timedelta(days=1)
                    ).day
         message = await ctx.send("Procesando datos del mes, espere por favor...")
-        await get_logs_animation(self.db, 28)
+        await get_logs_animation(self.db, day)
         # Generate monthly ranking animation
         df = pd.read_csv('temp/test.csv', index_col='date',
                          parse_dates=['date'])
@@ -971,10 +971,15 @@ class Logs(commands.Cog):
         if video:
             bcr.bar_chart_race(df, 'temp/video.mp4', figsize=(20, 12), fig=fig,
                                period_fmt="%d/%m/%Y", period_length=2000, steps_per_period=75, bar_size=0.7, interpolate_period=True)
-        file = discord.File("temp/video.mp4", filename="ranking.mp4")
+            file = discord.File("temp/video.mp4", filename="ranking.mp4")
         await message.delete()
         mvp = await get_best_user_of_range(self.db, "TOTAL", f"{today.year}/{month}")
+        newrole = self.myguild.get_role(mvp_role)
+        for user in ctx.guild.members:
+            if newrole in user.roles:
+                await user.remove_roles(newrole)
         mvpuser = ctx.message.guild.get_member(mvp["id"])
+        await mvpuser.add_roles(newrole)
 
         embed = Embed(
             title=f"🎌 AJR mes de {intToMonth(int(month))} 🎌", color=0x1302ff, description="-----------------")
@@ -986,7 +991,6 @@ class Logs(commands.Cog):
         embed.add_field(name="Puntos conseguidos",
                         value=round(mvp["points"], 2), inline=False)
         message = f"🎉 Felicidades a <@{mvp['id']}> por ser el usuario del mes de {intToMonth(int(month))}!"
-        video = True
         if video:
             await ctx.send(embed=embed, content=message, file=file)
         else:

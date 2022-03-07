@@ -144,8 +144,9 @@ class Test(commands.Cog):
             except KeyError:
                 return await send_error_message(self, ctx, "No has iniciado ningún test.")
         elif(level.lower() == "retry"):
-            foundUser = users.find_one({"user_id": ctx.message.author.id})
-            for elem in foundUser["questions_failed"]:
+            foundUser = users.find_one(
+                {"user_id": ctx.message.author.id})
+            for elem in foundUser["questions_failed"][:10]:
                 questions.append(exercises.find_one({"_id": elem}))
             preset_questions = True
             questionnum = len(questions)
