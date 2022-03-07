@@ -744,6 +744,8 @@ class Logs(commands.Cog):
             await send_error_message(self, ctx, "Formato de fecha no válido")
             return
         try:
+            if(int(date[2]) < 2000):
+                date[2] = int(date[2]) + 2000
             datets = int(datetime(int(date[2]), int(
                 date[1]), int(date[0])).timestamp())
         except ValueError:
