@@ -24,7 +24,7 @@ from pymongo import MongoClient, errors
 with open("cogs/myguild.json") as json_file:
     data_dict = json.load(json_file)
     guild_id = data_dict["guild_id"]
-    join_quiz_channel_ids = data_dict["join_quiz_1_id"]
+    logs_channel_id = data_dict["logs_channel_id"]
     admin_id = data_dict["kaigen_user_id"]
 #############################################################
 
@@ -734,9 +734,9 @@ class Logs(commands.Cog):
             await create_user(self.db, ctx.author.id, ctx.author.name)
 
         # Verify the user is in the correct channel
-        if ctx.channel.id not in join_quiz_channel_ids:
+        if ctx.channel.id not in logs_channel_id:
             await ctx.send(
-                "Este comando solo puede ser usado en <#796084920790679612>.")
+                "Este comando solo puede ser usado en <#950449182043430942>.")
             return
 
         date = fecha.split("/")
@@ -825,9 +825,9 @@ class Logs(commands.Cog):
             await create_user(self.db, ctx.author.id, ctx.author.name)
 
         # Verify the user is in the correct channel
-        if ctx.channel.id not in join_quiz_channel_ids:
+        if ctx.channel.id not in logs_channel_id:
             await ctx.send(
-                "Este comando solo puede ser usado en <#796084920790679612>.")
+                "Este comando solo puede ser usado en <#950449182043430942>.")
             return
 
         message = ""
@@ -903,9 +903,9 @@ class Logs(commands.Cog):
             return
 
         # Verify the user is in the correct channel
-        if ctx.channel.id not in join_quiz_channel_ids:
+        if ctx.channel.id not in logs_channel_id:
             await ctx.send(
-                "Este comando solo puede ser usado en <#796084920790679612>.")
+                "Este comando solo puede ser usado en <#950449182043430942>.")
             return
         result = await remove_last_log(self.db, ctx.author.id)
         if(result == 1):
@@ -925,9 +925,9 @@ class Logs(commands.Cog):
             return
 
         # Verify the user is in the correct channel
-        if ctx.channel.id not in join_quiz_channel_ids:
+        if ctx.channel.id not in logs_channel_id:
             await ctx.send(
-                "Este comando solo puede ser usado en <#796084920790679612>.")
+                "Este comando solo puede ser usado en <#950449182043430942>.")
             return
 
         result = await remove_log(self.db, ctx.author.id, logid)
