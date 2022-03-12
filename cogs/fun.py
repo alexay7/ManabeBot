@@ -66,6 +66,14 @@ class Extra(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if("media.discordapp.net" in message.content):
+            await message.delete()
+            newlink = message.content.replace(
+                "media.discordapp.net", "cdn.discordapp.com")
+            await message.channel.send(newlink)
+
     @commands.command()
     async def say(self, ctx, message):
         "Comando para hablar a través del bot"
@@ -125,6 +133,7 @@ class Extra(commands.Cog):
             sleep(1)
             await message.edit(content=soup.find("h2").text)
         else:
+            return await ctx.send("Yes, Japan is now open for everyone!")
             await ctx.send(soup.find("h2").text)
 
     @commands.command(aliases=['jpytoeuro', 'yentoeuro', 'jpyaeuro', 'y2e', 'yte', 'yae'])
