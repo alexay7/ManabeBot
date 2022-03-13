@@ -68,11 +68,12 @@ class Extra(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if("media.discordapp.net" in message.content):
-            await message.delete()
-            newlink = message.content.replace(
-                "media.discordapp.net", "cdn.discordapp.com")
-            await message.channel.send(newlink)
+        if(message.author.id != 155149108183695360):
+            if("media.discordapp.net" in message.content):
+                await message.delete()
+                newlink = message.content.replace(
+                    "media.discordapp.net", "cdn.discordapp.com")
+                await message.channel.send(newlink)
 
     @commands.command()
     async def say(self, ctx, message):
