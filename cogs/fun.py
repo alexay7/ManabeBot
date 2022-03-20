@@ -134,7 +134,6 @@ class Extra(commands.Cog):
             sleep(1)
             await message.edit(content=soup.find("h2").text)
         else:
-            return await ctx.send("Yes, Japan is now open for everyone!")
             await ctx.send(soup.find("h2").text)
 
     @commands.command(aliases=['jpytoeuro', 'yentoeuro', 'jpyaeuro', 'y2e', 'yte', 'yae'])
