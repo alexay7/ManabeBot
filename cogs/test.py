@@ -242,6 +242,112 @@ class Test(commands.Cog):
             elif checkanswer(userans, answer):
                 if(preset_questions):
                     users.update_one({"user_id": ctx.message.author.id}, {
+                                     "$pull": {"questions_failed": question.get("_id")}})
+                correct = discord.Embed(
+                    title="✅ Respuesta Correcta: " + str(answer) + ") " + question.get("answers")[answer - 1] + ".", color=0x24b14d)
+                await ctx.send(embed=correct)
+                points += 1
+                # userans = await onlyUserReaction(userans)
+                sleep(2)
+            else:
+                incorrect = discord.Embed(
+                    title="❌ Tu Respuesta: " + str(userans) + ") " + question.get("answers")[userans - 1] + ".", color=0xff2929, description="Respuesta Correcta: " + str(answer) + ") " + question.get("answers")[answer - 1] + ".\n\n" + question.get("explanation"))
+                await ctx.send(embed=incorrect)
+                users.update_one({"user_id": ctx.message.author.id}, {
+                    "$addToSet": {"questions_failed": question.get("_id")}})
+                # await onlyUserReaction(userans)
+                sleep(3)
+
+            question_counter += 1
+
+        if(points == questionnum):
+            emoji = "🏆"
+        elif(points > float(questionnum) * 0.7):
+            emoji = "🎖️"
+        elif(points > float(questionnum) * 0.5):
+            emoji = "😐"
+        else:
+            emoji = "⚠️"
+        embed = discord.Embed(color=0x3344dd, title="Quiz terminado")
+        embed.add_field(
+            name=" Preguntas acertadas: ", value=emoji + " " + str(points) + "/" + str(questionnum) + " (" + str(round(int(points) * 100 / int(questionnum), 2)) + "%)", inline=True)
+        output = await ctx.send(embed=embed)
+
+    @commands.command()
+    async def testaño(self, ctx, year, month):
+        if ctx.message.author == self.bot:
+            return
+        users = self.db.users
+        exercises = self.db.exercises
+        questionnum = 40
+        preset_questions = False
+        questions = []
+        for elem in exercises.aggregate([{"$match": {"year": int(year), "period": month.capitalize()}}]):
+            questions.append(elem)
+        points = 0
+        question_counter = 1
+        user_data = {
+            "user_id": ctx.message.author.id
+        }
+        try:
+            users.insert(user_data)
+        except:
+            print("Ya existe")
+        for question in questions:
+            qname, explain, timemax = question_params(question.get("type"))
+            ""
+            qs = question.get("question").replace("＿", " ＿ ").replace(
+                "*", " ( ", 1).replace("*", ") ", 1).replace("_", "\_") + "\n"
+            counter = 1
+            anwserArr = ""
+            for elem in question.get("answers"):
+                anwserArr += str(counter) + ") " + elem + "\n"
+                counter += 1
+            answer = question.get("correct")
+            # embed = discord.Embed(
+            #     title="", color=0x00e1ff, description=qs)
+            qname = qname + " - JLPT N1 " + month.capitalize() + ", " + year
+            embed = discord.Embed(color=0x00e1ff, title=qname, description="Pregunta " +
+                                  str(question_counter) + " de " + str(questionnum) + ".")
+            embed.add_field(
+                name="Pregunta", value=qs, inline=True)
+            embed.add_field(name="Posibles Respuestas",
+                            value=anwserArr, inline=False)
+            embed.set_footer(
+                text="Enunciado: " + explain)
+            output = await ctx.send(embed=embed)
+            await output.add_reaction("1️⃣")
+            await output.add_reaction("2️⃣")
+            await output.add_reaction("3️⃣")
+            await output.add_reaction("4️⃣")
+
+            def check(reaction, user):
+                return user == ctx.message.author and str(reaction.emoji) in ["1️⃣", "2️⃣", "3️⃣", "4️⃣"]
+
+            timeout = False
+            try:
+                self.tasks[ctx.message.author.id] = self.bot.wait_for(
+                    'reaction_add', timeout=timemax, check=check)
+                guess = await self.tasks[ctx.message.author.id]
+            except asyncio.TimeoutError:
+                timeout = True
+            except RuntimeError:
+                return
+
+            if(not timeout):
+                userans = emojiToInt(guess[0].emoji)
+
+            if timeout:
+                incorrect = discord.Embed(
+                    title="⌛ Muy lento!", description=question.get("explanation"), color=0xff2929)
+                await ctx.send(embed=incorrect)
+                users.update_one({"user_id": ctx.message.author.id}, {
+                                 "$addToSet": {"questions_failed": question.get("_id")}})
+                # await onlyUserReaction(userans)
+                sleep(3)
+            elif checkanswer(userans, answer):
+                if(preset_questions):
+                    users.update_one({"user_id": ctx.message.author.id}, {
                                      "$pull": {"questions_failed": question.get("id")}})
                 correct = discord.Embed(
                     title="✅ Respuesta Correcta: " + str(answer) + ") " + question.get("answers")[answer - 1] + ".", color=0x24b14d)
