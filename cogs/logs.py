@@ -949,13 +949,14 @@ class Logs(commands.Cog):
         # Verify the user is in the correct channel
 
         users = self.db.users
-        logs = users.find_one({'userId': ctx.author.id}, {'logs'})
+        logs = users.find_one({'userId': ctx.author.id}, {'logs'})["logs"]
+        newlogs = sorted(logs, key=lambda d: d['timestamp'])
         counter = 1
-        for elem in logs["logs"]:
+        for elem in newlogs:
             elem["id"] = counter
             counter = counter + 1
         users.update_one({'userId': ctx.author.id}, {'$set': {
-                         'logs': logs["logs"], 'lastlog': len(logs["logs"])}})
+                         'logs': newlogs, 'lastlog': len(newlogs)}})
         await ctx.send("Tu toc ha sido remediado con éxito.")
 
     @ commands.command()
