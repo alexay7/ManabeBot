@@ -386,6 +386,7 @@ async def get_user_data(db, userid, timelapse, media="TOTAL"):
 
 async def check_user(db, userid):
     users = db.users
+    print(userid)
     return users.find({'userId': int(userid)}).count() > 0
 
 
@@ -941,6 +942,23 @@ class Logs(commands.Cog):
             await send_error_message(self, ctx, "Ese log no existe")
 
     @commands.command()
+    async def ordenarlogs(self, ctx):
+        if(not await check_user(self.db, ctx.author.id)):
+            await send_error_message(self, ctx, "No tienes ningún log.")
+            return
+        # Verify the user is in the correct channel
+
+        users = self.db.users
+        logs = users.find_one({'userId': ctx.author.id}, {'logs'})
+        counter = 1
+        for elem in logs["logs"]:
+            elem["id"] = counter
+            counter = counter + 1
+        users.update_one({'userId': ctx.author.id}, {'$set': {
+                         'logs': logs["logs"], 'lastlog': len(logs["logs"])}})
+        await ctx.send("Tu toc ha sido remediado con éxito.")
+
+    @ commands.command()
     async def findemes(self, ctx, video=False, month=None, day=None):
         if ctx.message.author.id != int(admin_id):
             return await send_error_message(self, ctx, "Vuelve a hacer eso y te mato")
