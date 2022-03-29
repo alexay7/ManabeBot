@@ -4,9 +4,9 @@
 - [x] Hacer output de leaderboard bonito
 - [x] Hacer output de logs bonito (con su correspondiente id)
 - [x] Permitir el uso de descripciones largas en backfill
-- [] Traducir el output a japonés (varios idiomas?)
-- [] Mejorar (mucho) el comando de ayuda, diferentes categorías. (botones?)
-- [] Comando de ayuda para las diferentes secciones del bot (kotoba/logs/otros)
+- [ ] Traducir el output a japonés (varios idiomas?)
+- [ ] Mejorar (mucho) el comando de ayuda, diferentes categorías. (botones?)
+- [ ] Comando de ayuda para las diferentes secciones del bot (kotoba/logs/otros)
 - [x] Mover el token a .env
 - [x] Función exports que genere csv con todos los logs del usuario
 - [x] Mejorar output función me
