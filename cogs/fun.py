@@ -1,19 +1,23 @@
 """Cog responsible for random things."""
 
+from asyncio import tasks
 import json
+import os
 import discord
 from discord.ext import commands
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.tz import gettz
 from bs4 import BeautifulSoup
 import requests
 from time import strftime, gmtime, sleep
 import random
+from pymongo import MongoClient, errors
 
 #############################################################
 # Variables (Temporary)
 with open("cogs/myguild.json") as json_file:
     data_dict = json.load(json_file)
+    guild_id = data_dict["guild_id"]
     join_quiz_channel_ids = [
         data_dict["join_quiz_1_id"]]
     admin_user_id = data_dict["kaigen_user_id"]
@@ -62,9 +66,39 @@ def intToWeekday(number):
     return "月"
 
 
+async def create_user(db, userid, username):
+    users = db.madrugar
+    newuser = {
+        'userId': userid,
+        'username': username,
+        'currentStreak': 1,
+        'lastDay': datetime.utcnow()
+    }
+    users.insert_one(newuser)
+
+
+async def check_user(db, userid):
+    users = db.madrugar
+    return users.find({'userId': int(userid)}).count() > 0
+
+
 class Extra(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    @ commands.Cog.listener()
+    async def on_ready(self):
+        self.myguild = self.bot.get_guild(guild_id)
+        if(self.myguild):
+            try:
+                client = MongoClient(os.getenv("MONGOURL"),
+                                     serverSelectionTimeoutMS=10000)
+                client.server_info()
+                print("Obtenida colección de madrugar de MongoDB")
+                self.db = client.ajrlogs
+            except errors.ServerSelectionTimeoutError:
+                print("Ha ocurrido un error intentando conectar con la base de datos.")
+                exit(1)
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -183,6 +217,65 @@ class Extra(commands.Cog):
         embed.set_footer(
             text="Si quieres obtener otra palabra, escribe $randomyoji dentro de 5 minutos.")
         await ctx.send(embed=embed)
+
+    @commands.command()
+    async def despierto(self, ctx):
+        now = datetime.now()
+        users = self.db.madrugar
+        if(now.hour == 8 and now.minute < 30):
+            if(not await check_user(self.db, ctx.author.id)):
+                await create_user(self.db, ctx.author.id, ctx.author.name)
+                embed = discord.Embed(
+                    title="Que empiece la racha!", description="Gracias por usar el bot para madrugar!", color=0x009411)
+                embed.add_field(name="Días consecutivos",
+                                value="1", inline=True)
+                embed.add_field(name="Hora registrada",
+                                value=strftime("%H:%M", gmtime(
+                                    int(now.hour) * 3600 + int(now.minute) * 60)), inline=True)
+                embed.set_footer(text="Sigue así!")
+                return await ctx.send(embed=embed)
+            author = users.find_one({'userId': ctx.author.id})
+            if(now.replace(hour=0, minute=0, second=0, microsecond=0) == (author["lastDay"] + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)):
+                # Sigue la racha
+                users.update_one({'userId': ctx.author.id}, {
+                    '$inc': {
+                        'currentStreak': 1
+                    }, '$set': {
+                        'lastDay': datetime.now()
+                    }})
+                embed = discord.Embed(
+                    title="La racha sigue!", description="Muy bien! Has conseguido conservar la racha de madrugones!", color=0x009411)
+                embed.add_field(name="Días consecutivos", value=str(
+                    author["currentStreak"] + 1), inline=True)
+                embed.add_field(name="Hora registrada",
+                                value=strftime("%H:%M", gmtime(
+                                    int(now.hour) * 3600 + int(now.minute) * 60)), inline=True)
+                embed.set_footer(text="Sigue así!")
+                await ctx.send(embed=embed)
+            elif(now.replace(hour=0, minute=0, second=0, microsecond=0) == author["lastDay"].replace(hour=0, minute=0, second=0, microsecond=0)):
+                embed = discord.Embed(
+                    title="Ya has registrado tu despertar hoy!", color=0x990000)
+                await ctx.send(embed=embed)
+            else:
+                # Racha perdida
+                users.update_one({'userId': ctx.author.id}, {
+                    '$set': {
+                        'lastDay': datetime.now(),
+                        'currentStreak': 1
+                    }})
+                embed = discord.Embed(
+                    title="Racha perdida!", description="Parece que no has conseguido aguantar la racha, toca empezar de nuevo!", color=0xff9411)
+                embed.add_field(name="Días consecutivos",
+                                value="1", inline=True)
+                embed.add_field(name="Hora registrada",
+                                value=strftime("%H:%M", gmtime(
+                                    int(now.hour) * 3600 + int(now.minute) * 60)), inline=True)
+                embed.set_footer(text="Animo!")
+                await ctx.send(embed=embed)
+        else:
+            embed = discord.Embed(
+                title="Has llegado tarde!!", description="Solo se pueden registrar despertares entre las 8:00 y las 8:30", color=0x990000)
+            await ctx.send(embed=embed)
 
 
 def setup(bot):
