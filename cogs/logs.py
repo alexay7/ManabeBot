@@ -1,6 +1,7 @@
 """Cog responsible for immersion logs."""
 
 import asyncio
+import math
 from turtle import color
 from numpy import isin
 
@@ -309,6 +310,21 @@ def calc_points(log):
     return puntos
 
 
+def calc_media(points):
+    # Mejor prevenir que curar
+    result = {
+        "libro": points,
+        "manga": points*5,
+        "vn": points*350,
+        "anime": points/95*10,
+        "lectura": points*350,
+        "tiempolectura": points/45*100,
+        "audio": points/45*100,
+        "video": points/45*100
+    }
+    return result
+
+
 def get_ranking_title(timelapse, media):
     tiempo = ""
     if timelapse == "MES":
@@ -441,7 +457,7 @@ def generate_graph(points, type, timelapse=None):
             return file
 
 
-async def get_logs_animation(db, day):
+async def get_logs_animation(db, month, day):
     # Esta función va a tener como parámetro el día, lo pasará a la función get logs y a partir de ahí generará el ranking pertinente
     header = []
     data = []
@@ -454,14 +470,11 @@ async def get_logs_animation(db, day):
     # if int(day) > date.day:
     #     day = date.day
     counter = 1
-    day = 28
-    print("DIAAAA")
-    print(day)
     while counter < int(day) + 1:
         total[str(counter)] = await get_sorted_ranking(
-            db, f"{date.year}/2/{counter}", "TOTAL")
+            db, f"{date.year}/{month}/{counter}", "TOTAL")
         aux = [0 for i in range(len(header))]
-        aux[0] = f"2/{counter}/{date.year}"
+        aux[0] = f"{month}/{counter}/{date.year}"
         for user in total[str(counter)]:
             aux[header.index(user["username"])] = user["points"]
         counter += 1
@@ -896,6 +909,30 @@ class Logs(commands.Cog):
             await send_error_message(self, ctx, "Cantidad de inmersión exagerada")
             return
 
+    @ commands.command()
+    async def puntos(self, ctx, points):
+        """Uso:: $log <tipo de inmersión> <cantidad inmersada>"""
+        immersion_needed = calc_media(int(points))
+        embed = discord.Embed(
+            title=f"Para conseguir {points} puntos necesitas inmersar:", color=0x00ccff)
+        embed.add_field(name="Libro", value=get_media_element(
+            immersion_needed["libro"], "LIBRO"), inline=False)
+        embed.add_field(name="Manga", value=get_media_element(
+            immersion_needed["manga"], "MANGA"), inline=False)
+        embed.add_field(name="VN", value=get_media_element(
+            immersion_needed["vn"], "VN"), inline=False)
+        embed.add_field(name="Anime", value=get_media_element(
+            math.ceil(immersion_needed["anime"]), "ANIME"), inline=False)
+        embed.add_field(name="Lectura", value=get_media_element(
+            immersion_needed["lectura"], "LECTURA"), inline=False)
+        embed.add_field(name="Tiempo de lectura", value=get_media_element(
+            immersion_needed["tiempolectura"], "TIEMPOLECTURA"), inline=False)
+        embed.add_field(name="Audio", value=get_media_element(
+            immersion_needed["audio"], "AUDIO"), inline=False)
+        embed.add_field(name="Video", value=get_media_element(
+            immersion_needed["video"], "VIDEO"), inline=False)
+        await ctx.send(embed=embed)
+
     @ commands.command(aliases=["deshacer"])
     async def undo(self, ctx):
         """Uso:: $undo"""
@@ -941,7 +978,7 @@ class Logs(commands.Cog):
         else:
             await send_error_message(self, ctx, "Ese log no existe")
 
-    @commands.command()
+    @ commands.command()
     async def ordenarlogs(self, ctx):
         if(not await check_user(self.db, ctx.author.id)):
             await send_error_message(self, ctx, "No tienes ningún log.")
@@ -970,7 +1007,7 @@ class Logs(commands.Cog):
             day = (datetime(today.year, int(month) + 1, 1) - timedelta(days=1)
                    ).day
         message = await ctx.send("Procesando datos del mes, espere por favor...")
-        await get_logs_animation(self.db, day)
+        await get_logs_animation(self.db, month, day)
         # Generate monthly ranking animation
         df = pd.read_csv('temp/test.csv', index_col='date',
                          parse_dates=['date'])

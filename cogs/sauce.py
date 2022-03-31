@@ -29,7 +29,7 @@ class Sauce(commands.Cog):
         self.myguild = self.bot.get_guild(guild_id)
         # await self.private_admin_channel.send("Connected to db successfully")
 
-    @commands.command()
+    @commands.command(aliases=["salsa"])
     async def sauce(self, ctx, url=None):
         sauce = SauceNao(os.getenv("SAUCE_TOKEN"))
 
