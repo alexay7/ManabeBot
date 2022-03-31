@@ -931,7 +931,7 @@ class Logs(commands.Cog):
             immersion_needed["audio"], "AUDIO"), inline=False)
         embed.add_field(name="Video", value=get_media_element(
             immersion_needed["video"], "VIDEO"), inline=False)
-        await ctx.send(embed=embed)
+        await ctx.send(embed=embed, delete_after=10.0)
 
     @ commands.command(aliases=["deshacer"])
     async def undo(self, ctx):
