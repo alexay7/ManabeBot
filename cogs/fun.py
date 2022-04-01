@@ -222,7 +222,7 @@ class Extra(commands.Cog):
     async def despierto(self, ctx):
         now = datetime.now()
         users = self.db.madrugar
-        if(now.hour == 8 and now.minute < 30):
+        if((now.hour == 8 and now.minute < 30) or now.hour == 7):
             if(not await check_user(self.db, ctx.author.id)):
                 await create_user(self.db, ctx.author.id, ctx.author.name)
                 embed = discord.Embed(
