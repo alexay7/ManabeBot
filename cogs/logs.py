@@ -35,6 +35,9 @@ MEDIA_TYPES = {"LIBRO", "MANGA", "VN", "ANIME",
 
 TIMESTAMP_TYPES = {"TOTAL", "MES", "SEMANA", "HOY"}
 
+MONTHS = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
+          "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"]
+
 
 # FUNCTIONS FOR SENDING MESSAGES
 
@@ -121,6 +124,11 @@ async def create_user(db, userid, username):
 async def get_user_logs(db, userid, timelapse, media=None):
     users = db.users
 
+    if timelapse in MONTHS:
+        year = datetime.now().year
+        month = MONTHS.index(timelapse) + 1
+        timelapse = f"{year}/{month}"
+
     if timelapse == "TOTAL":
         if media in MEDIA_TYPES:
             # ALL LOGS OF A MEDIA TYPE FROM USER
@@ -183,8 +191,6 @@ async def get_user_logs(db, userid, timelapse, media=None):
             # MONTHLY VIEW
             month = int(split_time[1])
             year = int(split_time[0])
-            print(year)
-            print(month)
             start = int(
                 (datetime(int(year), month, 1)).replace(hour=0, minute=0, second=0).timestamp())
             if month + 1 > 12:
@@ -215,7 +221,6 @@ async def get_user_logs(db, userid, timelapse, media=None):
             }
         }
     }]
-    print(query)
     if media in MEDIA_TYPES:
         query[1]["$project"]["logs"]["$filter"]["cond"]["$and"].append(
             {"$eq": ["$$log.medio", media]})
@@ -314,13 +319,13 @@ def calc_media(points):
     # Mejor prevenir que curar
     result = {
         "libro": points,
-        "manga": points*5,
-        "vn": points*350,
-        "anime": points/95*10,
-        "lectura": points*350,
-        "tiempolectura": points/45*100,
-        "audio": points/45*100,
-        "video": points/45*100
+        "manga": points * 5,
+        "vn": points * 350,
+        "anime": points / 95 * 10,
+        "lectura": points * 350,
+        "tiempolectura": points / 45 * 100,
+        "audio": points / 45 * 100,
+        "video": points / 45 * 100
     }
     return result
 
@@ -402,7 +407,6 @@ async def get_user_data(db, userid, timelapse, media="TOTAL"):
 
 async def check_user(db, userid):
     users = db.users
-    print(userid)
     return users.find({'userId': int(userid)}).count() > 0
 
 
@@ -479,7 +483,6 @@ async def get_logs_animation(db, month, day):
             aux[header.index(user["username"])] = user["points"]
         counter += 1
         data.append(aux)
-    print(data)
     with open('temp/test.csv', 'w', encoding='utf-8-sig', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(header)
