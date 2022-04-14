@@ -1,24 +1,23 @@
 """Cog responsible for immersion logs."""
 
 import asyncio
+from calendar import month
 import math
-from turtle import color
-from numpy import isin
-
 import os
 import json
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from discord.ext import commands
 from discord import Embed
 import discord.errors
-from time import sleep
-import matplotlib.animation as animation
+from time import sleep, time
 from .fun import intToMonth, intToWeekday
 import matplotlib.pyplot as plt
 import csv
 import bar_chart_race as bcr
 import pandas as pd
 from pymongo import MongoClient, errors
+import numpy as np
 
 #############################################################
 # Variables (Temporary)
@@ -433,6 +432,66 @@ def generate_graph(points, type, timelapse=None):
         ax1.axis('equal')
 
         plt.savefig("temp/image.png")
+        file = discord.File("temp/image.png", filename="image.png")
+        return file
+    elif type == "progress":
+        labels = []
+        values = []
+        media = {"LIBRO": [], "MANGA": [], "VN": [], "ANIME": [],
+                 "LECTURA": [], "TIEMPOLECTURA": [], "AUDIO": [], "VIDEO": []}
+
+        for x, y in aux.items():
+            labels.append(x),
+            values.append(y)
+        fig1, ax = plt.subplots(figsize=(10, 5))
+        max = 0
+
+        for elem in values:
+            media["LIBRO"].append(elem["LIBRO"])
+            media["MANGA"].append(elem["MANGA"])
+            media["VN"].append(elem["VN"])
+            media["ANIME"].append(elem["ANIME"])
+            media["LECTURA"].append(elem["LECTURA"])
+            media["TIEMPOLECTURA"].append(elem["TIEMPOLECTURA"])
+            media["AUDIO"].append(elem["AUDIO"])
+            media["VIDEO"].append(elem["VIDEO"])
+            total = elem["LIBRO"] + elem["MANGA"] + elem["VN"] + elem["ANIME"] +  \
+                elem["LECTURA"] + elem["TIEMPOLECTURA"] +  \
+                elem["AUDIO"] + elem["VIDEO"]
+            if total > max:
+                max = total
+
+        libro = np.array(media["LIBRO"])
+        manga = np.array(media["MANGA"])
+        vn = np.array(media["VN"])
+        anime = np.array(media["ANIME"])
+        lectura = np.array(media["LECTURA"])
+        tiempolectura = np.array(media["TIEMPOLECTURA"])
+        audio = np.array(media["AUDIO"])
+        video = np.array(media["VIDEO"])
+        plt.xticks(rotation=45)
+        plt.bar(labels, libro, color='#b3554d')
+        plt.bar(labels, manga, bottom=libro, color='#4BD0CB')
+        plt.bar(labels, vn, bottom=(
+            libro + manga), color='#93D04B')
+        plt.bar(labels, anime, bottom=libro +
+                manga + vn, color='#808bc1')
+        plt.bar(labels, lectura,
+                bottom=libro + manga + vn + anime, color='#4BD088')
+        plt.bar(labels, tiempolectura,
+                bottom=libro + manga + vn + anime + lectura, color='#4b92d0')
+        plt.bar(labels, audio,
+                bottom=libro + manga + vn + anime + lectura + tiempolectura, color='#D04B51')
+        plt.bar(labels, video, bottom=libro + manga + vn + anime + lectura +
+                tiempolectura + audio, color='#CB4BD0')
+        plt.xlabel("FECHA")
+        plt.ylabel("PUNTOS")
+        print(max)
+        plt.ylim(0, max * 1.05)
+        plt.legend(["LIBRO", "MANGA", "VN", "ANIME", "LECTURA",
+                   "TIEMPOLECTURA", "AUDIO", "VIDEO"], loc='upper center', bbox_to_anchor=(0.5, 1.25),
+                   ncol=3, fancybox=True, shadow=True)
+        plt.savefig("temp/image.png", bbox_inches="tight")
         file = discord.File("temp/image.png", filename="image.png")
         return file
     else:
@@ -999,6 +1058,69 @@ class Logs(commands.Cog):
         users.update_one({'userId': ctx.author.id}, {'$set': {
                          'logs': newlogs, 'lastlog': len(newlogs)}})
         await ctx.send("Tu toc ha sido remediado con éxito.")
+
+    @commands.command()
+    async def progreso(self, ctx, timelapse="TOTAL"):
+        if(not await check_user(self.db, ctx.author.id)):
+            await send_error_message(self, ctx, "No tienes ningún log.")
+            return
+        results = {}
+
+        if(timelapse.upper() == "TOTAL"):
+
+            data = self.db.users.aggregate([
+                {"$match": {"userId": ctx.author.id}},
+                {"$project":
+                 {"item": 1,
+                  "firstElem": {"$arrayElemAt": ["$logs", 0]}
+                  }
+                 }
+            ])
+            firstlog = data.next()
+            start = datetime.fromtimestamp(
+                firstlog['firstElem']['timestamp']).replace(day=1)
+            end = datetime.now().replace()
+            steps = (end.year - start.year) * 12 + end.month - start.month + 1
+        elif(timelapse.isdigit()):
+            if(int(timelapse) < 1000):
+                timelapse = "20"+timelapse
+            start = datetime(year=int(timelapse), month=1, day=1)
+            end = datetime(year=int(timelapse), month=12, day=31)
+            steps = 12
+
+            # funcion get logs de mes en mes hasta el día de hoy
+            # meter en array ordenado cada mes
+            # hacer gráfica con el array ordenado
+            # profit
+        else:
+            return await send_error_message(self, ctx, "Escribe 'TOTAL' para ver el progreso desde tu primer log o concreta un año para ver el progreso en ese año")
+        i = 0
+        while i < steps:
+            begin = (start + relativedelta(months=i)).replace(day=1)
+            logs = await get_user_logs(self.db, ctx.author.id, f"{begin.year}/{begin.month}")
+            i += 1
+
+            points = {
+                "LIBRO": 0,
+                "MANGA": 0,
+                "ANIME": 0,
+                "VN": 0,
+                "LECTURA": 0,
+                "TIEMPOLECTURA": 0,
+                "AUDIO": 0,
+                "VIDEO": 0,
+            }
+
+            for log in logs:
+                points[log["medio"]] += log["puntos"]
+            results[f"{begin.year}/{begin.month}"] = points
+
+        normal = discord.Embed(
+            title=f"Vista {get_ranking_title(timelapse.upper(),'ALL')}", color=0xeeff00)
+        normal.add_field(name="Usuario", value=ctx.author.name, inline=True)
+        bardoc = generate_graph(results, "progress")
+        normal.set_image(url="attachment://image.png")
+        await ctx.send(embed=normal, file=bardoc)
 
     @ commands.command()
     async def findemes(self, ctx, video=False, month=None, day=None):
