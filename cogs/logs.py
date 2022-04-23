@@ -253,7 +253,7 @@ async def get_best_user_of_range(db, media, timelapse):
     return None
 
 
-async def add_log(db, userid, log):
+async def add_log(db, userid, log, username):
     users = db.users
     user = users.find_one({'userId': userid})
     newid = len(user["logs"])
@@ -261,7 +261,7 @@ async def add_log(db, userid, log):
     users.update_one(
         {'userId': userid},
         {'$push': {"logs": log},
-         '$set': {"lastlog": log["id"]}}
+         '$set': {"lastlog": log["id"], "username": username}}
     )
     return log["id"]
 
@@ -855,7 +855,7 @@ class Logs(commands.Cog):
             for user in ranking:
                 if user["username"] == ctx.author.name:
                     position = ranking.index(user)
-            logid = await add_log(self.db, ctx.author.id, newlog)
+            logid = await add_log(self.db, ctx.author.id, newlog, ctx.author.name)
             ranking[position]["points"] += output
 
             newranking = sorted(
@@ -923,17 +923,18 @@ class Logs(commands.Cog):
         output = calc_points(newlog)
 
         if output > 0:
+            logid = await add_log(self.db, ctx.author.id, newlog, ctx.author.name)
+
             ranking = await get_sorted_ranking(self.db, "MES", "TOTAL")
+            newranking = ranking
             for user in ranking:
                 if user["username"] == ctx.author.name:
                     position = ranking.index(user)
 
-            logid = await add_log(self.db, ctx.author.id, newlog)
+                    ranking[position]["points"] += output
 
-            ranking[position]["points"] += output
-
-            newranking = sorted(
-                ranking, key=lambda x: x["points"], reverse=True)
+                    newranking = sorted(
+                        ranking, key=lambda x: x["points"], reverse=True)
 
             for user in newranking:
                 if user["username"] == ctx.author.name:
