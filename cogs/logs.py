@@ -241,11 +241,11 @@ async def get_best_user_of_range(db, media, timelapse):
         newuser = {
             "id": user["userId"],
             "username": user["username"],
-            "points": userpoints[media.upper()],
+            "points": round(userpoints[media.upper()], 2),
             "parameters": parameters[media.upper()]
         }
         if newuser["points"] > points:
-            points = newuser["points"]
+            points = round(newuser["points"], 2)
             parameternum = newuser["parameters"]
             aux = newuser
     if(not(aux is None)):
@@ -337,6 +337,8 @@ def get_ranking_title(timelapse, media):
         tiempo = "semanal"
     elif timelapse == "HOY":
         tiempo = "diario"
+    elif timelapse.isnumeric():
+        tiempo = "de "+timelapse
     else:
         tiempo = "total"
     medio = ""
@@ -616,11 +618,19 @@ class Logs(commands.Cog):
 
     @ commands.command(aliases=["ranking", "podio"])
     async def leaderboard(self, ctx, timelapse="MES", media="TOTAL"):
-        """Uso:: $leaderboard <tiempo (semana/mes/total)/tipo de inmersión> <tipo de inmersión>"""
+        """Uso:: $leaderboard <tiempo (semana/mes/año/total)/tipo de inmersión> <tipo de inmersión>"""
         leaderboard = []
         if timelapse.upper() in MEDIA_TYPES:
-            media = timelapse
-            timelapse = "MES"
+            aux = media
+            media = timelapse.upper()
+            if aux != "TOTAL":
+                timelapse = aux.upper()
+            else:
+                timelapse = "MES"
+        if media.isnumeric():
+            aux = timelapse
+            timelapse = media
+            media = aux
         sortedlist = await get_sorted_ranking(self.db, timelapse, media)
         message = ""
         position = 1
