@@ -1061,12 +1061,11 @@ class Logs(commands.Cog):
         await ctx.send("Tu toc ha sido remediado con éxito.")
 
     @commands.command()
-    async def progreso(self, ctx, timelapse="TOTAL"):
+    async def progreso(self, ctx, timelapse=str(datetime.now().year)):
         if(not await check_user(self.db, ctx.author.id)):
             await send_error_message(self, ctx, "No tienes ningún log.")
             return
         results = {}
-
         if(timelapse.upper() == "TOTAL"):
 
             data = self.db.users.aggregate([
