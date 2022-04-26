@@ -11,6 +11,8 @@ from discord.ext import commands
 from discord import Embed
 import discord.errors
 from time import sleep, time
+
+import requests
 from .fun import intToMonth, intToWeekday
 import matplotlib.pyplot as plt
 import csv
@@ -93,6 +95,86 @@ async def send_message_with_buttons(self, ctx, content):
                 # ending the loop if user doesn't react after x seconds
 
 # FUNCTIONS RELATED WITH LOGS
+
+
+async def get_anilist_id(username):
+    query = '''
+    query ($username: String){
+  User(name:$username){
+        id
+        }
+    }
+    '''
+
+    # Define our query variables and values that will be used in the query request
+    variables = {
+        'username': username
+    }
+
+    url = 'https://graphql.anilist.co'
+
+    # Make the HTTP Api request
+    res = requests.post(
+        url, json={'query': query, 'variables': variables}).json()
+
+    if("errors" in res):
+        print(res)
+        return -1
+    else:
+        print(res["data"])
+        return res["data"]["User"]["id"]
+
+
+async def get_anilist_logs(user_id, page):
+    query = '''
+    query($page:Int, $userId:Int){
+  Page(page:$page,perPage:50){
+    pageInfo{
+      hasNextPage
+      lastPage
+      currentPage
+    }
+    mediaList(userId: $userId,type:ANIME,sort:STARTED_ON,status:COMPLETED,completedAt_lesser:20220201) {
+      id
+      media{
+        title {
+          romaji
+          english
+          native
+          userPreferred
+        },
+        format,
+        episodes,
+        duration
+      },
+      completedAt {
+        year
+        month
+        day
+      },
+      startedAt {
+        year
+        month
+        day
+      }
+      status
+  }
+  }
+}
+
+    '''
+
+    # Define our query variables and values that will be used in the query request
+    variables = {
+        'userId': user_id,
+        'page': page
+    }
+
+    url = 'https://graphql.anilist.co'
+
+    # Make the HTTP Api request
+    return requests.post(
+        url, json={'query': query, 'variables': variables}).json()
 
 
 async def remove_log(db, userid, logid):
@@ -1206,6 +1288,87 @@ class Logs(commands.Cog):
                 # TODO: función para borrar logs dado el id del log y el id del usuario
                 await remove_log(self.db, payload.user_id, message.embeds[0].description.split(" ")[1].replace("#", ""))
                 await message.delete()
+
+    @commands.command()
+    async def loganilist(self, ctx, username):
+        user_id = await get_anilist_id(username)
+        if(user_id == -1):
+            await send_error_message(self, ctx, "Esa cuenta de anilist no existe o es privada, cambia tus ajustes de privacidad.")
+            return
+        nextPage = True
+        page = 1
+        errored = []
+        total_logs = 0
+        total_repeated = 0
+        while nextPage:
+            logs = await get_anilist_logs(user_id, page)
+            nextPage = logs["data"]["Page"]["pageInfo"]["hasNextPage"]
+            for log in logs["data"]["Page"]["mediaList"]:
+                newlog = {
+                    'anilistAccount': username,
+                    'anilistId': log["id"],
+                    'timestamp': 0,
+                    'descripcion': "",
+                    'medio': "",
+                    'parametro': ""
+                }
+                newlog["descripcion"] = log["media"]["title"]["native"]
+                if log["media"]["format"] == "MOVIE":
+                    newlog["medio"] = "VIDEO"
+                    newlog["parametro"] = str(log["media"]["duration"])
+                elif log["media"]["duration"] < 19:
+                    newlog["medio"] = "VIDEO"
+                    newlog["parametro"] = str(log["media"]["duration"] *
+                                              log["media"]["episodes"])
+                else:
+                    newlog["medio"] = "ANIME"
+                    newlog["parametro"] = str(log["media"]["episodes"])
+
+                failed = False
+                if(log["completedAt"]["year"]):
+                    newlog["timestamp"] = int(datetime(
+                        log["completedAt"]["year"], log["completedAt"]["month"], log["completedAt"]["day"]).timestamp())
+                elif(log["startedAt"]["year"]):
+                    newlog["timestamp"] = int(datetime(
+                        log["startedAt"]["year"], log["startedAt"]["month"], log["startedAt"]["day"]).timestamp())
+                else:
+                    errored.append(log["media"]["title"]["native"])
+                    failed = True
+
+                if(self.db.users.find({'userId': ctx.author.id, 'logs': {'$elemMatch': {'anilistId': newlog["anilistId"]}}}).count() > 0):
+                    total_repeated += 1
+                    failed = True
+
+                if(not failed):
+                    total_logs += 1
+                    output = calc_points(newlog)
+                    if output > 0:
+                        logid = await add_log(self.db, ctx.author.id, newlog, ctx.author.name)
+
+            page += 1
+        total_errored = ""
+        total_len = 0
+        total_size = 0
+        for elem in errored:
+            total_errored += elem + "\n"
+            total_len += 1
+            total_size += len(elem)
+        if(total_size > 500):
+            total_errored = "Demasiados logs fallidos para poder representarlo, revisa que tus entradas de anilist tienen fecha de finalización."
+        embed = Embed(
+            title=f"Añadido a logs la cuenta de anilist de {username}", color=0x1302ff, description="-----------------")
+        embed.add_field(name="Logs introducidos",
+                        value=total_logs, inline=False)
+        if(total_repeated > 0):
+            embed.add_field(name="Logs repetidos",
+                            value=total_repeated, inline=False)
+        if(total_errored != ""):
+            embed.add_field(name="Logs fallidos",
+                            value=total_len, inline=False)
+            embed.add_field(name="Lista de fallidos",
+                            value=total_errored, inline=True)
+        await ctx.send(embed=embed)
+        print(errored)
 
 
 def setup(bot):
