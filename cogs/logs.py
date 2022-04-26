@@ -125,16 +125,16 @@ async def get_anilist_id(username):
         return res["data"]["User"]["id"]
 
 
-async def get_anilist_logs(user_id, page):
+async def get_anilist_logs(user_id, page, date):
     query = '''
-    query($page:Int, $userId:Int){
+    query($page:Int, $userId:Int,$date:FuzzyDateInt){
   Page(page:$page,perPage:50){
     pageInfo{
       hasNextPage
       lastPage
       currentPage
     }
-    mediaList(userId: $userId,type:ANIME,sort:STARTED_ON,status:COMPLETED,completedAt_lesser:20220201) {
+    mediaList(userId: $userId,type:ANIME,sort:STARTED_ON,status:COMPLETED,completedAt_lesser:20220201,completedAt_greater:$date) {
       id
       media{
         title {
@@ -167,7 +167,8 @@ async def get_anilist_logs(user_id, page):
     # Define our query variables and values that will be used in the query request
     variables = {
         'userId': user_id,
-        'page': page
+        'page': page,
+        'date': date
     }
 
     url = 'https://graphql.anilist.co'
@@ -1290,7 +1291,10 @@ class Logs(commands.Cog):
                 await message.delete()
 
     @commands.command()
-    async def loganilist(self, ctx, username):
+    async def loganilist(self, ctx, username, date=20000101):
+        if len(str(date)) is not 8:
+            await send_error_message(self, ctx, "La fecha debe tener el formato YYYYMMDD")
+            return
         user_id = await get_anilist_id(username)
         if(user_id == -1):
             await send_error_message(self, ctx, "Esa cuenta de anilist no existe o es privada, cambia tus ajustes de privacidad.")
@@ -1301,7 +1305,8 @@ class Logs(commands.Cog):
         total_logs = 0
         total_repeated = 0
         while nextPage:
-            logs = await get_anilist_logs(user_id, page)
+            logs = await get_anilist_logs(user_id, page, date)
+            print(logs)
             nextPage = logs["data"]["Page"]["pageInfo"]["hasNextPage"]
             for log in logs["data"]["Page"]["mediaList"]:
                 newlog = {
