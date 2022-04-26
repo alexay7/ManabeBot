@@ -574,7 +574,7 @@ class Logs(commands.Cog):
 
     @ commands.command(aliases=["halloffame", "salondelafama", "salonfama", "mvp"])
     async def hallofame(self, ctx, timelapse=f"{datetime.today().year}", media="TOTAL"):
-        """Uso:: $hallofame <tiempo (semana/mes/total)/tipo de inmersión> <tipo de inmersión>"""
+        """Uso:: $hallofame <tiempo (semana/mes/año/total)/tipo de inmersión> <tipo de inmersión>"""
         output = ""
         if timelapse.upper() in MEDIA_TYPES:
             media = timelapse.upper()
@@ -591,7 +591,11 @@ class Logs(commands.Cog):
                         output += f" -> {get_media_element(winner['parameters'],media.upper())}\n"
                     else:
                         output += "\n"
-            title = f"🏆 Usuarios del mes ({datetime.today().year})"
+            if(timelapse.isnumeric()):
+                year = timelapse
+            else:
+                year = datetime.today().year
+            title = f"🏆 Usuarios del mes ({year})"
             if media.upper() in MEDIA_TYPES:
                 title += f" [{media.upper()}]"
 
