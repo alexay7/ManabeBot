@@ -1367,6 +1367,8 @@ class Logs(commands.Cog):
                             value=total_len, inline=False)
             embed.add_field(name="Lista de fallidos",
                             value=total_errored, inline=True)
+        embed.set_footer(
+            text="Es recomendable que escribas el comando .ordenarlogs después de hacer un import de anilist.")
         await ctx.send(embed=embed)
         print(errored)
 
