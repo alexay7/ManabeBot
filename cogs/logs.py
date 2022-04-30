@@ -1081,11 +1081,11 @@ class Logs(commands.Cog):
         embed.add_field(name="Libro", value=get_media_element(
             immersion_needed["libro"], "LIBRO"), inline=False)
         embed.add_field(name="Manga", value=get_media_element(
-            immersion_needed["manga"], "MANGA"), inline=False)
+            immersion_needed["manga"], "MANGA") + f" (aprox {math.ceil(int(immersion_needed['manga'])/170)} volúmenes)", inline=False)
         embed.add_field(name="VN", value=get_media_element(
             immersion_needed["vn"], "VN"), inline=False)
         embed.add_field(name="Anime", value=get_media_element(
-            math.ceil(immersion_needed["anime"]), "ANIME"), inline=False)
+            math.ceil(immersion_needed["anime"]), "ANIME") + f" (aprox {get_media_element(immersion_needed['anime']*24, 'VIDEO')})", inline=False)
         embed.add_field(name="Lectura", value=get_media_element(
             immersion_needed["lectura"], "LECTURA"), inline=False)
         embed.add_field(name="Tiempo de lectura", value=get_media_element(
@@ -1094,8 +1094,7 @@ class Logs(commands.Cog):
             immersion_needed["audio"], "AUDIO"), inline=False)
         embed.add_field(name="Video", value=get_media_element(
             immersion_needed["video"], "VIDEO"), inline=False)
-        await ctx.send(embed=embed, delete_after=20.0)
-        await ctx.message.delete()
+        await ctx.send(embed=embed, delete_after=60.0)
 
     @ commands.command(aliases=["deshacer"])
     async def undo(self, ctx):
@@ -1295,7 +1294,7 @@ class Logs(commands.Cog):
 
     @commands.command()
     async def loganilist(self, ctx, username, date=20000101):
-        if len(str(date)) is not 8:
+        if len(str(date)) != 8:
             await send_error_message(self, ctx, "La fecha debe tener el formato YYYYMMDD")
             return
         user_id = await get_anilist_id(username)
