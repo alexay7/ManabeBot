@@ -362,7 +362,8 @@ async def get_sorted_ranking(db, timelapse, media):
         if media.upper() in MEDIA_TYPES:
             leaderboard[counter]["param"] = parameters[media.upper()]
         counter += 1
-
+        if(user["username"] == "emolinam5"):
+            print(points)
     return sorted(
         leaderboard, key=lambda x: x["points"], reverse=True)
 
@@ -718,6 +719,8 @@ class Logs(commands.Cog):
             aux = timelapse
             timelapse = media
             media = aux
+        print(timelapse)
+        print(media)
         sortedlist = await get_sorted_ranking(self.db, timelapse, media)
         message = ""
         position = 1
@@ -1020,7 +1023,6 @@ class Logs(commands.Cog):
         output = calc_points(newlog)
 
         if output > 0:
-            logid = await add_log(self.db, ctx.author.id, newlog, ctx.author.name)
 
             ranking = await get_sorted_ranking(self.db, "MES", "TOTAL")
             newranking = ranking
@@ -1032,11 +1034,12 @@ class Logs(commands.Cog):
 
                     newranking = sorted(
                         ranking, key=lambda x: x["points"], reverse=True)
-
             for user in newranking:
                 if user["username"] == ctx.author.name:
                     newposition = newranking.index(user)
                     current_points = user["points"]
+
+            logid = await add_log(self.db, ctx.author.id, newlog, ctx.author.name)
 
             embed = Embed(title="Log registrado con éxito",
                           description=f"Log #{logid} || {today.strftime('%d/%m/%Y')}", color=0x24b14d)
