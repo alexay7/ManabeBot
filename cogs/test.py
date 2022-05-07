@@ -144,9 +144,13 @@ class Test(commands.Cog):
             except KeyError:
                 return await send_error_message(self, ctx, "No has iniciado ningún test.")
         elif(level.lower() == "retry"):
+            questionnum = 10
+            if(param):
+                questionnum = int(param)
             foundUser = users.find_one(
                 {"user_id": ctx.message.author.id})
-            for elem in foundUser["questions_failed"][:10]:
+            random.shuffle(foundUser["questions_failed"])
+            for elem in foundUser["questions_failed"][:questionnum]:
                 questions.append(exercises.find_one({"_id": elem}))
             preset_questions = True
             questionnum = len(questions)
