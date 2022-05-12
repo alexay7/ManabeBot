@@ -704,7 +704,7 @@ class Logs(commands.Cog):
                         value=output, inline=True)
         await ctx.send(embed=embed)
 
-    @ commands.command(aliases=["ranking", "podio"])
+    @ commands.command(aliases=["ranking", "podio","lb"])
     async def leaderboard(self, ctx, timelapse="MES", media="TOTAL"):
         """Uso:: $leaderboard <tiempo (semana/mes/año/total)/tipo de inmersión> <tipo de inmersión>"""
         leaderboard = []
