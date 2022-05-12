@@ -11,7 +11,7 @@ intents = discord.Intents.default()
 intents.typing = False
 intents.presences = False
 intents.members = True
-djtbot = commands.Bot(command_prefix='.', intents=intents)
+djtbot = commands.Bot(command_prefix='.', intents=intents, help_command=None)
 client = discord.Client()
 
 with open("cogs/myguild.json") as json_file:
