@@ -704,7 +704,7 @@ class Logs(commands.Cog):
                         value=output, inline=True)
         await ctx.send(embed=embed)
 
-    @ commands.command(aliases=["ranking", "podio","lb"])
+    @ commands.command(aliases=["ranking", "podio", "lb"])
     async def leaderboard(self, ctx, timelapse="MES", media="TOTAL"):
         """Uso:: $leaderboard <tiempo (semana/mes/año/total)/tipo de inmersión> <tipo de inmersión>"""
         leaderboard = []
@@ -1291,6 +1291,15 @@ class Logs(commands.Cog):
                 # TODO: función para borrar logs dado el id del log y el id del usuario
                 await remove_log(self.db, payload.user_id, message.embeds[0].description.split(" ")[1].replace("#", ""))
                 await message.delete()
+
+    @commands.command()
+    async def calcchars(self, ctx, total_chars, read_pages, total_pages):
+        await ctx.message.delete()
+        if(total_chars.isnumeric() and current_pages.isnumeric() and total_pages.isnumeric()):
+            read_chars = round(int(current_pages) *
+                               int(total_chars) / int(total_pages))
+            return await ctx.send(f"Has leido un total de {read_chars} carácteres", delete_after=15.0)
+        return await send_error_message(self, ctx, "Solo se aceptan números")
 
     @commands.command()
     async def loganilist(self, ctx, username, date=20000101):
