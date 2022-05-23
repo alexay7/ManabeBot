@@ -1295,8 +1295,8 @@ class Logs(commands.Cog):
     @commands.command()
     async def calcchars(self, ctx, total_chars, read_pages, total_pages):
         await ctx.message.delete()
-        if(total_chars.isnumeric() and current_pages.isnumeric() and total_pages.isnumeric()):
-            read_chars = round(int(current_pages) *
+        if(total_chars.isnumeric() and read_pages.isnumeric() and total_pages.isnumeric()):
+            read_chars = round(int(read_pages) *
                                int(total_chars) / int(total_pages))
             return await ctx.send(f"Has leido un total de {read_chars} carácteres", delete_after=15.0)
         return await send_error_message(self, ctx, "Solo se aceptan números")
