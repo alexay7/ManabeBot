@@ -18,8 +18,7 @@ from pymongo import MongoClient, errors
 with open("cogs/myguild.json") as json_file:
     data_dict = json.load(json_file)
     guild_id = data_dict["guild_id"]
-    join_quiz_channel_ids = [
-        data_dict["join_quiz_1_id"]]
+    join_quiz_channel_ids = data_dict["join_quiz_1_id"]
     admin_user_id = data_dict["kaigen_user_id"]
 #############################################################
 
