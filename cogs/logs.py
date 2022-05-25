@@ -422,7 +422,7 @@ def get_ranking_title(timelapse, media):
     elif timelapse == "HOY":
         tiempo = "diario"
     elif timelapse.isnumeric():
-        tiempo = "de "+timelapse
+        tiempo = "de " + timelapse
     else:
         tiempo = "total"
     medio = ""
@@ -658,7 +658,7 @@ class Logs(commands.Cog):
 
     @ commands.command(aliases=["halloffame", "salondelafama", "salonfama", "mvp"])
     async def hallofame(self, ctx, timelapse=f"{datetime.today().year}", media="TOTAL"):
-        """Uso:: $hallofame <tiempo (semana/mes/año/total)/tipo de inmersión> <tipo de inmersión>"""
+        """Uso:: .hallofame <tiempo (semana/mes/año/total)/tipo de inmersión> <tipo de inmersión>"""
         output = ""
         if timelapse.upper() in MEDIA_TYPES:
             media = timelapse.upper()
@@ -706,7 +706,7 @@ class Logs(commands.Cog):
 
     @ commands.command(aliases=["ranking", "podio", "lb"])
     async def leaderboard(self, ctx, timelapse="MES", media="TOTAL"):
-        """Uso:: $leaderboard <tiempo (semana/mes/año/total)/tipo de inmersión> <tipo de inmersión>"""
+        """Uso:: .leaderboard <tiempo (semana/mes/año/total)/tipo de inmersión> <tipo de inmersión>"""
         leaderboard = []
         if timelapse.upper() in MEDIA_TYPES:
             aux = media
@@ -746,7 +746,7 @@ class Logs(commands.Cog):
 
     @ commands.command()
     async def logs(self, ctx, timelapse="TOTAL", user=None, media="TOTAL"):
-        """Uso:: $logs <tiempo (semana/mes/total)/Id usuario> <Id usuario>"""
+        """Uso:: .logs <tiempo (semana/mes/total)/Id usuario> <Id usuario>"""
         if timelapse.isnumeric():
             user = int(timelapse)
             timelapse = "TOTAL"
@@ -790,7 +790,7 @@ class Logs(commands.Cog):
 
     @commands.command()
     async def export(self, ctx, timelapse="TOTAL"):
-        """Uso:: $export <tiempo (semana/mes/total)>"""
+        """Uso:: .export <tiempo (semana/mes/total)>"""
         if(not await check_user(self.db, ctx.author.id)):
             await send_error_message(self, ctx, "No tiene ningún log")
             return
@@ -812,7 +812,7 @@ class Logs(commands.Cog):
 
     @ commands.command(aliases=["yo"])
     async def me(self, ctx, timelapse="MES", graph=1):
-        """Uso:: $me <tiempo (semana/mes/total)>"""
+        """Uso:: .me <tiempo (semana/mes/total)>"""
         if(not await check_user(self.db, ctx.author.id)):
             await send_error_message(self, ctx, "No tienes ningún log")
             return
@@ -904,7 +904,7 @@ class Logs(commands.Cog):
 
     @ commands.command(aliases=["backlog"])
     async def backfill(self, ctx, fecha, medio, cantidad, descripcion):
-        """Uso:: $backfill <fecha (dd/mm/yyyy)> <tipo de inmersión> <cantidad inmersada>"""
+        """Uso:: .backfill <fecha (dd/mm/yyyy)> <tipo de inmersión> <cantidad inmersada>"""
 
         # Check if the user has logs
         if(not await check_user(self.db, ctx.author.id)):
@@ -996,7 +996,7 @@ class Logs(commands.Cog):
 
     @ commands.command()
     async def log(self, ctx, medio, cantidad, descripcion):
-        """Uso:: $log <tipo de inmersión> <cantidad inmersada>"""
+        """Uso:: .log <tipo de inmersión> <cantidad inmersada>"""
         # Check if the user has logs
         if(not await check_user(self.db, ctx.author.id)):
             await create_user(self.db, ctx.author.id, ctx.author.name)
@@ -1074,7 +1074,7 @@ class Logs(commands.Cog):
 
     @ commands.command()
     async def puntos(self, ctx, points):
-        """Uso:: $log <tipo de inmersión> <cantidad inmersada>"""
+        """Uso:: .log <tipo de inmersión> <cantidad inmersada>"""
         immersion_needed = calc_media(int(points))
         embed = discord.Embed(
             title=f"Para conseguir {points} puntos necesitas inmersar:", color=0x00ccff)
@@ -1098,7 +1098,7 @@ class Logs(commands.Cog):
 
     @ commands.command(aliases=["deshacer"])
     async def undo(self, ctx):
-        """Uso:: $undo"""
+        """Uso:: .undo"""
         # Verify the user has logs
         if(not await check_user(self.db, ctx.author.id)):
             await send_error_message(self, ctx, "No tienes ningún log.")
@@ -1120,7 +1120,7 @@ class Logs(commands.Cog):
 
     @ commands.command(aliases=["dellog"])
     async def remlog(self, ctx, logid):
-        """Uso:: $remlog <Id log a borrar>"""
+        """Uso:: .remlog <Id log a borrar>"""
         # Verify the user has logs
         if(not await check_user(self.db, ctx.author.id)):
             await send_error_message(self, ctx, "No tienes ningún log.")
@@ -1182,7 +1182,7 @@ class Logs(commands.Cog):
             steps = (end.year - start.year) * 12 + end.month - start.month + 1
         elif(timelapse.isdigit()):
             if(int(timelapse) < 1000):
-                timelapse = "20"+timelapse
+                timelapse = "20" + timelapse
             start = datetime(year=int(timelapse), month=1, day=1)
             end = datetime(year=int(timelapse), month=12, day=31)
             steps = 12

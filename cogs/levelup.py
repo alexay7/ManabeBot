@@ -37,7 +37,7 @@ class Quiz(commands.Cog):
     async def on_ready(self):
         self.myguild = self.bot.get_guild(guild_id)
         await self.bot.change_presence(activity=discord.Activity(
-            type=discord.ActivityType.watching, name="Cosas japonesas| $help"))
+            type=discord.ActivityType.watching, name="Cosas japonesas| .help"))
         self.aiosession = aiohttp.ClientSession()
 
     @commands.command()
@@ -59,7 +59,7 @@ class Quiz(commands.Cog):
                 await ctx.send(currentcommand)
 
         await ctx.send(
-            "Usa este comando para subir de nivel.\nPara ver todos los niveles disponibles escribe `$levelupall`")
+            "Usa este comando para subir de nivel.\nPara ver todos los niveles disponibles escribe `.levelupall`")
 
     @commands.command()
     async def levelupall(self, ctx):
@@ -68,7 +68,7 @@ class Quiz(commands.Cog):
         """
         message_list = []
         message_list.append(
-            "Escribe `$help` para ver una lista con todos los comandos.\n")
+            "Escribe `.help` para ver una lista con todos los comandos.\n")
 
         for rankid in mycommands:
             levelupmesssage = mycommands[rankid]
@@ -261,10 +261,31 @@ class Quiz(commands.Cog):
                                         announcementchannel = self.bot.get_channel(
                                             announcement_channel_id)
                                         await announcementchannel.send(f'<@!{mainuserid}> ha aprobado el {quizname}!\n'
-                                                                       f'Escribe `$levelup` para ver el comando para subir al siguiente nivel.')
+                                                                       f'Escribe `.levelup` para ver el comando para subir al siguiente nivel.')
 
             except TypeError:
                 pass
+
+    @commands.command()
+    async def arreglar(self, ctx):
+        quizwinner = self.myguild.get_member(
+            331444118469214220)
+        for role in quizwinner.roles:
+            if role.id in quizranks:
+                print("Role ID:", role.id)
+                currentroleid = role.id
+
+        if quizranks.index(currentroleid) <= quizranks.index(892868169729986600) - 1:
+            currentrole = self.myguild.get_role(
+                currentroleid)
+            newrole = self.myguild.get_role(
+                892868169729986600)
+            await quizwinner.remove_roles(currentrole)
+            await quizwinner.add_roles(newrole)
+            announcementchannel = self.bot.get_channel(
+                announcement_channel_id)
+            await announcementchannel.send(f'<@!{331444118469214220}> ha aprobado el {quizname}!\n'
+                                           f'Escribe `.levelup` para ver el comando para subir al siguiente nivel.')
 
     @commands.command()
     async def generatequiz(self, ctx):

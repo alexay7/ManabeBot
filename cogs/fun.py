@@ -172,13 +172,13 @@ class Extra(commands.Cog):
 
     @commands.command(aliases=['jpytoeuro', 'yentoeuro', 'jpyaeuro', 'y2e', 'yte', 'yae'])
     async def yenaeuro(self, ctx, yenes):
-        "Convierte yenes a euros. Uso: $comando cantidad"
+        "Convierte yenes a euros. Uso: .comando cantidad"
         result = round(int(yenes) * 0.0077, 2)
         await ctx.send(yenes + "¥ equivalen a " + str(result) + "€")
 
     @commands.command(aliases=['eurotojpy', 'eurotoyen', 'euroajpy', 'e2y', 'ety', 'eay'])
     async def euroayen(self, ctx, euros):
-        "Convierte euros a yenes. Uso: $comando cantidad"
+        "Convierte euros a yenes. Uso: .comando cantidad"
         result = int(euros) * 129.8701298701
         await ctx.send(euros + "€ equivalen a " + str(result) + "¥")
 
@@ -215,7 +215,7 @@ class Extra(commands.Cog):
         embed.add_field(
             name="Significados", value=meanings, inline=False)
         embed.set_footer(
-            text="Si quieres obtener otra palabra, escribe $randomyoji dentro de 5 minutos.")
+            text="Si quieres obtener otra palabra, escribe .randomyoji dentro de 5 minutos.")
         await ctx.send(embed=embed)
 
     @commands.command()
