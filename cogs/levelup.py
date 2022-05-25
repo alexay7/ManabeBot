@@ -14,8 +14,7 @@ with open("cogs/myguild.json") as json_file:
     data_dict = json.load(json_file)
     guild_id = data_dict["guild_id"]
     kotobabotid = data_dict["kotoba_id"]
-    join_quiz_channel_ids = [
-        data_dict["join_quiz_1_id"]]
+    join_quiz_channel_ids = data_dict["join_quiz_1_id"]
     announcement_channel_id = data_dict["otaku_channel_id"]
     quizranks = data_dict["quizranks"]
     mycommands = data_dict["mycommands"]
