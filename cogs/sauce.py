@@ -6,7 +6,7 @@ import os
 from discord.ext import commands
 from saucenao_api import SauceNao, errors
 from discord import Embed
-from .logs import send_error_message
+from .fun import send_error_message
 
 #############################################################
 # Variables (Temporary)

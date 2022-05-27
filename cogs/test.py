@@ -9,7 +9,7 @@ import discord
 import os
 from discord.ext import commands
 from discord import Embed
-from .logs import send_error_message
+from .fun import send_error_message
 from pymongo import MongoClient, errors
 
 #############################################################

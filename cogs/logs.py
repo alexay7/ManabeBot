@@ -13,7 +13,9 @@ import discord.errors
 from time import sleep, time
 
 import requests
-from .fun import intToMonth, intToWeekday
+
+from .anilist import get_anilist_id, get_anilist_logs
+from .fun import intToMonth, intToWeekday, send_error_message
 import matplotlib.pyplot as plt
 import csv
 import bar_chart_race as bcr
@@ -41,13 +43,6 @@ MONTHS = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
 
 
 # FUNCTIONS FOR SENDING MESSAGES
-
-async def send_error_message(self, ctx, content):
-    embed = Embed(color=0xff2929)
-    embed.add_field(
-        name="❌", value=content, inline=False)
-    await ctx.send(embed=embed, delete_after=15.0)
-
 
 async def send_message_with_buttons(self, ctx, content):
     pages = len(content)
@@ -95,87 +90,6 @@ async def send_message_with_buttons(self, ctx, content):
                 # ending the loop if user doesn't react after x seconds
 
 # FUNCTIONS RELATED WITH LOGS
-
-
-async def get_anilist_id(username):
-    query = '''
-    query ($username: String){
-  User(name:$username){
-        id
-        }
-    }
-    '''
-
-    # Define our query variables and values that will be used in the query request
-    variables = {
-        'username': username
-    }
-
-    url = 'https://graphql.anilist.co'
-
-    # Make the HTTP Api request
-    res = requests.post(
-        url, json={'query': query, 'variables': variables}).json()
-
-    if("errors" in res):
-        print(res)
-        return -1
-    else:
-        print(res["data"])
-        return res["data"]["User"]["id"]
-
-
-async def get_anilist_logs(user_id, page, date):
-    query = '''
-    query($page:Int, $userId:Int,$date:FuzzyDateInt){
-  Page(page:$page,perPage:50){
-    pageInfo{
-      hasNextPage
-      lastPage
-      currentPage
-    }
-    mediaList(userId: $userId,type:ANIME,sort:STARTED_ON,status:COMPLETED,completedAt_lesser:20220201,completedAt_greater:$date) {
-      id
-      media{
-        title {
-          romaji
-          english
-          native
-          userPreferred
-        },
-        format,
-        episodes,
-        duration
-      },
-      completedAt {
-        year
-        month
-        day
-      },
-      startedAt {
-        year
-        month
-        day
-      }
-      status
-  }
-  }
-}
-
-    '''
-
-    # Define our query variables and values that will be used in the query request
-    variables = {
-        'userId': user_id,
-        'page': page,
-        'date': date
-    }
-
-    url = 'https://graphql.anilist.co'
-
-    # Make the HTTP Api request
-    return requests.post(
-        url, json={'query': query, 'variables': variables}).json()
 
 
 async def remove_log(db, userid, logid):

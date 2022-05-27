@@ -23,6 +23,13 @@ with open("cogs/myguild.json") as json_file:
 #############################################################
 
 
+async def send_error_message(self, ctx, content):
+    embed = discord.Embed(color=0xff2929)
+    embed.add_field(
+        name="❌", value=content, inline=False)
+    await ctx.send(embed=embed, delete_after=15.0)
+
+
 def intToMonth(number):
     if number == 1:
         return "Enero"
