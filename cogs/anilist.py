@@ -141,7 +141,7 @@ class Anilist(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def random(self, ctx, medium, username):
+    async def random(self, ctx, medium, username, volumes=10000):
         if(medium.upper() not in MEDIUMS):
             await send_error_message(self, ctx, "Los medios disponibles son manga o anime.")
             return
@@ -166,9 +166,13 @@ class Anilist(commands.Cog):
                     "episodes": media["media"]["episodes"],
                     "url": media["media"]["siteUrl"]
                 }
-                result.append(element)
+                if(element["volumes"] and element["volumes"] <= int(volumes)):
+                    result.append(element)
 
             page += 1
+        if(len(result) == 0):
+            await send_error_message(self, ctx, "No hay nada en tu lista que cumpla los parámetros seleccionados")
+            return
         chosen = random.choice(result)
         embed = discord.Embed(
             title=f"El {medium} seleccionado es: ", color=0x24b14d, description=chosen["url"])
