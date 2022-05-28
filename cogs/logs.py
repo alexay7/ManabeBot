@@ -339,13 +339,13 @@ def get_ranking_title(timelapse, media):
         tiempo = "total"
     medio = ""
     if media in {"MANGA", "ANIME", "AUDIO", "LECTURA", "VIDEO"}:
-        medio = "de " + media.lower()
+        medio = "de " + media.lower() + " "
     elif media in {"LIBRO"}:
-        medio = "de " + media.lower() + "s"
+        medio = "de " + media.lower() + "s "
     elif media in {"LECTURATIEMPO"}:
-        medio = "de lectura (tiempo)"
+        medio = "de lectura (tiempo) "
     elif media in {"VN"}:
-        medio = "de " + media
+        medio = "de " + media + " "
     return f"{tiempo} {medio}"
 
 
