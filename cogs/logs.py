@@ -276,8 +276,6 @@ async def get_sorted_ranking(db, timelapse, media):
         if media.upper() in MEDIA_TYPES:
             leaderboard[counter]["param"] = parameters[media.upper()]
         counter += 1
-        if(user["username"] == "emolinam5"):
-            print(points)
     return sorted(
         leaderboard, key=lambda x: x["points"], reverse=True)
 
@@ -619,7 +617,7 @@ class Logs(commands.Cog):
         await ctx.send(embed=embed)
 
     @ commands.command(aliases=["ranking", "podio", "lb"])
-    async def leaderboard(self, ctx, timelapse="MES", media="TOTAL"):
+    async def leaderboard(self, ctx, timelapse="MES", media="TOTAL", extended=False):
         """Uso:: .leaderboard <tiempo (semana/mes/año/total)/tipo de inmersión> <tipo de inmersión>"""
         leaderboard = []
         if timelapse.upper() in MEDIA_TYPES:
@@ -633,12 +631,13 @@ class Logs(commands.Cog):
             aux = timelapse
             timelapse = media
             media = aux
-        print(timelapse)
-        print(media)
         sortedlist = await get_sorted_ranking(self.db, timelapse, media)
         message = ""
         position = 1
-        for user in sortedlist[0:10]:
+        total_users = 10
+        if(extended):
+            total_users = len(sortedlist)
+        for user in sortedlist[0:total_users]:
             if(user["points"] != 0):
                 message += f"**{str(position)}º {user['username']}:** {str(round(user['points'],2))} puntos"
                 if("param" in user):
@@ -648,9 +647,12 @@ class Logs(commands.Cog):
                 position += 1
             else:
                 sortedlist.remove(user)
+        append = ""
+        if(extended):
+            append = "extendido"
         if len(sortedlist) > 0:
             title = "Ranking " + \
-                get_ranking_title(timelapse.upper(), media.upper())
+                get_ranking_title(timelapse.upper(), media.upper()) + append
             embed = Embed(color=0x5842ff)
             embed.add_field(name=title, value=message, inline=True)
             await ctx.send(embed=embed)
