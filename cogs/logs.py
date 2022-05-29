@@ -667,6 +667,10 @@ class Logs(commands.Cog):
             user = int(timelapse)
             timelapse = "TOTAL"
 
+        if user is not None and user.upper() in MEDIA_TYPES:
+            media = user.upper()
+            user = ctx.author.id
+
         if timelapse.upper() in MEDIA_TYPES:
             media = timelapse.upper()
             timelapse = "TOTAL"
@@ -1096,6 +1100,7 @@ class Logs(commands.Cog):
                 firstlog['firstElem']['timestamp']).replace(day=1)
             end = datetime.now().replace()
             steps = (end.year - start.year) * 12 + end.month - start.month + 1
+            real_months = steps
         elif(timelapse.isdigit()):
             if(int(timelapse) < 1000):
                 timelapse = "20" + timelapse
@@ -1110,6 +1115,13 @@ class Logs(commands.Cog):
         else:
             return await send_error_message(self, ctx, "Escribe 'TOTAL' para ver el progreso desde tu primer log o concreta un año para ver el progreso en ese año")
         i = 0
+        total = 0
+        real_months = steps
+        best_month = {
+            'month': 0,
+            'year': 0,
+            'points': 0
+        }
         while i < steps:
             begin = (start + relativedelta(months=i)).replace(day=1)
             logs = await get_user_logs(self.db, ctx.author.id, f"{begin.year}/{begin.month}")
@@ -1125,14 +1137,27 @@ class Logs(commands.Cog):
                 "AUDIO": 0,
                 "VIDEO": 0,
             }
-
+            local_total = 0
             for log in logs:
                 points[log["medio"]] += log["puntos"]
+                local_total += log["puntos"]
+                total += log["puntos"]
+            if local_total == 0:
+                real_months -= 1
+            if local_total > best_month["points"]:
+                best_month["month"] = begin.month
+                best_month["year"] = begin.year
+                best_month["points"] = local_total
             results[f"{begin.year}/{begin.month}"] = points
-
+        media = total / real_months
+        print(best_month)
         normal = discord.Embed(
             title=f"Vista {get_ranking_title(timelapse.upper(),'ALL')}", color=0xeeff00)
-        normal.add_field(name="Usuario", value=ctx.author.name, inline=True)
+        normal.add_field(name="Usuario", value=ctx.author.name, inline=False)
+        normal.add_field(name="Media en el periodo",
+                         value=f"{round(media, 2)} puntos", inline=True)
+        normal.add_field(
+            name="Mejor mes", value=f"{MONTHS[best_month['month']-1].capitalize()} del {best_month['year']} con {round(best_month['points'],2)} puntos", inline=True)
         bardoc = generate_graph(results, "progress")
         normal.set_image(url="attachment://image.png")
         await ctx.send(embed=normal, file=bardoc)
@@ -1226,6 +1251,7 @@ class Logs(commands.Cog):
         if(user_id == -1):
             await send_error_message(self, ctx, "Esa cuenta de anilist no existe o es privada, cambia tus ajustes de privacidad.")
             return
+        await ctx.send(f"Añadiendo los logs de anilist de {username} a tu cuenta... si esto ha sido un error contacta con el administrador.", delete_after=10.0)
         nextPage = True
         page = 1
         errored = []
@@ -1233,7 +1259,6 @@ class Logs(commands.Cog):
         total_repeated = 0
         while nextPage:
             logs = await get_anilist_logs(user_id, page, date)
-            print(logs)
             nextPage = logs["data"]["Page"]["pageInfo"]["hasNextPage"]
             for log in logs["data"]["Page"]["mediaList"]:
                 newlog = {
