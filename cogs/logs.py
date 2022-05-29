@@ -1002,18 +1002,12 @@ class Logs(commands.Cog):
             immersion_needed["libro"], "LIBRO"), inline=False)
         embed.add_field(name="Manga", value=get_media_element(
             immersion_needed["manga"], "MANGA") + f" (aprox {math.ceil(int(immersion_needed['manga'])/170)} volúmenes)", inline=False)
-        embed.add_field(name="VN", value=get_media_element(
+        embed.add_field(name="Lectura / VN", value=get_media_element(
             immersion_needed["vn"], "VN"), inline=False)
         embed.add_field(name="Anime", value=get_media_element(
             math.ceil(immersion_needed["anime"]), "ANIME") + f" (aprox {get_media_element(immersion_needed['anime']*24, 'VIDEO')})", inline=False)
-        embed.add_field(name="Lectura", value=get_media_element(
-            immersion_needed["lectura"], "LECTURA"), inline=False)
-        embed.add_field(name="Tiempo de lectura", value=get_media_element(
-            immersion_needed["tiempolectura"], "TIEMPOLECTURA"), inline=False)
-        embed.add_field(name="Audio", value=get_media_element(
+        embed.add_field(name="Audio / Video / Tiempo de lectura", value=get_media_element(
             immersion_needed["audio"], "AUDIO"), inline=False)
-        embed.add_field(name="Video", value=get_media_element(
-            immersion_needed["video"], "VIDEO"), inline=False)
         await ctx.send(embed=embed, delete_after=60.0)
 
     @ commands.command(aliases=["deshacer"])
