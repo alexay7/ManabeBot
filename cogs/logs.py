@@ -523,9 +523,13 @@ async def get_logs_animation(db, month, day):
     header = []
     data = []
     header.append("date")
-    users = db.users.find({}, {"username"})
-    for user in users:
-        header.append(user["username"])
+    monthly_ranking = await get_sorted_ranking(db, MONTHS[int(month) - 1], "TOTAL")
+    userlist = []
+    for elem in monthly_ranking:
+        if elem["points"] != 0:
+            userlist.append(elem["username"])
+    for user in userlist:
+        header.append(user)
     total = dict()
     date = datetime.today()
     # if int(day) > date.day:
@@ -537,7 +541,8 @@ async def get_logs_animation(db, month, day):
         aux = [0 for i in range(len(header))]
         aux[0] = f"{month}/{counter}/{date.year}"
         for user in total[str(counter)]:
-            aux[header.index(user["username"])] = user["points"]
+            if user["points"] != 0:
+                aux[header.index(user["username"])] = user["points"]
         counter += 1
         data.append(aux)
     with open('temp/test.csv', 'w', encoding='utf-8-sig', newline='') as f:
