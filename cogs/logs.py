@@ -741,9 +741,10 @@ class Logs(commands.Cog):
         if(not await check_user(self.db, ctx.author.id)):
             await send_error_message(self, ctx, "No tienes ningún log")
             return
-        if timelapse.isnumeric():
+        if timelapse.isnumeric() and int(timelapse) <= 2:
             graph = int(timelapse)
             timelapse = "MES"
+
         logs = await get_user_logs(self.db, ctx.author.id, timelapse.upper())
         points = {
             "LIBRO": 0,
