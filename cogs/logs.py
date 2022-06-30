@@ -31,6 +31,9 @@ with open("cogs/myguild.json") as json_file:
     logs_channel_id = data_dict["logs_channel_id"]
     admin_id = data_dict["kaigen_user_id"]
     mvp_role = data_dict["mvp_role"]
+
+with open("cogs/achievements.json") as ach_file:
+    levels = json.load(ach_file)
 #############################################################
 
 MEDIA_TYPES = {"LIBRO", "MANGA", "VN", "ANIME",
@@ -226,6 +229,17 @@ async def get_user_logs(db, userid, timelapse, media=None):
             # Only one document should be found so no problem returning data
             return elem["logs"]
     return ""
+
+
+async def get_total_parameter_of_media(db, media, userid):
+    users = db.users
+    # ALL LOGS OF A MEDIA TYPE FROM USER
+    logs = await get_user_logs(db, userid, "TOTAL")
+    total_param = 0
+    for log in logs:
+        if(log["medio"] == media):
+            total_param += int(log["parametro"])
+    return total_param
 
 
 async def get_best_user_of_range(db, media, timelapse):
@@ -472,16 +486,15 @@ def generate_graph(points, type, timelapse=None):
         plt.bar(labels, manga, bottom=libro, color='#4BD0CB')
         plt.bar(labels, vn, bottom=(
             libro + manga), color='#93D04B')
-        plt.bar(labels, anime, bottom=libro +
-                manga + vn, color='#808bc1')
+        plt.bar(labels, anime, bottom=libro + manga + vn, color='#808bc1')
         plt.bar(labels, lectura,
                 bottom=libro + manga + vn + anime, color='#4BD088')
         plt.bar(labels, tiempolectura,
                 bottom=libro + manga + vn + anime + lectura, color='#4b92d0')
         plt.bar(labels, audio,
                 bottom=libro + manga + vn + anime + lectura + tiempolectura, color='#D04B51')
-        plt.bar(labels, video, bottom=libro + manga + vn + anime + lectura +
-                tiempolectura + audio, color='#CB4BD0')
+        plt.bar(labels, video,
+                bottom=libro + manga + vn + anime + lectura + tiempolectura + audio, color='#CB4BD0')
         plt.xlabel("FECHA")
         plt.ylabel("PUNTOS")
         print(max)
@@ -949,7 +962,6 @@ class Logs(commands.Cog):
         output = calc_points(newlog)
 
         if output > 0:
-
             ranking = await get_sorted_ranking(self.db, "MES", "TOTAL")
             newranking = ranking
             for user in ranking:
@@ -985,6 +997,21 @@ class Logs(commands.Cog):
                 text=ctx.author.id)
             message = await ctx.send(embed=embed)
             await message.add_reaction("❌")
+
+            current_param = await get_total_parameter_of_media(self.db, medio.upper(), ctx.author.id)
+            param_before = current_param - int(cantidad)
+
+            if math.floor(param_before / levels[medio.upper()]) != math.floor(current_param / levels[medio.upper()]):
+                if medio.upper() in ["ANIME", "VN", "LECTURA"]:
+                    verbo = "inmersados"
+                else:
+                    verbo = "inmersadas"
+                achievement_embed = Embed(title=f"¡Nuevo logro de {ctx.author.name}!",
+                                          description="¡Sigue así!", color=0x0095ff)
+                achievement_embed.set_thumbnail(url=ctx.author.avatar)
+                achievement_embed.add_field(
+                    name="Logro conseguido", value=f"{get_media_element(math.floor(current_param / levels[medio.upper()])*levels[medio.upper()],medio.upper())} de {medio.lower()} {verbo}")
+                await ctx.send(embed=achievement_embed)
             sleep(10)
             await message.clear_reaction("❌")
 
@@ -1237,8 +1264,8 @@ class Logs(commands.Cog):
     async def calcchars(self, ctx, total_chars, read_pages, total_pages):
         await ctx.message.delete()
         if(total_chars.isnumeric() and read_pages.isnumeric() and total_pages.isnumeric()):
-            read_chars = round(int(read_pages) *
-                               int(total_chars) / int(total_pages))
+            read_chars = round(
+                int(read_pages) * int(total_chars) / int(total_pages))
             return await ctx.send(f"Has leido un total de {read_chars} carácteres", delete_after=15.0)
         return await send_error_message(self, ctx, "Solo se aceptan números")
 
@@ -1275,8 +1302,8 @@ class Logs(commands.Cog):
                     newlog["parametro"] = str(log["media"]["duration"])
                 elif log["media"]["duration"] < 19:
                     newlog["medio"] = "VIDEO"
-                    newlog["parametro"] = str(log["media"]["duration"] *
-                                              log["media"]["episodes"])
+                    newlog["parametro"] = str(
+                        log["media"]["duration"] * log["media"]["episodes"])
                 else:
                     newlog["medio"] = "ANIME"
                     newlog["parametro"] = str(log["media"]["episodes"])
