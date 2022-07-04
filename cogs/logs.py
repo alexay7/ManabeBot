@@ -1025,7 +1025,7 @@ class Logs(commands.Cog):
             await send_error_message(self, ctx, "Cantidad de inmersión exagerada")
             return
 
-    @commands.command()
+    @commands.command(aliases=["calcpuntos"])
     async def calcpoints(self, ctx, media, param):
         aux = {
             'medio': media.upper(),
