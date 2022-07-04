@@ -296,7 +296,7 @@ async def get_sorted_ranking(db, timelapse, media):
 # GENERAL FUNCTIONS
 
 
-def calc_points(log):
+def compute_points(log):
     # Mejor prevenir que curar
     if log["medio"] not in MEDIA_TYPES:
         return 0
@@ -887,7 +887,7 @@ class Logs(commands.Cog):
             'parametro': cantidad
         }
 
-        output = calc_points(newlog)
+        output = compute_points(newlog)
 
         if output > 0:
             ranking = await get_sorted_ranking(self.db, "MES", "TOTAL")
@@ -959,7 +959,7 @@ class Logs(commands.Cog):
             'parametro': cantidad
         }
 
-        output = calc_points(newlog)
+        output = compute_points(newlog)
 
         if output > 0:
             ranking = await get_sorted_ranking(self.db, "MES", "TOTAL")
@@ -1024,6 +1024,26 @@ class Logs(commands.Cog):
         elif output == -2:
             await send_error_message(self, ctx, "Cantidad de inmersión exagerada")
             return
+
+    @commands.command()
+    async def calcpoints(self, ctx, media, param):
+        aux = {
+            'medio': media.upper(),
+            'parametro': param,
+        }
+        points = compute_points(aux)
+
+        logs = await get_user_logs(self.db, ctx.author.id, "MES")
+        user_points = 0
+        for log in logs:
+            user_points += log["puntos"]
+
+        embed = discord.Embed(
+            title="Preivisión de puntos", color=0x8d205f, description=f"Si inmersaras {get_media_element(int(param),media.upper())} de {media}:"
+        )
+        embed.add_field(name="Puntos otorgados", value=points)
+        embed.add_field(name="Puntos mensuales", value=user_points + points)
+        await ctx.send(embed=embed, delete_after=30.0)
 
     @ commands.command()
     async def puntos(self, ctx, points):
@@ -1325,7 +1345,7 @@ class Logs(commands.Cog):
 
                 if(not failed):
                     total_logs += 1
-                    output = calc_points(newlog)
+                    output = compute_points(newlog)
                     if output > 0:
                         logid = await add_log(self.db, ctx.author.id, newlog, ctx.author.name)
 
