@@ -183,6 +183,11 @@ class Anilist(commands.Cog):
 
         if(anime["data"]["Media"]["title"]["native"] != manga["data"]["Media"]["title"]["native"]):
             manga = await get_media_info(anime["data"]["Media"]["title"]["native"], "MANGA")
+            if "errors" in manga:
+                return await send_error_message(self, ctx, "No se han podido encontrar coincidencias, escriba el título de forma más exacta.")
+
+        if "errors" in manga:
+            return await send_error_message(self, ctx, "No existe manga para esa serie.")
 
         if not anime["data"]["Media"]["meanScore"]:
             return await send_error_message(self, ctx, "Ese anime todavía no tiene puntuación.")
