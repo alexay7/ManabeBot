@@ -136,9 +136,81 @@ async def get_anilist_planning(page, user_id, media):
         url, json={'query': query, 'variables': variables}).json()
 
 
+async def get_media_info(search, media):
+    query = '''
+        query($query:String, $media:MediaFormat){
+        Media(search:$query,format:$media){
+        title {
+        romaji
+        english
+        native
+        userPreferred
+        }
+        meanScore
+        coverImage{
+            extraLarge
+        }
+        siteUrl
+    }
+    }
+    '''
+
+    variables = {
+        'query': search,
+        'media': media
+    }
+
+    url = 'https://graphql.anilist.co'
+
+    return requests.post(
+        url, json={'query': query, 'variables': variables}).json()
+
+
 class Anilist(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.command(aliases=["animeomanga", "animevsmanga"])
+    async def animeormanga(self, ctx, title):
+        manga = await get_media_info(title, "MANGA")
+        anime = await get_media_info(title, "TV")
+
+        if "errors" in anime:
+            return await send_error_message(self, ctx, "No existe anime para esa serie.")
+
+        if "errors" in manga:
+            return await send_error_message(self, ctx, "No existe manga para esa serie.")
+
+        if(anime["data"]["Media"]["title"]["native"] != manga["data"]["Media"]["title"]["native"]):
+            manga = await get_media_info(anime["data"]["Media"]["title"]["native"], "MANGA")
+
+        if not anime["data"]["Media"]["meanScore"]:
+            return await send_error_message(self, ctx, "Ese anime todavía no tiene puntuación.")
+
+        if not manga["data"]["Media"]["meanScore"]:
+            return await send_error_message(self, ctx, "Ese manga todavía no tiene puntuación.")
+
+        if(anime["data"]["Media"]["meanScore"] > manga["data"]["Media"]["meanScore"]):
+            best = anime
+            best_type = "anime"
+            worst_type = "manga"
+        else:
+            best = manga
+            best_type = "manga"
+            worst_type = "anime"
+
+        embed = discord.Embed(
+            title=f"El {best_type} de {best['data']['Media']['title']['native']} es mejor que el {worst_type}")
+        embed.set_thumbnail(
+            url=best["data"]["Media"]["coverImage"]["extraLarge"])
+        embed.add_field(name="Puntuación del manga",
+                        value=manga["data"]["Media"]["meanScore"])
+        embed.add_field(name="Puntuación del anime",
+                        value=anime["data"]["Media"]["meanScore"])
+        embed.add_field(
+            name="Link", value=best["data"]["Media"]["siteUrl"], inline=False)
+
+        await ctx.send(embed=embed)
 
     @commands.command()
     async def random(self, ctx, medium, username, volumes=10000):
