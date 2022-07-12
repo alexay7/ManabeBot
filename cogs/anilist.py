@@ -194,10 +194,20 @@ class Anilist(commands.Cog):
             best = anime
             best_type = "anime"
             worst_type = "manga"
-        else:
+        elif(anime["data"]["Media"]["meanScore"] < manga["data"]["Media"]["meanScore"]):
             best = manga
             best_type = "manga"
             worst_type = "anime"
+        else:
+            embed = discord.Embed(
+                title=f"Tanto el anime como el manga de {anime['data']['Media']['title']['native']} tienen la misma puntuación")
+            embed.set_thumbnail(
+                url=anime["data"]["Media"]["coverImage"]["extraLarge"])
+            embed.add_field(name="Puntuación",
+                            value=manga["data"]["Media"]["meanScore"])
+            embed.add_field(
+                name="Link", value=anime["data"]["Media"]["siteUrl"], inline=False)
+            return await ctx.send(embed=embed)
 
         embed = discord.Embed(
             title=f"El {best_type} de {best['data']['Media']['title']['native']} es mejor que el {worst_type}")
@@ -210,7 +220,7 @@ class Anilist(commands.Cog):
         embed.add_field(
             name="Link", value=best["data"]["Media"]["siteUrl"], inline=False)
 
-        await ctx.send(embed=embed)
+        return await ctx.send(embed=embed)
 
     @commands.command()
     async def random(self, ctx, medium, username, volumes=10000):
