@@ -56,7 +56,7 @@ async def send_message_with_buttons(self, ctx, content):
         await message.add_reaction("▶️")
         while True:
             try:
-                reaction, user = await self.bot.wait_for("reaction_add", timeout=30)
+                reaction, user = await self.bot.wait_for("reaction_add", timeout=180)
                 if(not user.bot):
                     # waiting for a reaction to be added - times out after x seconds, 60 in this
                     # example
@@ -1025,7 +1025,7 @@ class Logs(commands.Cog):
             await send_error_message(self, ctx, "Cantidad de inmersión exagerada")
             return
 
-    @commands.command(aliases=["calcpuntos"])
+    @commands.command(aliases=["calcpuntos", 'calcularpuntos'])
     async def calcpoints(self, ctx, media, param):
         aux = {
             'medio': media.upper(),
