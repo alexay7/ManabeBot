@@ -193,11 +193,6 @@ class Extra(commands.Cog):
     async def aleatoria(self, ctx):
         "Obtiene un yoji aleatorio de jisho.org (cooldown de 5 min)"
 
-        if ctx.channel.id not in join_quiz_channel_ids:
-            await ctx.send(
-                "Este comando solo puede ser usado en <#796084920790679612>.")
-            return
-
         page = random.randint(1, 100)
         response = requests.get(
             f"https://jisho.org/api/v1/search/words?keyword=%23yoji&page={page}")
