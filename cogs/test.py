@@ -386,11 +386,3 @@ class Test(commands.Cog):
 
 def setup(bot):
     bot.add_cog(Test(bot))
-
-# Ideas:
-# Comando para crear un test de una categoría (vocabulario/gramatica)
-# Comando para crear un test de un tipo (kanjis/uso/parafrases/...)
-# Argumento para los tests anteriores que defina el tiempo limite
-# Argumento para los tests anteriores que defina el numero de preguntas
-# Comando para crear un test que imite un examen del N1
-# Comando para salir de un test no finalizado

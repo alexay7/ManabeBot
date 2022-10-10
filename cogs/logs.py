@@ -1154,11 +1154,6 @@ class Logs(commands.Cog):
             start = datetime(year=int(timelapse), month=1, day=1)
             end = datetime(year=int(timelapse), month=12, day=31)
             steps = 12
-
-            # funcion get logs de mes en mes hasta el día de hoy
-            # meter en array ordenado cada mes
-            # hacer gráfica con el array ordenado
-            # profit
         else:
             return await send_error_message(self, ctx, "Escribe 'TOTAL' para ver el progreso desde tu primer log o concreta un año para ver el progreso en ese año")
         i = 0
