@@ -1,205 +1,57 @@
 import random
-import re
 import discord
 from discord.ext import commands
-import requests
 
-from cogs.fun import send_error_message
-
-MEDIUMS = ["MANGA", "ANIME"]
-
-
-async def get_anilist_id(username):
-    query = '''
-    query ($username: String){
-  User(name:$username){
-        id
-        }
-    }
-    '''
-
-    # Define our query variables and values that will be used in the query request
-    variables = {
-        'username': username
-    }
-
-    url = 'https://graphql.anilist.co'
-
-    # Make the HTTP Api request
-    res = requests.post(
-        url, json={'query': query, 'variables': variables}).json()
-
-    if("errors" in res):
-        print(res)
-        return -1
-    else:
-        return res["data"]["User"]["id"]
-
-
-async def get_anilist_logs(user_id, page, date):
-    query = '''
-    query($page:Int, $userId:Int,$date:FuzzyDateInt){
-  Page(page:$page,perPage:50){
-    pageInfo{
-      hasNextPage
-      lastPage
-      currentPage
-    }
-    mediaList(userId: $userId,type:ANIME,sort:STARTED_ON,status:COMPLETED,completedAt_lesser:20220201,completedAt_greater:$date) {
-      id
-      media{
-        title {
-          romaji
-          english
-          native
-          userPreferred
-        },
-        format,
-        episodes,
-        duration
-      },
-      completedAt {
-        year
-        month
-        day
-      },
-      startedAt {
-        year
-        month
-        day
-      }
-      status
-  }
-  }
-}
-
-    '''
-
-    # Define our query variables and values that will be used in the query request
-    variables = {
-        'userId': user_id,
-        'page': page,
-        'date': date
-    }
-
-    url = 'https://graphql.anilist.co'
-
-    # Make the HTTP Api request
-    return requests.post(
-        url, json={'query': query, 'variables': variables}).json()
-
-
-async def get_anilist_planning(page, user_id, media):
-    query = '''
-    query($page:Int, $userId:Int,$media:MediaType){
-    Page(page:$page,perPage:50){
-    pageInfo{
-      hasNextPage
-      lastPage
-      currentPage
-    }
-    mediaList(userId: $userId,type:$media,status:PLANNING) {
-      id
-      media{
-        title {
-          romaji
-          english
-          native
-          userPreferred
-        },
-        meanScore,
-        status,
-        volumes,
-        coverImage {
-            large
-        },
-        episodes,
-        siteUrl
-      }
-  }
-  }
-}
-
-    '''
-
-    # Define our query variables and values that will be used in the query request
-    variables = {
-        'userId': user_id,
-        'page': page,
-        'media': media
-    }
-
-    url = 'https://graphql.anilist.co'
-
-    # Make the HTTP Api request
-    return requests.post(
-        url, json={'query': query, 'variables': variables}).json()
-
-
-async def get_media_info(search, media):
-    query = '''
-        query($query:String, $media:MediaFormat){
-        Media(search:$query,format:$media){
-        title {
-        romaji
-        english
-        native
-        userPreferred
-        }
-        meanScore
-        coverImage{
-            extraLarge
-        }
-        siteUrl
-    }
-    }
-    '''
-
-    variables = {
-        'query': search,
-        'media': media
-    }
-
-    url = 'https://graphql.anilist.co'
-
-    return requests.post(
-        url, json={'query': query, 'variables': variables}).json()
+from helpers.anilist import MEDIA, get_anilist_id, get_anilist_planning, get_media_info, get_media_info_by_id
+from helpers.general import send_error_message, send_response, set_processing
 
 
 class Anilist(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=["animeomanga", "animevsmanga"])
-    async def animeormanga(self, ctx, title):
+    @commands.Cog.listener()
+    async def on_ready(self):
+        print("Cog de anilist cargado con éxito")
+
+    @commands.command(aliases=["animeomanga", "animevsmanga", "animeormanga"])
+    async def animeormangaprefix(self, ctx, title=""):
+        if title == "":
+            return await send_error_message(ctx, "Tienes que escribir el nombre de la franquicia")
+        await self.animeormanga(ctx, title)
+
+    @commands.slash_command()
+    async def animeormanga(self, ctx,
+                           title: discord.Option(str, "Título de la franquicia a analizar", required=True)):
+        await set_processing(ctx)
         manga = await get_media_info(title, "MANGA")
         anime = await get_media_info(title, "TV")
 
         if "errors" in anime:
-            return await send_error_message(self, ctx, "No existe anime para esa serie.")
+            return await send_error_message(ctx, "No existe anime para esa serie.")
 
         if "errors" in manga:
-            return await send_error_message(self, ctx, "No existe manga para esa serie.")
+            return await send_error_message(ctx, "No existe manga para esa serie.")
 
-        if(anime["data"]["Media"]["title"]["native"] != manga["data"]["Media"]["title"]["native"]):
+        if anime["data"]["Media"]["title"]["native"] != manga["data"]["Media"]["title"]["native"]:
             manga = await get_media_info(anime["data"]["Media"]["title"]["native"], "MANGA")
             if "errors" in manga:
-                return await send_error_message(self, ctx, "No se han podido encontrar coincidencias, escriba el título de forma más exacta.")
+                return await send_error_message(ctx, "No se han podido encontrar coincidencias, escriba el título de forma más exacta.")
 
         if "errors" in manga:
-            return await send_error_message(self, ctx, "No existe manga para esa serie.")
+            return await send_error_message(ctx, "No existe manga para esa serie.")
 
         if not anime["data"]["Media"]["meanScore"]:
-            return await send_error_message(self, ctx, "Ese anime todavía no tiene puntuación.")
+            return await send_error_message(ctx, "Ese anime todavía no tiene puntuación.")
 
         if not manga["data"]["Media"]["meanScore"]:
-            return await send_error_message(self, ctx, "Ese manga todavía no tiene puntuación.")
+            return await send_error_message(ctx, "Ese manga todavía no tiene puntuación.")
 
-        if(anime["data"]["Media"]["meanScore"] > manga["data"]["Media"]["meanScore"]):
+        if anime["data"]["Media"]["meanScore"] > manga["data"]["Media"]["meanScore"]:
             best = anime
             best_type = "anime"
             worst_type = "manga"
-        elif(anime["data"]["Media"]["meanScore"] < manga["data"]["Media"]["meanScore"]):
+        elif anime["data"]["Media"]["meanScore"] < manga["data"]["Media"]["meanScore"]:
             best = manga
             best_type = "manga"
             worst_type = "anime"
@@ -212,7 +64,7 @@ class Anilist(commands.Cog):
                             value=manga["data"]["Media"]["meanScore"])
             embed.add_field(
                 name="Link", value=anime["data"]["Media"]["siteUrl"], inline=False)
-            return await ctx.send(embed=embed)
+            return await send_response(ctx, embed=embed)
 
         embed = discord.Embed(
             title=f"El {best_type} de {best['data']['Media']['title']['native']} es mejor que el {worst_type}")
@@ -225,22 +77,24 @@ class Anilist(commands.Cog):
         embed.add_field(
             name="Link", value=best["data"]["Media"]["siteUrl"], inline=False)
 
-        return await ctx.send(embed=embed)
+        return await send_response(ctx, embed=embed)
 
-    @commands.command()
-    async def random(self, ctx, medium, username, volumes=10000):
-        if(medium.upper() not in MEDIUMS):
-            await send_error_message(self, ctx, "Los medios disponibles son manga o anime.")
-            return
+    @commands.slash_command()
+    async def randommedia(self, ctx,
+                          medio: discord.Option(str, "Elegir entre anime o manga aleatorios", choices=MEDIA, required=True),
+                          username: discord.Option(str, "Nombre de usuario de anilist", required=True),
+                          volumes: discord.Option(int, "Número máximo de volúmenes (en caso de manga)", min_value=1, required=False, default=10000)):
+
         user_id = await get_anilist_id(username)
-        if(user_id == -1):
-            await send_error_message(self, ctx, "Esa cuenta de anilist no existe o es privada, cambia tus ajustes de privacidad.")
+        if user_id == -1:
+            await send_error_message(ctx, "Esa cuenta de anilist no existe o es privada, cambia tus ajustes de privacidad.")
             return
         nextPage = True
         page = 1
+        await set_processing(ctx)
         result = []
         while nextPage:
-            planning = await get_anilist_planning(page, user_id, medium.upper())
+            planning = await get_anilist_planning(page, user_id, medio.upper())
             nextPage = planning["data"]["Page"]["pageInfo"]["hasNextPage"]
             for media in planning["data"]["Page"]["mediaList"]:
                 element = {
@@ -253,16 +107,16 @@ class Anilist(commands.Cog):
                     "episodes": media["media"]["episodes"],
                     "url": media["media"]["siteUrl"]
                 }
-                if(element["volumes"] and element["volumes"] <= int(volumes)):
+                if (element["volumes"] and element["volumes"] <= int(volumes)) or medio == "ANIME":
                     result.append(element)
 
             page += 1
-        if(len(result) == 0):
-            await send_error_message(self, ctx, "No hay nada en tu lista que cumpla los parámetros seleccionados")
+        if len(result) == 0:
+            await send_error_message(ctx, "No hay nada en tu lista que cumpla los parámetros seleccionados")
             return
         chosen = random.choice(result)
         embed = discord.Embed(
-            title=f"El {medium} seleccionado es: ", color=0x24b14d, description=chosen["url"])
+            title=f"El {medio} seleccionado es: ", color=0x24b14d, description=chosen["url"])
         embed.set_thumbnail(
             url=chosen["image"])
         embed.add_field(
@@ -270,7 +124,7 @@ class Anilist(commands.Cog):
         embed.add_field(name="Nota media", value=chosen['mean'], inline=False)
         embed.add_field(
             name="Estado", value=chosen["status"], inline=False)
-        if(medium.upper() == "MANGA"):
+        if medio.upper() == "MANGA":
             volumes = chosen["volumes"]
             if volumes is None:
                 volumes = "Todavía se está publicando"
@@ -279,7 +133,18 @@ class Anilist(commands.Cog):
         else:
             embed.add_field(
                 name="Capítulos", value=chosen["episodes"], inline=False)
-        await ctx.send(embed=embed)
+        await send_response(ctx, embed=embed)
+
+    @commands.command(aliases=["randommedia"])
+    async def randomprefix(self, ctx, medio, username="", volumes=10000):
+        if medio.upper() not in MEDIA:
+            await send_error_message(self, ctx, "Los medios disponibles son manga o anime.")
+            return
+        if username == "":
+            return await send_error_message(ctx, "Tienes que escribir tu nombre de usuario de anilist")
+        if volumes < 1:
+            return await send_error_message(ctx, "El mínimo de volúmenes es 1")
+        await self.random(ctx, medio, username, volumes)
 
 
 def setup(bot):

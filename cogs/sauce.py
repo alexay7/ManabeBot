@@ -1,39 +1,24 @@
-"""Cog responsible for sauce."""
-
-import json
-import discord
 import os
+import discord
 from discord.ext import commands
+
 from saucenao_api import SauceNao, errors
-from discord import Embed
-from .fun import send_error_message
 
-#############################################################
-# Variables (Temporary)
-with open("cogs/myguild.json") as json_file:
-    data_dict = json.load(json_file)
-    guild_id = data_dict["guild_id"]
-    join_quiz_channel_ids = data_dict["join_quiz_1_id"]
-    admin_id = data_dict["kaigen_user_id"]
-#############################################################
-
-# BOT'S COMMANDS
+from helpers.general import send_error_message
 
 
 class Sauce(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @ commands.Cog.listener()
+    @commands.Cog.listener()
     async def on_ready(self):
-        self.myguild = self.bot.get_guild(guild_id)
-        # await self.private_admin_channel.send("Connected to db successfully")
+        print("Cog de salsa cargado con éxito")
 
     @commands.command(aliases=["salsa"])
     async def sauce(self, ctx, url=None):
         sauce = SauceNao(os.getenv("SAUCE_TOKEN"))
-
-        if(ctx.message.reference):
+        if ctx.message.reference:
             msg = await ctx.fetch_message(ctx.message.reference.message_id)
             if len(msg.attachments) > 0:
                 url = msg.attachments[0].url
@@ -46,13 +31,14 @@ class Sauce(commands.Cog):
         try:
             best = sauce.from_url(url)[0]
         except errors.UnknownClientError:
-            return await send_error_message(self, ctx, "Nada encontrado")
+            return await send_error_message(ctx, "Nada encontrado")
 
         if best and len(best.urls) > 0:
             if best.similarity > 60:
-                embed = Embed(color=0x5842ff, title="✅ He encontrado algo!")
+                embed = discord.Embed(
+                    color=0x5842ff, title="✅ He encontrado algo!")
             else:
-                embed = Embed(
+                embed = discord.Embed(
                     color=0x5842ff, title="🤨 No estoy muy seguro, buscas esto?")
             embed.set_thumbnail(url=best.thumbnail)
             embed.add_field(name="Nombre", value=best.title, inline=True)

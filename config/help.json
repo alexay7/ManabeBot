@@ -1,0 +1,292 @@
+{
+    "categories": {
+        "inmersion": {
+            "descripcion": "🏆 Loguea tu inmersión y compite contra otros usuarios!"
+        },
+        "extras": {
+            "descripcion": "🎌 Comandos de todo tipo para lo que puedas necesitar!"
+        },
+        "kotoba": {
+            "descripcion": "📖 Completa los ranked quiz y sube de nivel en el servidor!"
+        },
+        "tests": {
+            "descripcion": "✅ Prepárate para el JLPT con preguntas reales de exámenes!"
+        },
+        "manga": {
+            "descripción": "📚 Comandos relacionados con el komga del servidor"
+        }
+    },
+    "commands": {
+        "help": {
+            "categoria": "extras",
+            "comando": ".help",
+            "short_description": "Recibe ayuda",
+            "uso": ".help [comando o categoría]",
+            "descripcion": "Muestra el uso de los comandos del bot",
+            "Extra": [
+                {
+                    "name": "Categorías de ayuda:",
+                    "value": "[Inmersión]: Comandos sobre el logueo de inmersión\n[Kotoba]: Comandos sobre los ranked quiz del bot kotoba\n[Tests]: Comandos sobre los test JLPT\n[Extras]: Comandos variados"
+                }
+            ]
+        },
+        "kalise": {
+            "categoria": "extras",
+            "comando": ".kalise",
+            "short_description": "Comprueba si el bot está online",
+            "uso": ".kalise",
+            "descripcion": "Envía una imagen aleatoria"
+        },
+        "sauce": {
+            "categoria": "extras",
+            "comando": ".sauce",
+            "short_description": "Te dice de donde es una imagen",
+            "uso": ".sauce (url)",
+            "descripcion": "Recibe y una imagen y te dice cual es su procendencia.\nLas imágenes pueden mandarse poniendo el link directamente, adjuntándola o mencionando el mensaje que la contiene."
+        },
+        "japonabierto": {
+            "categoria": "extras",
+            "comando": ".japonabierto",
+            "short_description": "Comprueba si las fronteras de japón están abiertas",
+            "uso": ".japonabierto",
+            "descripcion": "Comprueba si las fronteras de japón ya están abiertas al turismo o siguen cerradas por el Covid."
+        },
+        "aleatorio": {
+            "categoria": "extras",
+            "comando": ".aleatorio",
+            "short_description": "Recibe un 四字熟語 (yojijukugo) aleatorio",
+            "uso": ".aleatorio",
+            "descripcion": "Buscar un 四字熟語 (yojijukugo) en jisho y muestra el significado."
+        },
+        "animeomanga": {
+            "categoria": "extras",
+            "comando": ".animeomanga",
+            "short_description": "Compara la nota entre anime y manga de algo",
+            "uso": ".animeomanga [nombre de la franquicia]",
+            "descripcion": "Compara las notas medias de anilist entre el anime y el manga de una franquicia.\nEn caso de existir varios animes solo tendrá en cuenta el primero."
+        },
+        "randommedia": {
+            "categoria": "extras",
+            "comando": ".randommedia",
+            "short_description": "Recibe un anime o manga aleatorio",
+            "uso": ".randommedia [anime/manga] [usuario de anilist] (número máximo de volúmenes)",
+            "descripcion": "Elige un anime o manga aleatorios de entre la lista de planeados del usuario de anilist indicado.\n El número máximo de volúmenes es opcional."
+        },
+        "yenaeuro": {
+            "categoria": "extras",
+            "comando": ".yenaeuro",
+            "short_description": "Convierte yenes a euros",
+            "uso": ".yenaeuro [cantidad de yenes]",
+            "descripcion": "Convierte yenes a euros según la cotización del día de hoy."
+        },
+        "euroayen": {
+            "categoria": "extras",
+            "comando": ".euroayen",
+            "short_description": "Convierte euros a yenes",
+            "uso": ".euroayen [cantidad de euros]",
+            "descripcion": "Convierte euros a yenes según la cotización del día de hoy"
+        },
+        "levelup": {
+            "categoria": "kotoba",
+            "comando": ".levelup",
+            "short_description": "Imprime el comando para subir al siguiente nivel",
+            "uso": ".levelup",
+            "descripcion": "Muestra el comando necesario para subir al siguiente nivel en los ranked quiz de kotoba.\nSolo puede ser utilizado en <#796084920790679612>"
+        },
+        "levelupall": {
+            "categoria": "kotoba",
+            "comando": ".levelupall",
+            "short_description": "Imprime todos los comandos para subir nivel",
+            "uso": ".levelupall",
+            "descripcion": "Muestra los diferentes comandos para subir de nivel en los ranked quiz de kotoba.\nSolo puede ser utilizado en <#796084920790679612>"
+        },
+        "test": {
+            "categoria": "tests",
+            "comando": "/test",
+            "short_description": "Haz un test con ejercicios del JLPT",
+            "uso": "/test [nivel] [número de preguntas] [categoría o tipo de preguntas]",
+            "descripcion": "Genera un test con preguntas aleatorias del nivel del JLPT que indiques.\nEste comando no puede ser usado con el prefijo .",
+            "Extra": [
+                {
+                    "name": "Niveles JLPT:",
+                    "value": "N1 | N2 | N3 | N4 | N5"
+                },
+                {
+                    "name": "Categorías de preguntas:",
+                    "value": "[VOCABULARIO]: Incluye los ejercicios 'KANJI','CONTEXTO','PARAFRASES','USO','ORTOGRAFÍA','FORMACION'.\n\n[GRAMÁTICA]: Incluye los ejercicios 'GRAMATICAFRASES','ORDENAR'"
+                },
+                {
+                    "name": "Tipos de preguntas:",
+                    "value": "[KANJI]: Escoger la lectura correcta de la palabra señalada.\n[CONTEXTO]: Escoge la palabra más adecuada para rellenar el hueco.\n[PARAFRASES]: Escoge la palabra más parecida a la subraya\n[USO]: Escoge la frase que usa correctamente la palabra\n[ORTOGRAFIA] (solo en N2,N3 y N4): Elige los kanjis correctos dada la lectura\n[FORMACION]: (solo en N2) Elige la opción para completar la palabra compuesta\n\n[GRAMATICAFRASES]: Escoge la palabra que complete el hueco correctamente\n[ORDENAR]: Escoge la parte de la frase que iría el el hueco con el *"
+                }
+            ]
+        },
+        "testaño": {
+            "categoria": "tests",
+            "comando": "/testaño",
+            "short_description": "Haz un test con ejercicios reales de un año del JLPT N1",
+            "uso": "/test [año] [julio/diciembre]",
+            "descripcion": "Genera un test con preguntas reales del año y la época que concretes (solo N1).\nEste comando no puede ser usado con el prefijo ."
+        },
+        "log": {
+            "categoria": "inmersion",
+            "comando": ".log",
+            "short_description": "Loguea tu inmersión",
+            "uso": ".log [medio] [cantidad] [descripción]",
+            "descripcion": "Comando para loguear lo que has hecho.\nIndica el medio de inmersión, la cantidad y una pequeña descripción para que quede registrado.",
+            "Extra": [
+                {
+                    "name": "Medios de Inmersión admitidos:",
+                    "value": "[LIBRO | MANGA]: Loguear en páginas\n[LECTURA | VN]: Loguear en carácteres\n[ANIME]: Loguear en capítulos\n[TIEMPOLECTURA | AUDIO | VIDEO]: Loguear en minutos"
+                }
+            ]
+        },
+        "backfill": {
+            "categoria": "inmersion",
+            "comando": ".backfill",
+            "short_description": "Loguea inmersión hecha en el pasado",
+            "uso": ".backfill [fecha en formato dd/mm/yyyy] [medio] [cantidad] [descripción]",
+            "descripcion": "Loguea inmersión en algún momento del pasado para tener datos más consistentes en tu progreso.",
+            "Extra": [
+                {
+                    "name": "Medios de Inmersión admitidos:",
+                    "value": "[LIBRO | MANGA]: Loguear en páginas\n[LECTURA | VN]: Loguear en carácteres\n[ANIME]: Loguear en capítulos\n[TIEMPOLECTURA | AUDIO | VIDEO]: Loguear en minutos"
+                }
+            ]
+        },
+        "undo": {
+            "categoria": "inmersion",
+            "comando": ".undo",
+            "short_description": "Borra el ultimo log hecho",
+            "uso": ".undo",
+            "descripcion": "Misma función que si reaccionas con ❌ al mensaje de confirmación del log, lo elimina de entre tus logs."
+        },
+        "remlog": {
+            "categoria": "inmersion",
+            "comando": ".remlog",
+            "short_description": "Borra un log determinado",
+            "uso": ".remlog [id del log]",
+            "descripcion": "Elimina el log identificado por la id indicada.\nLa id de un log es el número que aparece arriba a la izquierda en el mensaje de confirmación y a la izquierda en .logs."
+        },
+        "podio": {
+            "categoria": "inmersion",
+            "comando": ".podio",
+            "short_description": "Podio mensual de inmersión",
+            "uso": ".podio",
+            "descripcion": "Muestra el podio por puntos de inmersión del mes actual.",
+            "Extra": [
+                {
+                    "name": "⚠️ Advertencia:",
+                    "value": "Comando complejo: Si quieres modificar los parámetros por defecto usa / en lugar de . para ejectuarlo."
+                }
+            ]
+        },
+        "mvp": {
+            "categoria": "inmersion",
+            "comando": ".mvp",
+            "short_description": "Desglose por meses del top 1 de inmersión en el año actual",
+            "uso": ".mvp",
+            "descripcion": "Muestra a las personas que más han inmersado cada mes.",
+            "Extra": [
+                {
+                    "name": "⚠️ Advertencia:",
+                    "value": "Comando complejo: Si quieres modificar los parámetros por defecto usa / en lugar de . para ejectuarlo."
+                }
+            ]
+        },
+        "logs": {
+            "categoria": "inmersion",
+            "comando": ".logs",
+            "short_description": "Listado con todos tus logs",
+            "uso": ".logs",
+            "descripcion": "Muestra una lista detallada de todos tus logs de inmersión.",
+            "Extra": [
+                {
+                    "name": "⚠️ Advertencia:",
+                    "value": "Comando complejo: Si quieres modificar los parámetros por defecto usa / en lugar de . para ejectuarlo."
+                }
+            ]
+        },
+        "me": {
+            "categoria": "inmersion",
+            "comando": ".me",
+            "short_description": "Breve resumen de lo inmersado el último mes",
+            "uso": ".me",
+            "descripcion": "Muestra un resumen mensual de lo inmersado y lo desglosa por tipos.",
+            "Extra": [
+                {
+                    "name": "⚠️ Advertencia:",
+                    "value": "Comando complejo: Si quieres modificar los parámetros por defecto usa / en lugar de . para ejectuarlo."
+                }
+            ]
+        },
+        "progreso": {
+            "categoria": "inmersion",
+            "comando": ".progreso",
+            "short_description": "Muestra el progreso del ultimo año",
+            "uso": ".progreso",
+            "descripcion": "Compara lo inmersado durante los meses en el ultimo año.",
+            "Extra": [
+                {
+                    "name": "⚠️ Advertencia:",
+                    "value": "Comando complejo: Si quieres modificar los parámetros por defecto usa / en lugar de . para ejectuarlo."
+                }
+            ]
+        },
+        "puntos": {
+            "categoria": "inmersion",
+            "comando": ".puntos",
+            "short_description": "Calcula cuantos puntos necesita/da un periodo de inmersión",
+            "uso": ".puntos [cantidad] [medio]",
+            "descripcion": "Si indicas un medio el comando interpretará la cantidad como el tiempo dedicado a ese medio y devolverá los puntos que se conseguirían en caso de inmersarlo.\nEn caso de no indicar un medio, el comando interpretará la cantidad como los puntos que quieres conseguir y devolverá lo necesario para obtenerlos."
+        },
+        "export": {
+            "categoria": "inmersion",
+            "comando": ".export",
+            "short_description": "Exporta tus logs a excel",
+            "uso": ".export",
+            "descripcion": "Sube una archivo con todos tus logs para que puedas descargarlo y manipularlos a tu gusto.",
+            "Extra": [
+                {
+                    "name": "⚠️ Advertencia:",
+                    "value": "Comando complejo: Si quieres modificar los parámetros por defecto usa / en lugar de . para ejectuarlo."
+                }
+            ]
+        },
+        "ordenarlogs": {
+            "categoria": "inmersion",
+            "comando": ".ordenarlogs",
+            "short_description": "Rellena los huecos en los id causados por logs borrados",
+            "uso": ".ordenarlogs",
+            "descripcion": "Recoloca tus logs de forma que estén uno detrás de otro"
+        },
+        "komgainfo": {
+            "categoria": "manga",
+            "comando": ".komgainfo",
+            "short_description": "Obtén información sobre el servidor de komga",
+            "uso": ".komgainfo",
+            "descripcion": "Muestra los volúmenes/series que hay actualmente en komga además de enlaces de interés."
+        },
+        "subscribe": {
+            "categoria": "manga",
+            "comando": "/subscribe",
+            "short_description": "Suscríbete a un manga",
+            "uso": "/subscribe [Id anilist]",
+            "descripcion": "Se te notificará cuando aparezcan nuevos volúmenes del manga que elijas."
+        },
+        "unsubscribe": {
+            "categoria": "manga",
+            "comando": "/unsubscribe",
+            "short_description": "Suscríbete a un manga",
+            "uso": "/unsubscribe [Id anilist]",
+            "descripcion": "No se te notificará cuando aparezcan nuevos volúmenes del manga."
+        },
+        "buscarmanga": {
+            "categoria": "manga",
+            "comando": "/buscarmanga",
+            "short_description": "Busca información sobre un manga",
+            "uso": "/buscarmanga (Id anilist) (Nombre del manga)",
+            "descripcion": "Mostrará info sobre el manga que busques junto con el enlace de komga para leerlo."
+        }
+    }
+}

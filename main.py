@@ -1,64 +1,38 @@
-"""Main file"""
-
-import os
 import json
+import os
 import discord
+
 from dotenv import load_dotenv
 from discord.ext import commands
 
+# ================ GENERAL VARIABLES ================
+with open("config/general.json") as json_file:
+    general_config = json.load(json_file)
+    trusted_guilds = general_config["trusted_guilds"]
+# ====================================================
+
 load_dotenv()
 intents = discord.Intents.default()
-intents.typing = False
-intents.presences = False
+intents.message_content = True
 intents.members = True
-djtbot = commands.Bot(command_prefix='.', intents=intents, help_command=None)
-client = discord.Client()
-
-with open("cogs/myguild.json") as json_file:
-    data_dict = json.load(json_file)
-    trusted_server_ids = data_dict["trusted_server_ids"]
+intents.reactions = True
+bot = commands.Bot(command_prefix=".", intents=intents, help_command=None)
 
 
-@djtbot.event
+@bot.event
+async def on_ready():
+    await bot.change_presence(activity=discord.Activity(
+        type=discord.ActivityType.watching, name="Cosas japonesas| .help"))
+    print(f"{bot.user} está activo")
+
+
+@bot.event
 async def on_message(message):
-    """Activates when message detected"""
-    if(len(message.content) > 0):
-        if(message.content[0] == "$"):
-            channel = message.channel
-            await channel.send("Ahora mis comandos empiezan por .", delete_after=10.0)
-    for cog in djtbot.cogs:
-        cog = djtbot.get_cog(cog)
-        try:
-            await cog.searchAnilist(message)
-        except AttributeError:
-            continue
-    await djtbot.process_commands(message)
-
-
-@djtbot.check
-def check_guild(ctx):
-    """Checks if the guild is allowed to run the bot"""
-    try:
-        return ctx.guild.id in trusted_server_ids
-    except AttributeError:
-        return True
-
-
-# def connect_db():
-#     try:
-#         client = MongoClient(os.getenv("MONGOURL"),
-#                              serverSelectionTimeoutMS=10000)
-#         client.server_info()
-#         return client
-#     except errors.ServerSelectionTimeoutError:
-#         print("Ha ocurrido un error intentando conectar con la base de datos.")
-#         exit(1)
-
+    if not message.guild or message.guild.id in trusted_guilds:
+        await bot.process_commands(message)
 
 for filename in os.listdir('./cogs'):
     if filename.endswith('.py') and not filename.startswith("nocog"):
-        print(filename)
-        djtbot.load_extension(f'cogs.{filename[:-3]}')
-        print(f"Loaded cog {filename}")
+        bot.load_extension(f'cogs.{filename[:-3]}')
 
-djtbot.run(os.getenv("BOT_TOKEN"))
+bot.run(os.getenv('BOT_TOKEN'))
