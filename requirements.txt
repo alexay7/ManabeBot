@@ -1,6 +1,4 @@
 python-dotenv
-pycodestyle
-autopep8
 py-cord
 beautifulsoup4
 CurrencyConverter
@@ -9,3 +7,5 @@ pandas
 bar_chart_race
 pymongo
 saucenao-api
+translate
+youtube-dl
