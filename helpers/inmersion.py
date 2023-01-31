@@ -367,6 +367,7 @@ def generate_linear_graph(points):
     plt.ylabel("Puntos")
     plt.fill_between(labels, values, color="#AAAAF0")
     plt.savefig("temp/image.png", bbox_inches="tight")
+    plt.close()
     file = discord.File("temp/image.png", filename="image.png")
     return file
 
@@ -394,6 +395,7 @@ def generate_graph(points, type, timelapse=None):
         ax1.axis('equal')
 
         plt.savefig("temp/image.png")
+        plt.close()
         file = discord.File("temp/image.png", filename="image.png")
         return file
     elif type == "progress":
@@ -453,6 +455,7 @@ def generate_graph(points, type, timelapse=None):
                     "ANIME", "MANGA", "VN", "AUDIO", "VIDEO"], loc='upper center', bbox_to_anchor=(0.5, 1.25),
                    ncol=3, fancybox=True, shadow=True, labelcolor="black")
         plt.savefig("temp/image.png", bbox_inches="tight")
+        plt.close()
         file = discord.File("temp/image.png", filename="image.png")
         return file
     else:
@@ -477,6 +480,7 @@ def generate_graph(points, type, timelapse=None):
             fig.set_facecolor("#2F3136")
             fig.autofmt_xdate()
             plt.savefig("temp/image.png")
+            plt.close()
             file = discord.File("temp/image.png", filename="image.png")
             return file
 
