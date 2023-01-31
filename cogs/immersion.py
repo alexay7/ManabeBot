@@ -776,11 +776,11 @@ class Immersion(commands.Cog):
             start = start+relativedelta(months=1)
 
         graph = generate_linear_graph(results)
-        await send_response(ctx, file=graph)
+        return await send_response(ctx, file=graph)
 
     @commands.command(aliases=["ajrstats"])
     async def ajrstatsprefix(self, ctx):
-        await self.ajrstats(ctx)
+        return await self.ajrstats(ctx)
 
     @commands.slash_command()
     async def progreso(self, ctx,
