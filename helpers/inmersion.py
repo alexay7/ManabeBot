@@ -205,6 +205,43 @@ async def get_user_logs(db, userid, timelapse, media=None):
     return ""
 
 
+async def get_total_immersion_of_month(db, timelapse):
+    users = db.users
+    split_time = timelapse.split("/")
+    month = int(split_time[1])
+    year = int(split_time[0])
+    start = int(
+        (datetime(int(year), month, 1)).replace(hour=0, minute=0, second=0).timestamp())
+    if month + 1 > 12:
+        month = 0
+        year += 1
+    end = int(
+        (datetime(int(year), month + 1, 1) - timedelta(days=1)).replace(hour=23, minute=59, second=59).timestamp())
+    query = [{
+        "$project": {
+            "logs": {
+                "$filter": {
+                    "input": "$logs",
+                    "as": "log",
+                    "cond": {"$and": [
+                            {"$gte": ["$$log.timestamp", start]},
+                            {"$lte": ["$$log.timestamp", end]}
+                    ]}
+                }
+            }
+        }
+    }]
+    result = users.aggregate(query)
+    total = 0
+    if result:
+        for elem in result:
+            # Only one document should be found so no problem returning data
+            for log in elem["logs"]:
+                total += log["puntos"]
+
+    return total
+
+
 async def get_total_parameter_of_media(db, media, userid):
     users = db.users
     # ALL LOGS OF A MEDIA TYPE FROM USER
@@ -316,6 +353,24 @@ async def create_user(db, userid, username):
     users.insert_one(newuser)
 
 
+def generate_linear_graph(points):
+    aux = dict(points)
+    labels = []
+    values = []
+    for x, y in aux.items():
+        labels.append(x),
+        values.append(y)
+    plt.plot(labels, values)
+    plt.title("Inmersión en AJR")
+    plt.xticks(rotation=45)
+    plt.xlabel("Tiempo")
+    plt.ylabel("Puntos")
+    plt.fill_between(labels, values, color="#AAAAF0")
+    plt.savefig("temp/image.png", bbox_inches="tight")
+    file = discord.File("temp/image.png", filename="image.png")
+    return file
+
+
 def generate_graph(points, type, timelapse=None):
     aux = dict(points)
     if type == "piechart":
@@ -344,8 +399,8 @@ def generate_graph(points, type, timelapse=None):
     elif type == "progress":
         labels = []
         values = []
-        media = {"LIBRO": [], "MANGA": [], "VN": [], "ANIME": [],
-                 "LECTURA": [], "TIEMPOLECTURA": [], "AUDIO": [], "VIDEO": []}
+        media = {"LIBRO": [], "LECTURA": [], "TIEMPOLECTURA": [], "ANIME": [], "MANGA": [], "VN": [],
+                 "AUDIO": [], "VIDEO": []}
 
         for x, y in aux.items():
             labels.append(x),
@@ -377,24 +432,25 @@ def generate_graph(points, type, timelapse=None):
         audio = np.array(media["AUDIO"])
         video = np.array(media["VIDEO"])
         plt.xticks(rotation=45)
-        plt.bar(labels, libro, color='#b3554d')
-        plt.bar(labels, manga, bottom=libro, color='#4BD0CB')
-        plt.bar(labels, vn, bottom=(
-            libro + manga), color='#93D04B')
-        plt.bar(labels, anime, bottom=libro + manga + vn, color='#808bc1')
-        plt.bar(labels, lectura,
-                bottom=libro + manga + vn + anime, color='#4BD088')
-        plt.bar(labels, tiempolectura,
-                bottom=libro + manga + vn + anime + lectura, color='#4b92d0')
+        plt.bar(labels, libro, color='#f3554d')
+        plt.bar(labels, lectura, bottom=libro, color='#f3554d')
+        plt.bar(labels, tiempolectura, bottom=(
+            libro + lectura), color='#f3554d')
+        plt.bar(labels, anime, bottom=libro +
+                lectura + tiempolectura, color='#ff88cc')
+        plt.bar(labels, manga,
+                bottom=libro + lectura + tiempolectura + anime, color='#4B70fB')
+        plt.bar(labels, vn,
+                bottom=libro + lectura + tiempolectura + anime + manga, color='#03D04B')
         plt.bar(labels, audio,
-                bottom=libro + manga + vn + anime + lectura + tiempolectura, color='#D04B51')
+                bottom=libro + lectura + tiempolectura + anime + manga + vn, color='#FFFF44')
         plt.bar(labels, video,
-                bottom=libro + manga + vn + anime + lectura + tiempolectura + audio, color='#CB4BD0')
+                bottom=libro + lectura + tiempolectura + anime + manga + vn + audio, color='#0f5f0c')
         plt.xlabel("FECHA")
         plt.ylabel("PUNTOS")
         plt.ylim(0, max * 1.05)
-        plt.legend(["LIBRO", "MANGA", "VN", "ANIME", "LECTURA",
-                   "TIEMPOLECTURA", "AUDIO", "VIDEO"], loc='upper center', bbox_to_anchor=(0.5, 1.25),
+        plt.legend(["LIBRO", "LECTURA", "TIEMPOLECTURA",
+                    "ANIME", "MANGA", "VN", "AUDIO", "VIDEO"], loc='upper center', bbox_to_anchor=(0.5, 1.25),
                    ncol=3, fancybox=True, shadow=True, labelcolor="black")
         plt.savefig("temp/image.png", bbox_inches="tight")
         file = discord.File("temp/image.png", filename="image.png")

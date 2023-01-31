@@ -15,7 +15,7 @@ from pymongo import MongoClient, errors
 
 from helpers.anilist import get_anilist_id, get_anilist_logs
 from helpers.general import intToMonth, send_error_message, send_response, set_processing
-from helpers.inmersion import MEDIA_TYPES, MEDIA_TYPES_ENGLISH, MONTHS, TIMESTAMP_TYPES, add_log, calc_media, check_user, compute_points, create_user, generate_graph, get_best_user_of_range, get_logs_animation, get_media_element, get_ranking_title, get_sorted_ranking, get_total_parameter_of_media, get_user_logs, remove_last_log, remove_log, send_message_with_buttons
+from helpers.inmersion import MEDIA_TYPES, MEDIA_TYPES_ENGLISH, MONTHS, TIMESTAMP_TYPES, add_log, calc_media, check_user, compute_points, create_user, generate_graph, generate_linear_graph, get_best_user_of_range, get_logs_animation, get_media_element, get_ranking_title, get_sorted_ranking, get_total_immersion_of_month, get_total_parameter_of_media, get_user_logs, remove_last_log, remove_log, send_message_with_buttons
 
 # ================ GENERAL VARIABLES ================
 with open("config/general.json") as json_file:
@@ -762,6 +762,25 @@ class Immersion(commands.Cog):
     @commands.command(aliases=["ordenarlogs"])
     async def ordenarlogsprefix(self, ctx):
         await self.ordenarlogs(ctx)
+
+    @commands.slash_command()
+    async def ajrstats(self, ctx):
+        """Estadísticas totales de todo el servidor de AJR"""
+        results = {}
+
+        rigth_now = datetime.today()
+        start = datetime(year=2022, month=1, day=1)
+
+        while start.year != rigth_now.year or start.month != (rigth_now + relativedelta(months=1)).month:
+            results[f"{start.year}/{start.month}"] = await get_total_immersion_of_month(self.db, f"{start.year}/{start.month}")
+            start = start+relativedelta(months=1)
+
+        graph = generate_linear_graph(results)
+        await send_response(ctx, file=graph)
+
+    @commands.command(aliases=["ajrstats"])
+    async def ajrstatsprefix(self, ctx):
+        await self.ajrstats(ctx)
 
     @commands.slash_command()
     async def progreso(self, ctx,
