@@ -353,7 +353,7 @@ async def create_user(db, userid, username):
     users.insert_one(newuser)
 
 
-def generate_linear_graph(points):
+def generate_linear_graph(points, horas):
     aux = dict(points)
     labels = []
     values = []
@@ -364,7 +364,10 @@ def generate_linear_graph(points):
     plt.title("Inmersión en AJR")
     plt.xticks(rotation=45)
     plt.xlabel("Tiempo")
-    plt.ylabel("Puntos")
+    if horas:
+        plt.ylabel("Horas totales")
+    else:
+        plt.ylabel("Puntos totales")
     plt.fill_between(labels, values, color="#AAAAF0")
     plt.savefig("temp/image.png", bbox_inches="tight")
     plt.close()

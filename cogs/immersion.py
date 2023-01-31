@@ -764,7 +764,8 @@ class Immersion(commands.Cog):
         await self.ordenarlogs(ctx)
 
     @commands.slash_command()
-    async def ajrstats(self, ctx):
+    async def ajrstats(self, ctx,
+                       horas: discord.Option(bool, "Mostrar horas en vez de puntos", required=False, default=False)):
         """Estadísticas totales de todo el servidor de AJR"""
         results = {}
 
@@ -772,10 +773,14 @@ class Immersion(commands.Cog):
         start = datetime(year=2022, month=1, day=1)
 
         while start.year != rigth_now.year or start.month != (rigth_now + relativedelta(months=1)).month:
-            results[f"{start.year}/{start.month}"] = await get_total_immersion_of_month(self.db, f"{start.year}/{start.month}")
+            divisor = 1
+            if horas:
+                divisor = 27
+            results[f"{start.year}/{start.month}"] = math.ceil(await get_total_immersion_of_month(self.db, f"{start.year}/{start.month}") / divisor)
+
             start = start+relativedelta(months=1)
 
-        graph = generate_linear_graph(results)
+        graph = generate_linear_graph(results, horas)
         return await send_response(ctx, file=graph)
 
     @commands.command(aliases=["ajrstats"])
