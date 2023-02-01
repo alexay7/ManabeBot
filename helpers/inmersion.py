@@ -436,26 +436,27 @@ def generate_graph(points, type, timelapse=None):
         tiempolectura = np.array(media["TIEMPOLECTURA"])
         audio = np.array(media["AUDIO"])
         video = np.array(media["VIDEO"])
+        read = np.sum([libro, lectura, tiempolectura], axis=0)
         plt.xticks(rotation=45)
-        plt.bar(labels, libro, color='#f3554d')
-        plt.bar(labels, lectura, bottom=libro, color='#f3554d')
-        plt.bar(labels, tiempolectura, bottom=(
-            libro + lectura), color='#f3554d')
-        plt.bar(labels, anime, bottom=libro +
-                lectura + tiempolectura, color='#ff88cc')
+        # plt.bar(labels, libro, color='#f3054d')
+        # plt.bar(labels, lectura, bottom=libro, color='#f3054d')
+        # plt.bar(labels, tiempolectura, bottom=(
+        #     libro + lectura), color='#f3054d')
+        plt.bar(labels, read, color='#f3054d')
+        plt.bar(labels, anime, bottom=read, color='#ffae00')
         plt.bar(labels, manga,
-                bottom=libro + lectura + tiempolectura + anime, color='#4B70fB')
+                bottom=read + anime, color='#4Bd0fB')
         plt.bar(labels, vn,
-                bottom=libro + lectura + tiempolectura + anime + manga, color='#03D04B')
+                bottom=read + anime + manga, color='#ffa0ff')
         plt.bar(labels, audio,
-                bottom=libro + lectura + tiempolectura + anime + manga + vn, color='#FFFF44')
+                bottom=read + anime + manga + vn, color='#03D04B')
         plt.bar(labels, video,
-                bottom=libro + lectura + tiempolectura + anime + manga + vn + audio, color='#0f5f0c')
+                bottom=read + anime + manga + vn + audio, color='#0f5f0c')
         plt.xlabel("FECHA")
         plt.ylabel("PUNTOS")
         plt.ylim(0, max * 1.05)
-        plt.legend(["LIBRO", "LECTURA", "TIEMPOLECTURA",
-                    "ANIME", "MANGA", "VN", "AUDIO", "VIDEO"], loc='upper center', bbox_to_anchor=(0.5, 1.25),
+        plt.legend(["LECTURA", "ANIME", "MANGA", "VN", "AUDIO", 
+                    "VIDEO"], loc='upper center', bbox_to_anchor=(0.5, 1.25),
                    ncol=3, fancybox=True, shadow=True, labelcolor="black")
         plt.savefig("temp/image.png", bbox_inches="tight")
         plt.close()

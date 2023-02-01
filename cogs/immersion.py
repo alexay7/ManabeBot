@@ -778,7 +778,7 @@ class Immersion(commands.Cog):
                 divisor = 27
             results[f"{start.year}/{start.month}"] = math.ceil(await get_total_immersion_of_month(self.db, f"{start.year}/{start.month}") / divisor)
 
-            start = start+relativedelta(months=1)
+            start = start + relativedelta(months=1)
 
         graph = generate_linear_graph(results, horas)
         return await send_response(ctx, file=graph)
@@ -891,7 +891,7 @@ class Immersion(commands.Cog):
         df = pd.read_csv('temp/test.csv', index_col='date',
                          parse_dates=['date'])
         df.tail()
-        plt.rc('font', family='Noto Sans CJK JP')
+        plt.rc('font', family='Noto Sans JP')
         plt.rcParams['text.color'] = "#FFFFFF"
         plt.rcParams['axes.labelcolor'] = "#FFFFFF"
         plt.rcParams['xtick.color'] = "#FFFFFF"
