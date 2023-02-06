@@ -28,15 +28,6 @@ class Extra(commands.Cog):
     async def on_ready(self):
         print("Cog de cosas random cargado con éxito")
 
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        if message.author.id != 155149108183695360:
-            if "media.discordapp.net" in message.content:
-                await message.delete()
-                newlink = message.content.replace(
-                    "media.discordapp.net", "cdn.discordapp.com")
-                await send_message_for_other(message, message.author.name, message.author.avatar, newlink)
-
     @commands.slash_command(guild_ids=[main_guild])
     async def say(self, ctx,
                   message: discord.Option(str, "Mensaje a enviar", required=True)):

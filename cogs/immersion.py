@@ -240,7 +240,7 @@ class Immersion(commands.Cog):
 
     @commands.slash_command(pass_context=True)
     async def me(self, ctx,
-                 periodo: discord.Option(str, "Periodo de tiempo para exportar", choices=TIMESTAMP_TYPES, required=False, default="MES"),
+                 periodo: discord.Option(str, "Periodo de tiempo para exportar", choices=TIMESTAMP_TYPES, required=False, default="TOTAL"),
                  gráfica: discord.Option(str, "Gráficos para acompañar los datos", choices=["SECTORES", "BARRAS", "NINGUNO"], required=False, default="SECTORES")):
         """Muestra pequeño resumen de lo inmersado"""
         await set_processing(ctx)
@@ -334,10 +334,10 @@ class Immersion(commands.Cog):
             await send_response(ctx, embed=normal)
 
     @commands.command(aliases=["yo", "me", "resumen"])
-    async def meprefix(self, ctx, periodo="MES", grafica="SECTORES"):
+    async def meprefix(self, ctx, periodo="TOTAL", grafica="SECTORES"):
         if periodo.upper() in ["SECTORES", "BARRAS"]:
             grafica = periodo
-            periodo = "MES"
+            periodo = "TOTAL"
         await self.me(ctx, periodo.upper(), grafica.upper())
 
     @commands.slash_command()
