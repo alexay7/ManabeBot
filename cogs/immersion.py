@@ -520,7 +520,8 @@ class Immersion(commands.Cog):
     async def log(self, ctx,
                   medio: discord.Option(str, "Medio inmersado", choices=MEDIA_TYPES, required=True),
                   cantidad: discord.Option(int, "Cantidad inmersada", required=True, min_value=1, max_value=5000000),
-                  descripción: discord.Option(str, "Pequeño resumen de lo inmersado", required=True)):
+                  descripción: discord.Option(str, "Pequeño resumen de lo inmersado", required=True),
+                  tiempo: discord.Option(int, "Tiempo que te ha llevado en minutos", required=False)):
         """Loguear inmersión"""
         await set_processing(ctx)
         # Check if the user has logs
@@ -541,7 +542,8 @@ class Immersion(commands.Cog):
             'timestamp': int(today.timestamp()),
             'descripcion': message,
             'medio': medio.upper(),
-            'parametro': cantidad
+            'parametro': cantidad,
+            'tiempo': math.ceil(tiempo)
         }
         output = compute_points(newlog)
 
@@ -574,6 +576,9 @@ class Immersion(commands.Cog):
                             value=get_media_element(cantidad, medio.upper()), inline=True)
             embed.add_field(name="Inmersión",
                             value=message, inline=False)
+            if tiempo:
+                embed.add_field(name="Tiempo invertido:",
+                                value=get_media_element(tiempo, "VIDEO"), inline=False)
             if newposition < position:
                 embed.add_field(
                     name="🎉 Has subido en el ranking del mes! 🎉", value=f"**{position+1}º** ---> **{newposition+1}º**", inline=False)
