@@ -542,10 +542,12 @@ class Immersion(commands.Cog):
             'timestamp': int(today.timestamp()),
             'descripcion': message,
             'medio': medio.upper(),
-            'parametro': cantidad,
-            'tiempo': math.ceil(tiempo)
+            'parametro': cantidad
         }
         output = compute_points(newlog)
+
+        if tiempo and tiempo > 0:
+            newlog['tiempo'] = math.ceil(tiempo)
 
         if output > 0.01:
             ranking = await get_sorted_ranking(self.db, "MES", "TOTAL")
@@ -576,7 +578,7 @@ class Immersion(commands.Cog):
                             value=get_media_element(cantidad, medio.upper()), inline=True)
             embed.add_field(name="Inmersión",
                             value=message, inline=False)
-            if tiempo:
+            if tiempo and tiempo > 0:
                 embed.add_field(name="Tiempo invertido:",
                                 value=get_media_element(tiempo, "VIDEO"), inline=False)
             if newposition < position:
@@ -631,9 +633,11 @@ class Immersion(commands.Cog):
         if int(cantidad) > 5000000:
             return await send_error_message(ctx, "Cantidad de inmersión exagerada")
         message = ""
-        for word in ctx.message.content.split(" ")[3:]:
-            message += word + " "
-        await self.log(ctx, medio, cantidad, message)
+        description = ctx.message.content.split(" ")[3].split(";")
+        if len(description) > 1:
+            await self.log(ctx, medio, cantidad, description[0], int(description[1]))
+        else:
+            await self.log(ctx, medio, cantidad, description[0], 0)
 
     @commands.slash_command()
     async def puntos(self, ctx,
