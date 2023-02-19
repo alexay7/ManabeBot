@@ -529,10 +529,10 @@ class Immersion(commands.Cog):
             await create_user(self.db, ctx.author.id, ctx.author.name)
 
         # Verify the user is in the correct channel
-        if ctx.channel.id not in immersion_logs_channels:
-            await send_response(ctx,
-                                "Este comando solo puede ser usado en <#950449182043430942>.")
-            return
+        # if ctx.channel.id not in immersion_logs_channels:
+        #     await send_response(ctx,
+        #                         "Este comando solo puede ser usado en <#950449182043430942>.")
+        #     return
 
         message = descripción
 
@@ -633,11 +633,14 @@ class Immersion(commands.Cog):
         if int(cantidad) > 5000000:
             return await send_error_message(ctx, "Cantidad de inmersión exagerada")
         message = ""
-        description = ctx.message.content.split(" ")[3].split(";")
-        if len(description) > 1:
-            await self.log(ctx, medio, cantidad, description[0], int(description[1]))
+        full = ctx.message.content.split(";")
+        command = full[0]
+        for word in command.split(" ")[3:]:
+            message += word + " "
+        if len(full) > 1:
+            await self.log(ctx, medio, cantidad, message, int(full[1]))
         else:
-            await self.log(ctx, medio, cantidad, description[0], 0)
+            await self.log(ctx, medio, cantidad, message, 0)
 
     @commands.slash_command()
     async def puntos(self, ctx,
@@ -658,7 +661,7 @@ class Immersion(commands.Cog):
                 user_points += log["puntos"]
 
             embed = discord.Embed(
-                title="Preivisión de puntos", color=0x8d205f, description=f"Si inmersaras {get_media_element(cantidad,medio)} de {medio}:"
+                title="Previsión de puntos", color=0x8d205f, description=f"Si inmersaras {get_media_element(cantidad,medio)} de {medio}:"
             )
             embed.add_field(name="Puntos otorgados", value=points)
             embed.add_field(name="Puntos mensuales",
