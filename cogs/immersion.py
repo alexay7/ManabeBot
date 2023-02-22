@@ -346,7 +346,8 @@ class Immersion(commands.Cog):
                        fecha: discord.Option(str, "Fecha en formato DD/MM/YYYY", required=True),
                        medio: discord.Option(str, "Medio inmersado", choices=MEDIA_TYPES, required=True),
                        cantidad: discord.Option(int, "Cantidad inmersada", required=True, min_value=1, max_value=5000000),
-                       descripción: discord.Option(str, "Pequeño resumen de lo inmersado", required=True)):
+                       descripción: discord.Option(str, "Pequeño resumen de lo inmersado", required=True),
+                       tiempo: discord.Option(int, "Tiempo que te ha llevado en minutos", required=False)):
         """Loguear inmersión hecha en el pasado"""
         # Check if the user has logs
         await set_processing(ctx)
@@ -391,6 +392,15 @@ class Immersion(commands.Cog):
 
         output = compute_points(newlog)
 
+        if tiempo and tiempo > 0:
+            newlog['tiempo'] = math.ceil(tiempo)
+            auxlog = copy(newlog)
+            auxlog["medio"] = "TIEMPOLECTURA"
+            auxlog["parametro"] = tiempo
+            new_points = compute_points(auxlog)
+            if new_points > output:
+                output = new_points
+
         if output > 0:
             ranking = await get_sorted_ranking(self.db, "MES", "TOTAL")
             for user in ranking:
@@ -418,6 +428,9 @@ class Immersion(commands.Cog):
                             value=get_media_element(cantidad, medio.upper()), inline=True)
             embed.add_field(name="Inmersión",
                             value=message, inline=False)
+            if tiempo and tiempo > 0:
+                embed.add_field(name="Tiempo invertido:",
+                                value=get_media_element(tiempo, "VIDEO"), inline=False)
             if newposition < position:
                 embed.add_field(
                     name="🎉 Has subido en el ranking del mes! 🎉", value=f"**{position+1}º** ---> **{newposition+1}º**", inline=False)
@@ -439,19 +452,6 @@ class Immersion(commands.Cog):
             await message.clear_reaction("❌")
         except discord.errors.NotFound:
             pass
-
-    @commands.command(aliases=["backlog", "backfill"])
-    async def backfillprefix(self, ctx, fecha, medio, cantidad, descripcion):
-        if medio.upper() not in MEDIA_TYPES:
-            return await send_error_message(ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, audio y video")
-        if not str(cantidad).isnumeric():
-            return await send_error_message(ctx, "La cantidad de inmersión solo puede expresarse en números enteros")
-        if int(cantidad) > 5000000:
-            return await send_error_message(ctx, "Cantidad de inmersión exagerada")
-        message = ""
-        for word in ctx.message.content.split(" ")[3:]:
-            message += word + " "
-        await self.backfill(ctx, fecha, medio, cantidad, message)
 
     @commands.slash_command()
     async def logros(self, ctx):
