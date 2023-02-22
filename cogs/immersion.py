@@ -555,6 +555,7 @@ class Immersion(commands.Cog):
             new_points = compute_points(auxlog)
             if new_points > output:
                 output = new_points
+                newlog["puntos"] = new_points
 
         if output > 0.01:
             ranking = await get_sorted_ranking(self.db, "MES", "TOTAL")
