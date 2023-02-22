@@ -1,5 +1,6 @@
 from asyncio import sleep
 import csv
+from copy import copy
 from datetime import datetime, timedelta
 import json
 import math
@@ -548,6 +549,12 @@ class Immersion(commands.Cog):
 
         if tiempo and tiempo > 0:
             newlog['tiempo'] = math.ceil(tiempo)
+            auxlog = copy(newlog)
+            auxlog["medio"] = "TIEMPOLECTURA"
+            auxlog["parametro"] = tiempo
+            new_points = compute_points(auxlog)
+            if new_points > output:
+                output = new_points
 
         if output > 0.01:
             ranking = await get_sorted_ranking(self.db, "MES", "TOTAL")
