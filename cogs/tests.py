@@ -136,7 +136,7 @@ class Test(commands.Cog):
             if param:
                 questionnum = int(param)
             foundUser = users.find_one(
-                {"user_id": ctx.message.author.id})
+                {"userId": ctx.message.author.id})
             random.shuffle(foundUser["questions_failed"])
             for elem in foundUser["questions_failed"][:questionnum]:
                 questions.append(exercises.find_one({"_id": elem}))
@@ -172,7 +172,7 @@ class Test(commands.Cog):
         points = 0
         question_counter = 1
         user_data = {
-            "user_id": ctx.message.author.id
+            "userId": ctx.message.author.id
         }
         try:
             users.insert(user_data)
@@ -227,13 +227,13 @@ class Test(commands.Cog):
                 incorrect = discord.Embed(
                     title="⌛ Muy lento!", description=question.get("explanation"), color=0xff2929)
                 await ctx.send(embed=incorrect)
-                users.update_one({"user_id": ctx.message.author.id}, {
+                users.update_one({"userId": ctx.message.author.id}, {
                                  "$addToSet": {"questions_failed": question.get("_id")}})
                 # await onlyUserReaction(userans)
                 sleep(3)
             elif checkanswer(userans, answer):
                 # if(preset_questions):
-                #     users.update_one({"user_id": ctx.message.author.id}, {
+                #     users.update_one({"userId": ctx.message.author.id}, {
                 #                      "$pull": {"questions_failed": question.get("_id")}})
                 correct = discord.Embed(
                     title="✅ Respuesta Correcta: " + str(answer) + ") " + question.get("answers")[answer - 1] + ".", color=0x24b14d)
@@ -245,7 +245,7 @@ class Test(commands.Cog):
                 incorrect = discord.Embed(
                     title="❌ Tu Respuesta: " + str(userans) + ") " + question.get("answers")[userans - 1] + ".", color=0xff2929, description="Respuesta Correcta: " + str(answer) + ") " + question.get("answers")[answer - 1] + ".\n\n" + question.get("explanation"))
                 await ctx.send(embed=incorrect)
-                users.update_one({"user_id": ctx.message.author.id}, {
+                users.update_one({"userId": ctx.message.author.id}, {
                     "$addToSet": {"questions_failed": question.get("_id")}})
                 # await onlyUserReaction(userans)
                 sleep(3)
@@ -279,7 +279,7 @@ class Test(commands.Cog):
         points = 0
         question_counter = 1
         user_data = {
-            "user_id": ctx.message.author.id
+            "userId": ctx.message.author.id
         }
         try:
             users.insert(user_data)
@@ -333,13 +333,13 @@ class Test(commands.Cog):
                 incorrect = discord.Embed(
                     title="⌛ Muy lento!", description=question.get("explanation"), color=0xff2929)
                 await ctx.send(embed=incorrect)
-                users.update_one({"user_id": ctx.message.author.id}, {
+                users.update_one({"userId": ctx.message.author.id}, {
                                  "$addToSet": {"questions_failed": question.get("_id")}})
                 # await onlyUserReaction(userans)
                 sleep(3)
             elif checkanswer(userans, answer):
                 if preset_questions:
-                    users.update_one({"user_id": ctx.message.author.id}, {
+                    users.update_one({"userId": ctx.message.author.id}, {
                                      "$pull": {"questions_failed": question.get("id")}})
                 correct = discord.Embed(
                     title="✅ Respuesta Correcta: " + str(answer) + ") " + question.get("answers")[answer - 1] + ".", color=0x24b14d)
@@ -351,7 +351,7 @@ class Test(commands.Cog):
                 incorrect = discord.Embed(
                     title="❌ Tu Respuesta: " + str(userans) + ") " + question.get("answers")[userans - 1] + ".", color=0xff2929, description="Respuesta Correcta: " + str(answer) + ") " + question.get("answers")[answer - 1] + ".\n\n" + question.get("explanation"))
                 await ctx.send(embed=incorrect)
-                users.update_one({"user_id": ctx.message.author.id}, {
+                users.update_one({"userId": ctx.message.author.id}, {
                     "$addToSet": {"questions_failed": question.get("_id")}})
                 # await onlyUserReaction(userans)
                 sleep(3)

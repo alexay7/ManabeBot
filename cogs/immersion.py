@@ -558,6 +558,8 @@ class Immersion(commands.Cog):
                 newlog["puntos"] = new_points
 
         if output > 0.01:
+            logid = await add_log(self.db, ctx.author.id, newlog, ctx.author.name)
+
             ranking = await get_sorted_ranking(self.db, "MES", "TOTAL")
             newranking = ranking
             for user in ranking:
@@ -572,8 +574,6 @@ class Immersion(commands.Cog):
                 if user["username"] == ctx.author.name:
                     newposition = newranking.index(user)
                     current_points = user["points"]
-
-            logid = await add_log(self.db, ctx.author.id, newlog, ctx.author.name)
 
             embed = discord.Embed(title="Log registrado con éxito",
                                   description=f"Log #{logid} || {today.strftime('%d/%m/%Y')}", color=0x24b14d)
@@ -768,15 +768,13 @@ class Immersion(commands.Cog):
             await send_error_message(ctx, "No tienes ningún log.")
             return
         # Verify the user is in the correct channel
-        users = self.db.users
-        logs = users.find_one({'userId': ctx.author.id}, {'logs'})["logs"]
-        newlogs = sorted(logs, key=lambda d: d['timestamp'])
+        logs = self.db.logs
+        found_logs = logs.find({'userId': ctx.author.id})
+        newlogs = sorted(found_logs, key=lambda d: d['timestamp'])
         counter = 1
         for elem in newlogs:
-            elem["id"] = counter
+            logs.update_one({"_id": elem["_id"]}, {"$set": {"id": counter}})
             counter = counter + 1
-        users.update_one({'userId': ctx.author.id}, {'$set': {
-                         'logs': newlogs, 'lastlog': len(newlogs)}})
         await send_response(ctx, "Tu toc ha sido remediado con éxito.")
 
     @commands.command(aliases=["ordenarlogs"])
@@ -804,8 +802,8 @@ class Immersion(commands.Cog):
         return await send_response(ctx, file=graph)
 
     @commands.command(aliases=["ajrstats"])
-    async def ajrstatsprefix(self, ctx):
-        return await self.ajrstats(ctx)
+    async def ajrstatsprefix(self, ctx, horas=False):
+        return await self.ajrstats(ctx, horas)
 
     @commands.slash_command()
     async def progreso(self, ctx,
@@ -821,17 +819,11 @@ class Immersion(commands.Cog):
             año = "TOTAL"
         results = {}
         if año == "TOTAL":
-            data = self.db.users.aggregate([
-                {"$match": {"userId": ctx.author.id}},
-                {"$project":
-                 {"item": 1,
-                  "firstElem": {"$arrayElemAt": ["$logs", 0]}
-                  }
-                 }
-            ])
-            firstlog = data.next()
+            data = self.db.logs.find(
+                {"userId": ctx.author.id}).sort({"timestamp": 1}).limit(1)
+            firstlog = data[0]
             start = datetime.fromtimestamp(
-                firstlog['firstElem']['timestamp']).replace(day=1)
+                firstlog['timestamp']).replace(day=1)
             end = datetime.now().replace()
             steps = (end.year - start.year) * 12 + end.month - start.month + 1
             real_months = steps
@@ -876,17 +868,19 @@ class Immersion(commands.Cog):
                 best_month["year"] = begin.year
                 best_month["points"] = local_total
             results[f"{begin.year}/{begin.month}"] = points
-        media = total / real_months
-        normal = discord.Embed(
-            title=f"Vista {get_ranking_title(año,'ALL')}", color=0xeeff00)
-        normal.add_field(name="Usuario", value=ctx.author.name, inline=False)
-        normal.add_field(name="Media en el periodo",
-                         value=f"{round(media, 2)} puntos", inline=True)
-        normal.add_field(
-            name="Mejor mes", value=f"{MONTHS[best_month['month']-1].capitalize()} del {best_month['year']} con {round(best_month['points'],2)} puntos", inline=True)
-        bardoc = generate_graph(results, "progress")
-        normal.set_image(url="attachment://image.png")
-        await send_response(ctx, embed=normal, file=bardoc)
+        if real_months > 0:
+            media = total / real_months
+            normal = discord.Embed(
+                title=f"Vista {get_ranking_title(año,'ALL')}", color=0xeeff00)
+            normal.add_field(
+                name="Usuario", value=ctx.author.name, inline=False)
+            normal.add_field(name="Media en el periodo",
+                             value=f"{round(media, 2)} puntos", inline=True)
+            normal.add_field(
+                name="Mejor mes", value=f"{MONTHS[best_month['month']-1].capitalize()} del {best_month['year']} con {round(best_month['points'],2)} puntos", inline=True)
+            bardoc = generate_graph(results, "progress")
+            normal.set_image(url="attachment://image.png")
+            await send_response(ctx, embed=normal, file=bardoc)
 
     @commands.command(aliases=["progreso"])
     async def progresoprefix(self, ctx, argument=""):
@@ -1007,7 +1001,7 @@ class Immersion(commands.Cog):
                     errored.append(log["media"]["title"]["native"])
                     failed = True
 
-                if self.db.users.find({'userId': ctx.author.id, 'logs': {'$elemMatch': {'anilistId': newlog["anilistId"]}}}).count() > 0:
+                if self.db.logs.find({'anilistId': newlog["anilistId"], "userId": user_id}).count() > 0:
                     total_repeated += 1
                     failed = True
 

@@ -82,21 +82,25 @@ def get_ranking_title(timelapse, media):
 
 
 async def add_log(db, userid, log, username):
+    logs = db.logs
     users = db.users
     user = users.find_one({'userId': userid})
-    newid = len(user["logs"])
     log["id"] = user["lastlog"] + 1
+
     users.update_one(
         {'userId': userid},
-        {'$push': {"logs": log},
-         '$set': {"lastlog": log["id"], "username": username}}
+        {'$set': {"lastlog": log["id"], "username": username}}
     )
+
+    log["userId"] = userid
+
+    logs.insert_one(log)
+
     return log["id"]
 
 
 async def get_user_logs(db, userid, timelapse, media=None):
-    users = db.users
-
+    logs = db.logs
     if timelapse in MONTHS:
         year = datetime.now().year
         month = MONTHS.index(timelapse) + 1
@@ -105,32 +109,14 @@ async def get_user_logs(db, userid, timelapse, media=None):
     if timelapse == "TOTAL":
         if media in MEDIA_TYPES:
             # ALL LOGS OF A MEDIA TYPE FROM USER
-            result = users.aggregate([
-                {
-                    "$match": {
-                        "userId": userid
-                    }
-                }, {
-                    "$project": {
-                        "logs": {
-                            "$filter": {
-                                "input": "$logs",
-                                "as": "log",
-                                "cond": {"$eq": ["$$log.medio", media]}
-                            }
-                        }
-                    }
-                }
-            ])
+            result = logs.find({"medio": media, "userId": userid})
             if result:
-                for elem in result:
-                    # Only one document should be found so no problem returning data
-                    return elem["logs"]
+                return result
         else:
             # ALL LOGS OF ALL MEDIA TYPES FROM USER
-            result = users.find_one({"userId": userid}, {"logs"})
+            result = logs.find({"userId": userid})
             if result:
-                return result["logs"]
+                return result
         return ""
 
     if timelapse == "SEMANA":
@@ -179,34 +165,22 @@ async def get_user_logs(db, userid, timelapse, media=None):
                 hour=0, minute=0, second=0).timestamp())
             end = int((datetime(int(year), month, day)).replace(
                 hour=23, minute=59, second=59).timestamp())
-    query = [{"$match": {"userId": userid}},
-             {
-        "$project": {
-            "logs": {
-                "$filter": {
-                    "input": "$logs",
-                    "as": "log",
-                    "cond": {"$and": [
-                            {"$gte": ["$$log.timestamp", start]},
-                            {"$lte": ["$$log.timestamp", end]}
-                    ]}
-                }
-            }
-        }
-    }]
+
+    query = {"$and": [{"timestamp": {"$gte": start}}, {
+        "timestamp": {"$lte": end}}], "userId": userid}
+
     if media in MEDIA_TYPES:
-        query[1]["$project"]["logs"]["$filter"]["cond"]["$and"].append(
-            {"$eq": ["$$log.medio", media]})
-    result = users.aggregate(query)
+        query["medio"] = media
+
+    result = logs.find(query)
+
     if result:
-        for elem in result:
-            # Only one document should be found so no problem returning data
-            return elem["logs"]
+        return result
     return ""
 
 
 async def get_total_immersion_of_month(db, timelapse):
-    users = db.users
+    logs = db.logs
     split_time = timelapse.split("/")
     month = int(split_time[1])
     year = int(split_time[0])
@@ -217,33 +191,20 @@ async def get_total_immersion_of_month(db, timelapse):
         year += 1
     end = int(
         (datetime(int(year), month + 1, 1) - timedelta(days=1)).replace(hour=23, minute=59, second=59).timestamp())
-    query = [{
-        "$project": {
-            "logs": {
-                "$filter": {
-                    "input": "$logs",
-                    "as": "log",
-                    "cond": {"$and": [
-                            {"$gte": ["$$log.timestamp", start]},
-                            {"$lte": ["$$log.timestamp", end]}
-                    ]}
-                }
-            }
-        }
-    }]
-    result = users.aggregate(query)
+
+    result = logs.find(
+        {"$and": [{"timestamp": {"$gte": start}}, {"timestamp": {"$lte": end}}]})
+
     total = 0
     if result:
-        for elem in result:
+        for log in result:
             # Only one document should be found so no problem returning data
-            for log in elem["logs"]:
-                total += log["puntos"]
+            total += log["puntos"]
 
     return total
 
 
 async def get_total_parameter_of_media(db, media, userid):
-    users = db.users
     # ALL LOGS OF A MEDIA TYPE FROM USER
     logs = await get_user_logs(db, userid, "TOTAL")
     total_param = 0
@@ -261,10 +222,14 @@ async def remove_log(db, userid, logid):
 
 
 async def remove_last_log(db, userid):
-    users = db.users
-    result = users.update_one(
-        {"userId": userid}, {"$pop": {"logs": 1}})
-    return result.modified_count
+    logs = db.logs
+    try:
+        newest_log = logs.find({"userId": userid}).sort("_id", -1).limit(1)
+        if newest_log:
+            logs.delete_one({"_id": newest_log[0]["_id"]})
+            return 1
+    except:
+        return 0
 
 
 async def get_user_data(db, userid, timelapse, media="TOTAL"):
@@ -322,7 +287,7 @@ async def get_best_user_of_range(db, media, timelapse):
 
 async def get_sorted_ranking(db, timelapse, media):
     leaderboard = []
-    users = db.users.find({}, {"userId", "username"})
+    users = db.users.find({})
     counter = 0
     for user in users:
         points, parameters = await get_user_data(
@@ -347,7 +312,6 @@ async def create_user(db, userid, username):
     newuser = {
         'userId': userid,
         'username': username,
-        'logs': [],
         'lastlog': -1
     }
     users.insert_one(newuser)
@@ -455,7 +419,7 @@ def generate_graph(points, type, timelapse=None):
         plt.xlabel("FECHA")
         plt.ylabel("PUNTOS")
         plt.ylim(0, max * 1.05)
-        plt.legend(["LECTURA", "ANIME", "MANGA", "VN", "AUDIO", 
+        plt.legend(["LECTURA", "ANIME", "MANGA", "VN", "AUDIO",
                     "VIDEO"], loc='upper center', bbox_to_anchor=(0.5, 1.25),
                    ncol=3, fancybox=True, shadow=True, labelcolor="black")
         plt.savefig("temp/image.png", bbox_inches="tight")
