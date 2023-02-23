@@ -321,6 +321,8 @@ class Immersion(commands.Cog):
             points["TOTAL"], 2), inline=True)
         normal.add_field(name="Posición ranking",
                          value=f"{position+1}º", inline=True)
+        normal.add_field(name="Horas de tu vida perdidas",
+                         value=math.ceil(points["TOTAL"] / 27), inline=False)
         normal.add_field(name="Medios", value=output, inline=False)
 
         if gráfica == "SECTORES":
