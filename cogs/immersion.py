@@ -558,8 +558,6 @@ class Immersion(commands.Cog):
                 newlog["puntos"] = new_points
 
         if output > 0.01:
-            logid = await add_log(self.db, ctx.author.id, newlog, ctx.author.name)
-
             ranking = await get_sorted_ranking(self.db, "MES", "TOTAL")
             newranking = ranking
             for user in ranking:
@@ -574,6 +572,8 @@ class Immersion(commands.Cog):
                 if user["username"] == ctx.author.name:
                     newposition = newranking.index(user)
                     current_points = user["points"]
+
+            logid = await add_log(self.db, ctx.author.id, newlog, ctx.author.name)
 
             embed = discord.Embed(title="Log registrado con éxito",
                                   description=f"Log #{logid} || {today.strftime('%d/%m/%Y')}", color=0x24b14d)
