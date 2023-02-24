@@ -16,7 +16,7 @@ from pymongo import MongoClient, errors
 
 from helpers.anilist import get_anilist_id, get_anilist_logs
 from helpers.general import intToMonth, send_error_message, send_response, set_processing
-from helpers.inmersion import MEDIA_TYPES, MEDIA_TYPES_ENGLISH, MONTHS, TIMESTAMP_TYPES, add_log, calc_media, check_user, compute_points, create_user, generate_graph, generate_linear_graph, get_best_user_of_range, get_logs_animation, get_media_element, get_ranking_title, get_sorted_ranking, get_total_immersion_of_month, get_total_parameter_of_media, get_user_logs, remove_last_log, remove_log, send_message_with_buttons
+from helpers.inmersion import MEDIA_TYPES, MEDIA_TYPES_ENGLISH, MONTHS, TIMESTAMP_TYPES, get_media_level, get_param_for_media_level, get_immersion_level, add_log, calc_media, check_user, compute_points, create_user, generate_graph, generate_linear_graph, get_best_user_of_range, get_logs_animation, get_media_element, get_ranking_title, get_sorted_ranking, get_total_immersion_of_month, get_total_parameter_of_media, get_user_logs, remove_last_log, remove_log, send_message_with_buttons
 
 # ================ GENERAL VARIABLES ================
 with open("config/general.json") as json_file:
@@ -29,9 +29,6 @@ with open("config/immersion.json") as json_file:
     immersion_logs_channels = immersion_config["immersion_logs_channels"]
     immersion_mvp_role = immersion_config["immersion_mvp_role"]
     announces_channel = immersion_config["announces_channel"]
-
-with open("config/achievements.json") as json_file:
-    levels = json.load(json_file)
 # ====================================================
 
 
@@ -456,16 +453,33 @@ class Immersion(commands.Cog):
             pass
 
     @commands.slash_command()
-    async def logros(self, ctx):
+    async def logros(self, ctx, userid: discord.Option(str, "Usuario del que quieres ver los logs", required=False)):
         """Obtener tus logros de inmersión"""
-        await self.achievements_(ctx)
+        await self.achievements_(ctx, userid)
 
     @commands.command(aliases=["achievements", "logros", "level", "nivel"])
-    async def achievements_(self, ctx):
+    async def achievements_(self, ctx, userId=None):
         """Obtener tus logros de inmersión"""
         await set_processing(ctx)
 
-        logs = await get_user_logs(self.db, ctx.author.id, "TOTAL")
+        user_id = ctx.author.id
+        user_name = ctx.author.name
+
+        if userId:
+            try:
+                users = self.db.users
+                found = users.find_one({"userId": int(userId)})
+                if found:
+                    user_name = found["username"]
+                    user_id = int(userId)
+                else:
+                    await ctx.message.delete()
+                    return
+            except:
+                await ctx.message.delete()
+                return
+
+        logs = await get_user_logs(self.db, user_id, "TOTAL")
         points = {
             "LIBRO": 0,
             "MANGA": 0,
@@ -504,14 +518,19 @@ class Immersion(commands.Cog):
 
         output = "```"
         for key, value in parameters.items():
-            current_level = math.floor(value / levels[key.upper()])
+            current_level = get_media_level(value, key)
             if value > 0:
                 output += f"-> Eres nivel {current_level+1} en {key} con un total de {get_media_element(value,key)}\n"
 
+        title = f"🎌 Tus logros de inmersión 🎌"
+
+        if userId:
+            title = f"🎌 Logros de inmersión de {user_name} 🎌"
+
         normal = discord.Embed(
-            title=f"🎌 Tus logros de inmersión 🎌", color=0xeeff00)
+            title=title, color=0xeeff00)
         normal.add_field(
-            name="Usuario", value=f"{ctx.author.name} **[Lvl: {math.floor(points['TOTAL'] / 2000) + 1}]**", inline=True)
+            name="Usuario", value=f"{user_name} **[Lvl: {get_immersion_level(points['TOTAL'])}]**", inline=True)
         normal.add_field(name="Puntos Totales", value=round(
             points["TOTAL"], 2), inline=True)
         normal.add_field(name="Nivel por categorías",
@@ -599,9 +618,14 @@ class Immersion(commands.Cog):
             message = await send_response(ctx, embed=embed)
             await message.add_reaction("❌")
             current_param = await get_total_parameter_of_media(self.db, medio.upper(), ctx.author.id)
+
             param_before = current_param - int(cantidad)
 
-            if math.floor(param_before / levels[medio.upper()]) != math.floor(current_param / levels[medio.upper()]):
+            level_before = get_media_level(
+                current_param - int(cantidad), medio.upper())
+            level_after = get_media_level(current_param, medio.upper())
+
+            if level_after > level_before:
                 if medio.upper() in ["ANIME", "VN", "LECTURA"]:
                     verbo = "inmersados"
                 else:
@@ -610,7 +634,7 @@ class Immersion(commands.Cog):
                                                   description="¡Sigue así!", color=0x0095ff)
                 achievement_embed.set_thumbnail(url=ctx.author.avatar)
                 achievement_embed.add_field(
-                    name="Logro conseguido", value=f"{get_media_element(math.floor(current_param / levels[medio.upper()])*levels[medio.upper()],medio.upper())} de {medio.lower()} {verbo}")
+                    name="Logro conseguido", value=f"{get_media_element(math.floor(get_param_for_media_level(level_after,medio.upper())),medio.upper())} de {medio.lower()} {verbo}")
                 await send_response(ctx, embed=achievement_embed)
             await sleep(10)
             try:

@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from helpers.general import intToWeekday, send_error_message
+import math
+import json
 
 
 MONTHS = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
@@ -477,6 +479,75 @@ def compute_points(log):
         puntos = round(int(log["parametro"]) * 45 / 100, 4)
     log["puntos"] = puntos
     return puntos
+
+
+def get_immersion_level(parameter):
+    y = parameter
+
+    nivel = 0
+    while y >= 0:
+        puntos_nivel_siguiente = 100 * math.log2(nivel + 1) + 100
+        if y >= puntos_nivel_siguiente:
+            nivel += 1
+            y -= puntos_nivel_siguiente
+        else:
+            break
+    if y > 2000:
+        y = 2000
+    return nivel
+
+
+def get_param_for_media_level(level, medio):
+    with open("config/achievements.json") as json_file:
+        levels_dict = json.load(json_file)
+
+    level_points = levels_dict[medio]
+    accumulated_points = 0
+
+    for i in range(1, level + 1):
+        if i <= 10:
+            accumulated_points += level_points[0]
+        elif i <= 25:
+            accumulated_points += level_points[1]
+        elif i <= 50:
+            accumulated_points += level_points[2]
+        elif i <= 75:
+            accumulated_points += level_points[3]
+        elif i <= 100:
+            accumulated_points += level_points[4]
+        else:
+            accumulated_points += level_points[5]
+
+    if accumulated_points > 1:
+        return accumulated_points
+    else:
+        return 1
+
+
+def get_media_level(parametro, medio):
+    with open("config/achievements.json") as json_file:
+        levels_dict = json.load(json_file)
+
+    required_points = levels_dict[medio]
+    total_points = 0
+    for i in range(1, 101):
+        if i < 11:
+            required = required_points[0]
+        elif i < 26:
+            required = required_points[1]
+        elif i < 51:
+            required = required_points[2]
+        elif i < 76:
+            required = required_points[3]
+        elif i < 101:
+            required = required_points[4]
+        else:
+            required = required_points[5]
+
+        total_points += required
+        if parametro < total_points:
+            return i - 1
+    return 100
 
 
 async def get_logs_animation(db, month, day):
