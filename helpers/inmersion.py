@@ -69,6 +69,8 @@ def get_ranking_title(timelapse, media):
         tiempo = "diario"
     elif timelapse.isnumeric():
         tiempo = "de " + timelapse
+    elif len(timelapse.split("-")) > 1:
+        tiempo = f"desde el {timelapse.split('-')[0]} hasta el {timelapse.split('-')[1]}"
     else:
         tiempo = "total"
     medio = ""
@@ -139,7 +141,7 @@ async def get_user_logs(db, userid, timelapse, media=None):
             hour=0, minute=0, second=0).timestamp())
         end = int(datetime.today().replace(
             hour=23, minute=59, second=59).timestamp())
-    else:
+    elif len(timelapse.split("-")) == 1:
         split_time = timelapse.split("/")
         if len(split_time) == 1:
             # TOTAL VIEW
@@ -167,6 +169,17 @@ async def get_user_logs(db, userid, timelapse, media=None):
                 hour=0, minute=0, second=0).timestamp())
             end = int((datetime(int(year), month, day)).replace(
                 hour=23, minute=59, second=59).timestamp())
+    else:
+        dates = timelapse.split("-")
+        start_split = dates[0].split("/")
+        end_split = dates[1].split("/")
+        try:
+            start = int(
+                datetime(int(start_split[2]), int(start_split[1]), int(start_split[0])).timestamp())
+            end = int(
+                datetime(int(end_split[2]), int(end_split[1]), int(end_split[0])).timestamp())
+        except:
+            return ""
 
     query = {"$and": [{"timestamp": {"$gte": start}}, {
         "timestamp": {"$lte": end}}], "userId": userid}

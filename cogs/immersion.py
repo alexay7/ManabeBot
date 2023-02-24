@@ -238,18 +238,30 @@ class Immersion(commands.Cog):
 
     @commands.slash_command(pass_context=True)
     async def me(self, ctx,
-                 periodo: discord.Option(str, "Periodo de tiempo para exportar", choices=TIMESTAMP_TYPES, required=False, default="TOTAL"),
-                 gráfica: discord.Option(str, "Gráficos para acompañar los datos", choices=["SECTORES", "BARRAS", "NINGUNO"], required=False, default="SECTORES")):
+                 periodo: discord.Option(str, "Periodo de tiempo para exportar", choices=TIMESTAMP_TYPES.union(["CUSTOM"]), required=False, default="TOTAL"),
+                 gráfica: discord.Option(str, "Gráficos para acompañar los datos", choices=["SECTORES", "BARRAS", "NINGUNO"], required=False, default="SECTORES"),
+                 comienzo: discord.Option(str, "Fecha de inicio (DD/MM/YYYY)", required=False),
+                 final: discord.Option(str, "Fecha de fin (DD/MM/YYYY)", required=False)):
         """Muestra pequeño resumen de lo inmersado"""
         await set_processing(ctx)
         if not await check_user(self.db, ctx.author.id):
             await send_error_message(ctx, "No tienes ningún log")
             return
 
+        if periodo == "CUSTOM" and (not comienzo or not final):
+            await send_error_message(ctx, "Debes concretar un principio y un final")
+            return
+
         if gráfica == "BARRAS":
             periodo = "SEMANA"
 
+        if periodo == "CUSTOM":
+            periodo = comienzo + "-" + final
+
         logs = await get_user_logs(self.db, ctx.author.id, periodo)
+        if logs == "":
+            await send_error_message("Algo ha salido mal, revisa el comando")
+            return
         points = {
             "LIBRO": 0,
             "MANGA": 0,
