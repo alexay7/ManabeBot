@@ -858,7 +858,7 @@ class Immersion(commands.Cog):
         results = {}
         if año == "TOTAL":
             data = self.db.logs.find(
-                {"userId": ctx.author.id}).sort({"timestamp": 1}).limit(1)
+                {"userId": ctx.author.id}).sort("timestamp", 1).limit(1)
             firstlog = data[0]
             start = datetime.fromtimestamp(
                 firstlog['timestamp']).replace(day=1)
