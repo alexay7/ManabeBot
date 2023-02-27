@@ -942,7 +942,7 @@ class Immersion(commands.Cog):
         plt.savefig("temp/image.png", bbox_inches="tight")
         plt.close()
         file = discord.File("temp/image.png", filename="image.png")
-        await send_response(file=file)
+        await send_response(ctx, file=file)
 
     @commands.command(aliases=["ajrstats"])
     async def ajrstatsprefix(self, ctx, horas=False):
