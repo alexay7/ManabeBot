@@ -929,7 +929,10 @@ class Immersion(commands.Cog):
         ax.set_xlabel('Meses')
 
         # Set the y-axis label
-        ax.set_ylabel('Puntos')
+        if horas:
+            ax.set_ylabel('Horas')
+        else:
+            ax.set_ylabel('Puntos')
 
         # Set the title
         ax.set_title('Inmersión en AJR')
