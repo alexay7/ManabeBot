@@ -1,9 +1,11 @@
 from asyncio import sleep
 import csv
+import calendar
 from copy import copy
 from datetime import datetime, timedelta
 import json
 import math
+import numpy as np
 import os
 import matplotlib.pyplot as plt
 import discord
@@ -823,21 +825,124 @@ class Immersion(commands.Cog):
     async def ajrstats(self, ctx,
                        horas: discord.Option(bool, "Mostrar horas en vez de puntos", required=False, default=False)):
         """Estadísticas totales de todo el servidor de AJR"""
-        results = {}
+        pipeline = [
+            {"$match": {
+                "timestamp": {
+                    "$gte": int(datetime(2022, 1, 1, 0, 0, 0).timestamp()),
+                }
+            }},
+            {
+                '$group': {
+                    '_id': {
+                        'userId': '$userId',
+                        'year': {'$year': {'$toDate': {'$multiply': ['$timestamp', 1000]}}},
+                        'month': {'$month': {'$toDate': {'$multiply': ['$timestamp', 1000]}}}
+                    },
+                    'puntos': {'$sum': '$puntos'}
+                }
+            },
+            {
+                '$sort': {'_id.year': 1, '_id.month': 1}
+            }, {
+                '$lookup': {
+                    'from': 'users',
+                    'localField': '_id.userId',
+                    'foreignField': 'userId',
+                    'as': 'userInfo'
+                }
+            }, {
+                '$unwind': {
+                    'path': '$userInfo'
+                }
+            }, {
+                '$project': {
+                    '_id.month': 1,
+                    '_id.year': 1,
+                    '_id.userId': '$userInfo.username',
+                    'puntos': 1
+                }
+            }
+        ]
 
-        rigth_now = datetime.today()
-        start = datetime(year=2022, month=1, day=1)
+        # Run the pipeline and get the results
+        results = list(self.db.logs.aggregate(pipeline))
 
-        while start.year != rigth_now.year or start.month != (rigth_now + relativedelta(months=1)).month:
-            divisor = 1
+        # Create a dictionary to store the data for each user
+        user_data = {}
+
+        # Loop through the results and group the data by user
+        for result in results:
+            user_id = result['_id']['userId']
+            year = result['_id']['year']
+            month = result['_id']['month']
+            month_name = calendar.month_name[month]
+            puntos = result['puntos']
+
+            # Check if the user data exists in the dictionary, and add it if it doesn't
+            if user_id not in user_data:
+                user_data[user_id] = {'x': [], 'y': [], 'label': user_id}
+
+            # Add the data point to the user's data
+            user_data[user_id]['x'].append(f"{year}/{str(month).zfill(2)}")
             if horas:
-                divisor = 27
-            results[f"{start.year}/{start.month}"] = math.ceil(await get_total_immersion_of_month(self.db, f"{start.year}/{start.month}") / divisor)
+                user_data[user_id]['y'].append(puntos / 27)
+            else:
+                user_data[user_id]['y'].append(puntos)
 
-            start = start + relativedelta(months=1)
+        # Find the common set of x-axis labels and sort them by year and month
+        x_labels = list(
+            set([x_val for user_id, data in user_data.items() for x_val in data['x']]))
+        x_labels.sort()
 
-        graph = generate_linear_graph(results, horas)
-        return await send_response(ctx, file=graph)
+        # Create a dictionary to hold the filled-in data
+        filled_data = {}
+
+        # Loop through each user's data and fill in missing data with zeros
+        for user_id, data in user_data.items():
+            filled_data[user_id] = {'x': x_labels, 'y': []}
+            for x_label in x_labels:
+                if x_label in data['x']:
+                    filled_data[user_id]['y'].append(
+                        data['y'][data['x'].index(x_label)])
+                else:
+                    filled_data[user_id]['y'].append(0)
+            # Copy the label from the user_data dictionary to the filled_data dictionary
+            filled_data[user_id]['label'] = data['label']
+
+        # Create a stacked area chart using Matplotlib
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        hatch_patterns = ['//', '\\\\', '||', '--', 'o', 'xx']
+
+        # Combine the y values for each user and plot them together as a stacked area chart
+        stacked_y = [filled_data[user_id]['y']
+                     for user_id, data in filled_data.items()]
+        stack_coll = ax.stackplot(x_labels, stacked_y, labels=[
+            data['label'] for user_id, data in filled_data.items()])
+
+        for i in range(len(stack_coll)):  # Itera sobre las partes del stackplot
+            # Asigna un hatch diferente a cada parte
+            stack_coll[i].set_hatch(
+                hatch_patterns[(i - 1) % len(hatch_patterns)])
+
+        # Set the x-axis label
+        ax.set_xlabel('Meses')
+
+        # Set the y-axis label
+        ax.set_ylabel('Puntos')
+
+        # Set the title
+        ax.set_title('Inmersión en AJR')
+
+        # Create the legend outside the plot
+        ax.legend([filled_data[user_id]['label'] for user_id, data in filled_data.items(
+        )], loc='upper left', bbox_to_anchor=(1.05, 1), fontsize='large')
+
+        plt.xticks(rotation=45)
+        plt.savefig("temp/image.png", bbox_inches="tight")
+        plt.close()
+        file = discord.File("temp/image.png", filename="image.png")
+        await ctx.send(file=file)
 
     @commands.command(aliases=["ajrstats"])
     async def ajrstatsprefix(self, ctx, horas=False):
