@@ -20,9 +20,6 @@ with open("config/manga.json") as json_file:
     petitions_channels = manga_config["petitions_channels"]
     notification_channel = manga_config["notification_channel"]
     defects_channel = manga_config["defects_channel"]
-
-with open("config/komga.json", encoding="utf8") as json_file:
-    komga_files = json.load(json_file)
 # ====================================================
 
 
