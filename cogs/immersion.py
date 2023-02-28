@@ -869,6 +869,8 @@ class Immersion(commands.Cog):
 
         # Create a dictionary to store the data for each user
         user_data = {}
+        max_points = 0
+        max_month = None
 
         # Loop through the results and group the data by user
         for result in results:
@@ -909,10 +911,27 @@ class Immersion(commands.Cog):
             # Copy the label from the user_data dictionary to the filled_data dictionary
             filled_data[user_id]['label'] = data['label']
 
+        month_points = {}
+        for x_label in x_labels:
+            total_points = sum([data['y'][idx] for user_id, data in filled_data.items(
+            ) for idx, x_val in enumerate(data['x']) if x_val == x_label])
+            month_points[x_label] = total_points
+
+        # Find the month with the highest points
+        for month, points in month_points.items():
+            if points > max_points:
+                max_month = month
+                max_points = points
+            if (month == f"{datetime.now().year}/{str(datetime.now().month).zfill(2)}"):
+                current_month = month
+                current_month_points = points
+
+        colors = ["#000", "#556b2f", "#7f0000", "#191970", "#5f9ea0", "#9acd32", "#ff0000", "#ff8c00", "#ffd700",
+                  "#0000cd", "#ba55d3", "#00fa9a", "#00ffff", "#f08080", "#ff00ff", "#1e90ff", "#dda0dd",
+                  "#ff1493", "#f5deb3"]
+
         # Create a stacked area chart using Matplotlib
         fig, ax = plt.subplots(figsize=(10, 6))
-
-        hatch_patterns = ['//', '\\\\', '||', '--', 'o', 'xx']
 
         # Combine the y values for each user and plot them together as a stacked area chart
         stacked_y = [filled_data[user_id]['y']
@@ -922,8 +941,16 @@ class Immersion(commands.Cog):
 
         for i in range(len(stack_coll)):  # Itera sobre las partes del stackplot
             # Asigna un hatch diferente a cada parte
-            stack_coll[i].set_hatch(
-                hatch_patterns[(i - 1) % len(hatch_patterns)])
+            stack_coll[i].set_color(
+                colors[(i - 1) % len(colors)])
+
+        ax.text(max_month, max_points,
+                f"{math.ceil(max_points)}", ha='center', va='bottom', fontsize=12)
+
+        if max_month != month:
+            # Add text annotation for current month points
+            ax.text(current_month, current_month_points,
+                    f"{math.ceil(current_month_points)}", ha='center', va='center')
 
         # Set the x-axis label
         ax.set_xlabel('Meses')
@@ -947,11 +974,11 @@ class Immersion(commands.Cog):
         file = discord.File("temp/image.png", filename="image.png")
         await send_response(ctx, file=file)
 
-    @commands.command(aliases=["ajrstats"])
+    @ commands.command(aliases=["ajrstats"])
     async def ajrstatsprefix(self, ctx, horas=False):
         return await self.ajrstats(ctx, horas)
 
-    @commands.slash_command()
+    @ commands.slash_command()
     async def progreso(self, ctx,
                        año: discord.Option(int, "Año que cubre el ranking (el desglose será mensual)", min_value=2019, max_value=datetime.now().year, required=False, default=datetime.now().year),
                        total: discord.Option(bool, "Progreso desde el primer log registrado", required=False, default=False)):
@@ -1028,13 +1055,13 @@ class Immersion(commands.Cog):
             normal.set_image(url="attachment://image.png")
             await send_response(ctx, embed=normal, file=bardoc)
 
-    @commands.command(aliases=["progreso"])
+    @ commands.command(aliases=["progreso"])
     async def progresoprefix(self, ctx, argument=""):
         if argument != "":
             return await send_error_message(ctx, "Para usar parámetros escribe el comando con / en lugar de .")
         await self.progreso(ctx, datetime.now().year, False)
 
-    @commands.slash_command()
+    @ commands.slash_command()
     async def findemes(self, ctx,
                        mes: discord.Option(int, "Mes que ha finalizado", min_value=1, max_value=12, required=False, default=datetime.now().month - 1),
                        video: discord.Option(bool, "Video o no", required=False, default=True)):
@@ -1092,7 +1119,7 @@ class Immersion(commands.Cog):
             await channel.send(embed=embed, content=message)
         await send_response(ctx, "Gráfico generado con éxito")
 
-    @commands.slash_command()
+    @ commands.slash_command()
     async def addanilist(self, ctx,
                          anilistuser: discord.Option(str, "Nombre de usuario anilist", required=True),
                          fechaminima: discord.Option(str, "Fecha de inicio en formato YYYYMMDD", required=False)):
@@ -1184,7 +1211,7 @@ class Immersion(commands.Cog):
         await send_response(ctx, embed=embed)
         print(errored)
 
-    @commands.command(aliases=["addanilist"])
+    @ commands.command(aliases=["addanilist"])
     async def addanilistprefix(self, ctx, anilistuser, fechaminima=""):
         await self.addanilist(ctx, anilistuser, fechaminima)
 
