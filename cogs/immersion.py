@@ -271,6 +271,7 @@ class Immersion(commands.Cog):
             "VN": 0,
             "LECTURA": 0,
             "TIEMPOLECTURA": 0,
+            "OUTPUT": 0,
             "AUDIO": 0,
             "VIDEO": 0,
             "TOTAL": 0
@@ -282,6 +283,7 @@ class Immersion(commands.Cog):
             "VN": 0,
             "LECTURA": 0,
             "TIEMPOLECTURA": 0,
+            "OUTPUT": 0,
             "AUDIO": 0,
             "VIDEO": 0
         }
@@ -316,6 +318,8 @@ class Immersion(commands.Cog):
                 output += f"**LECTURA:** {get_media_element(parameters['LECTURA'],'LECTURA')} -> {round(points['LECTURA'],2)} pts\n"
             if points["TIEMPOLECTURA"] > 0:
                 output += f"**LECTURA:** {get_media_element(parameters['TIEMPOLECTURA'],'TIEMPOLECTURA')} -> {round(points['TIEMPOLECTURA'],2)} pts\n"
+            if points["OUTPUT"] > 0:
+                output += f"**OUTPUT:** {get_media_element(parameters['OUTPUT'],'OUTPUT')} -> {round(points['OUTPUT'],2)} pts\n"
             if points["AUDIO"] > 0:
                 output += f"**AUDIO:** {get_media_element(parameters['AUDIO'],'AUDIO')} -> {round(points['AUDIO'],2)} pts\n"
             if points["VIDEO"] > 0:
@@ -352,7 +356,7 @@ class Immersion(commands.Cog):
         if periodo.upper() in ["SECTORES", "BARRAS"]:
             grafica = periodo
             periodo = "TOTAL"
-        await self.me(ctx, periodo.upper(), grafica.upper())
+        await self.me(ctx, periodo.upper(), grafica.upper(), None, None)
 
     @commands.slash_command()
     async def backfill(self, ctx,
@@ -452,7 +456,7 @@ class Immersion(commands.Cog):
             message = await send_response(ctx, embed=embed)
             await message.add_reaction("❌")
         elif output == 0:
-            await send_error_message(ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, audio y video")
+            await send_error_message(ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, output, audio y video")
             return
         elif output == -1:
             await send_error_message(ctx, "La cantidad de inmersión solo puede expresarse en números enteros")
@@ -501,6 +505,7 @@ class Immersion(commands.Cog):
             "VN": 0,
             "LECTURA": 0,
             "TIEMPOLECTURA": 0,
+            "OUTPUT": 0,
             "AUDIO": 0,
             "VIDEO": 0,
             "TOTAL": 0
@@ -512,6 +517,7 @@ class Immersion(commands.Cog):
             "VN": 0,
             "LECTURA": 0,
             "TIEMPOLECTURA": 0,
+            "OUTPUT": 0,
             "AUDIO": 0,
             "VIDEO": 0
         }
@@ -657,7 +663,7 @@ class Immersion(commands.Cog):
                 pass
 
         elif output == 0:
-            await send_error_message(ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, audio y video")
+            await send_error_message(ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, output, audio y video")
             return
         elif output == -1:
             await send_error_message(ctx, "La cantidad de inmersión solo puede expresarse en números enteros")
@@ -675,7 +681,7 @@ class Immersion(commands.Cog):
             if medio.upper() in MEDIA_TYPES_ENGLISH:
                 medio = MEDIA_TYPES_ENGLISH[medio.upper()]
             else:
-                return await send_error_message(ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, audio y video")
+                return await send_error_message(ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, output, audio y video")
         if not str(cantidad).isnumeric():
             return await send_error_message(ctx, "La cantidad de inmersión solo puede expresarse en números enteros")
         if int(cantidad) > 5000000:
@@ -738,7 +744,7 @@ class Immersion(commands.Cog):
                 return await send_error_message(ctx, "Los puntos deben ser un número entero")
         if medio != "":
             if medio.upper() not in MEDIA_TYPES:
-                return await send_error_message(ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, audio y video")
+                return await send_error_message(ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, output, audio y video")
             else:
                 await self.puntos(ctx, cantidad, medio.upper())
         else:
@@ -786,6 +792,7 @@ class Immersion(commands.Cog):
             return
 
         result = await remove_log(self.db, ctx.author.id, logid)
+        print(result)
         if result == 1:
             logdeleted = discord.Embed(color=0x24b14d)
             logdeleted.add_field(
@@ -1026,6 +1033,7 @@ class Immersion(commands.Cog):
                 "VN": 0,
                 "LECTURA": 0,
                 "TIEMPOLECTURA": 0,
+                "OUTPUT": 0,
                 "AUDIO": 0,
                 "VIDEO": 0,
             }

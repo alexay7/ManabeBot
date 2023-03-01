@@ -1,3 +1,4 @@
+from pymongo import collection
 import asyncio
 import csv
 from datetime import datetime, timedelta
@@ -15,7 +16,7 @@ MONTHS = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
           "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"]
 
 MEDIA_TYPES = {"LIBRO", "MANGA", "VN", "ANIME",
-               "LECTURA", "TIEMPOLECTURA", "AUDIO", "VIDEO"}
+               "LECTURA", "TIEMPOLECTURA", "OUTPUT", "AUDIO", "VIDEO"}
 
 MEDIA_TYPES_ENGLISH = {"BOOK": "LIBRO", "READING": "LECTURA",
                        "READTIME": "TIEMPOLECTURA", "LISTENING": "AUDIO"}
@@ -36,7 +37,7 @@ def get_media_element(num, media):
         if int(num) == 1:
             return "1 episodio"
         return f"{num} episodios"
-    if media in {"TIEMPOLECTURA", "AUDIO", "VIDEO"}:
+    if media in {"TIEMPOLECTURA", "AUDIO", "VIDEO", "OUTPUT"}:
         if int(num) < 60:
             return f"{int(num)%60} minutos"
         elif int(num) < 120:
@@ -53,6 +54,7 @@ def calc_media(points):
         "anime": points / 95 * 10,
         "lectura": points * 350,
         "tiempolectura": points / 45 * 100,
+        "output": points/45*100,
         "audio": points / 45 * 100,
         "video": points / 45 * 100
     }
@@ -230,10 +232,11 @@ async def get_total_parameter_of_media(db, media, userid):
 
 
 async def remove_log(db, userid, logid):
-    users = db.users
-    result = users.update_one(
-        {"userId": userid}, {"$pull": {"logs": {"id": int(logid)}}})
-    return result.modified_count
+    logs: collection.Collection = db.logs
+    found_log = logs.delete_one({"userId": userid, "id": int(logid)})
+    if found_log.deleted_count > 0:
+        return 1
+    return 0
 
 
 async def remove_last_log(db, userid):
@@ -256,6 +259,7 @@ async def get_user_data(db, userid, timelapse, media="TOTAL"):
         "VN": 0,
         "LECTURA": 0,
         "TIEMPOLECTURA": 0,
+        "OUTPUT": 0,
         "AUDIO": 0,
         "VIDEO": 0,
         "TOTAL": 0
@@ -267,6 +271,7 @@ async def get_user_data(db, userid, timelapse, media="TOTAL"):
         "VN": 0,
         "LECTURA": 0,
         "TIEMPOLECTURA": 0,
+        "OUTPUT": 0,
         "AUDIO": 0,
         "VIDEO": 0,
         "TOTAL": 0
@@ -383,7 +388,7 @@ def generate_graph(points, type, timelapse=None):
     elif type == "progress":
         labels = []
         values = []
-        media = {"LIBRO": [], "LECTURA": [], "TIEMPOLECTURA": [], "ANIME": [], "MANGA": [], "VN": [],
+        media = {"LIBRO": [], "LECTURA": [], "TIEMPOLECTURA": [], "OUTPUT": [], "ANIME": [], "MANGA": [], "VN": [],
                  "AUDIO": [], "VIDEO": []}
 
         for x, y in aux.items():
@@ -399,10 +404,11 @@ def generate_graph(points, type, timelapse=None):
             media["ANIME"].append(elem["ANIME"])
             media["LECTURA"].append(elem["LECTURA"])
             media["TIEMPOLECTURA"].append(elem["TIEMPOLECTURA"])
+            media["OUTPUT"].append(elem["OUTPUT"])
             media["AUDIO"].append(elem["AUDIO"])
             media["VIDEO"].append(elem["VIDEO"])
             total = elem["LIBRO"] + elem["MANGA"] + elem["VN"] + elem["ANIME"] +  \
-                elem["LECTURA"] + elem["TIEMPOLECTURA"] +  \
+                elem["LECTURA"] + elem["TIEMPOLECTURA"] + elem["OUTPUT"] +  \
                 elem["AUDIO"] + elem["VIDEO"]
             if total > max:
                 max = total
@@ -413,6 +419,7 @@ def generate_graph(points, type, timelapse=None):
         anime = np.array(media["ANIME"])
         lectura = np.array(media["LECTURA"])
         tiempolectura = np.array(media["TIEMPOLECTURA"])
+        output = np.array(media["OUTPUT"])
         audio = np.array(media["AUDIO"])
         video = np.array(media["VIDEO"])
         read = np.sum([libro, lectura, tiempolectura], axis=0)
@@ -431,11 +438,13 @@ def generate_graph(points, type, timelapse=None):
                 bottom=read + anime + manga + vn, color='#03D04B')
         plt.bar(labels, video,
                 bottom=read + anime + manga + vn + audio, color='#0f5f0c')
+        plt.bar(labels, output,
+                bottom=read + anime + manga + vn + audio + video, color='#ff5f0c')
         plt.xlabel("FECHA")
         plt.ylabel("PUNTOS")
         plt.ylim(0, max * 1.05)
         plt.legend(["LECTURA", "ANIME", "MANGA", "VN", "AUDIO",
-                    "VIDEO"], loc='upper center', bbox_to_anchor=(0.5, 1.25),
+                    "VIDEO", "OUTPUT"], loc='upper center', bbox_to_anchor=(0.5, 1.25),
                    ncol=3, fancybox=True, shadow=True, labelcolor="black")
         plt.savefig("temp/image.png", bbox_inches="tight")
         plt.close()
@@ -487,6 +496,8 @@ def compute_points(log):
     elif log["medio"] == "TIEMPOLECTURA":
         puntos = round(int(log["parametro"]) * 45 / 100, 4)
     elif log["medio"] == "AUDIO":
+        puntos = round(int(log["parametro"]) * 45 / 100, 4)
+    elif log["medio"] == "OUTPUT":
         puntos = round(int(log["parametro"]) * 45 / 100, 4)
     elif log["medio"] == "VIDEO":
         puntos = round(int(log["parametro"]) * 45 / 100, 4)

@@ -137,7 +137,7 @@
             "Extra": [
                 {
                     "name": "Medios de Inmersión admitidos:",
-                    "value": "[LIBRO | MANGA]: Loguear en páginas\n[LECTURA | VN]: Loguear en carácteres\n[ANIME]: Loguear en capítulos\n[TIEMPOLECTURA | AUDIO | VIDEO]: Loguear en minutos"
+                    "value": "[LIBRO | MANGA]: Loguear en páginas\n[LECTURA | VN]: Loguear en carácteres\n[ANIME]: Loguear en capítulos\n[TIEMPOLECTURA | OUTPUT | AUDIO | VIDEO]: Loguear en minutos"
                 }
             ]
         },
@@ -150,7 +150,7 @@
             "Extra": [
                 {
                     "name": "Medios de Inmersión admitidos:",
-                    "value": "[LIBRO | MANGA]: Loguear en páginas\n[LECTURA | VN]: Loguear en carácteres\n[ANIME]: Loguear en capítulos\n[TIEMPOLECTURA | AUDIO | VIDEO]: Loguear en minutos"
+                    "value": "[LIBRO | MANGA]: Loguear en páginas\n[LECTURA | VN]: Loguear en carácteres\n[ANIME]: Loguear en capítulos\n[TIEMPOLECTURA | OUTPUT | AUDIO | VIDEO]: Loguear en minutos"
                 }
             ]
         },
