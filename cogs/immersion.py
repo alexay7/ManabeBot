@@ -116,13 +116,19 @@ class Immersion(commands.Cog):
     async def podio(self, ctx,
                     periodo: discord.Option(str, "Periodo de tiempo que cubre el ranking", choices=TIMESTAMP_TYPES, required=False, default="MES"),
                     medio: discord.Option(str, "Medio de inmersión que cubre el ranking", choices=MEDIA_TYPES, required=False, default="TOTAL"),
-                    año: discord.Option(int, "Año que cubre el ranking", min_value=2019, max_value=datetime.now().year, required=False),
+                    comienzo: discord.Option(str, "Fecha de inicio (DD/MM/YYYY)", required=False),
+                    final: discord.Option(str, "Fecha de fin (DD/MM/YYYY)", required=False),
                     extendido: discord.Option(
                         bool, "Muestra el ranking completo", required=False)
                     ):
         """Imprime un ranking de inmersión según los parámetros indicados"""
-        if año:
-            periodo = str(año)
+        if (comienzo and not final) or (final and not comienzo):
+            await send_error_message(ctx, "Debes concretar un principio y un final")
+            return
+
+        if comienzo and final:
+            periodo = comienzo + "-" + final
+
         await set_processing(ctx)
         sortedlist = await get_sorted_ranking(self.db, periodo, medio)
         message = ""
@@ -157,7 +163,7 @@ class Immersion(commands.Cog):
     async def podioprefix(self, ctx, argument=""):
         if argument != "":
             return await send_error_message(ctx, "Para usar parámetros escribe el comando con / en lugar de .")
-        await self.podio(ctx, "MES", "TOTAL", None, None)
+        await self.podio(ctx, "MES", "TOTAL", None, None, None)
 
     @commands.slash_command()
     async def logs(self, ctx,
@@ -240,7 +246,7 @@ class Immersion(commands.Cog):
 
     @commands.slash_command(pass_context=True)
     async def me(self, ctx,
-                 periodo: discord.Option(str, "Periodo de tiempo para exportar", choices=TIMESTAMP_TYPES.union(["CUSTOM"]), required=False, default="TOTAL"),
+                 periodo: discord.Option(str, "Periodo de tiempo para exportar", choices=TIMESTAMP_TYPES, required=False, default="TOTAL"),
                  gráfica: discord.Option(str, "Gráficos para acompañar los datos", choices=["SECTORES", "BARRAS", "NINGUNO"], required=False, default="SECTORES"),
                  comienzo: discord.Option(str, "Fecha de inicio (DD/MM/YYYY)", required=False),
                  final: discord.Option(str, "Fecha de fin (DD/MM/YYYY)", required=False)):
@@ -250,15 +256,15 @@ class Immersion(commands.Cog):
             await send_error_message(ctx, "No tienes ningún log")
             return
 
-        if periodo == "CUSTOM" and (not comienzo or not final):
+        if (comienzo and not final) or (final and not comienzo):
             await send_error_message(ctx, "Debes concretar un principio y un final")
             return
 
-        if gráfica == "BARRAS":
-            periodo = "SEMANA"
-
-        if periodo == "CUSTOM":
+        if comienzo and final:
             periodo = comienzo + "-" + final
+        else:
+            if gráfica == "BARRAS":
+                periodo = "SEMANA"
 
         logs = await get_user_logs(self.db, ctx.author.id, periodo)
         if logs == "":
