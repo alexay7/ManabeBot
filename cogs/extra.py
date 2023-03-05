@@ -9,6 +9,7 @@ import requests
 from bs4 import BeautifulSoup
 from currency_converter import CurrencyConverter
 from translate import Translator
+from helpers.chatgpt import send_prompt
 
 from helpers.general import intToMonth, send_error_message, send_message_for_other, send_response, set_processing
 
@@ -174,6 +175,20 @@ class Extra(commands.Cog):
     @ commands.command(aliases=['randomyoji', 'yojialeatorio', 'palabraaleatoria', 'randomword', 'aleatorio', 'aleatoria'])
     async def aleatorioprefix(self, ctx):
         await self.aleatorio(ctx)
+
+    @commands.slash_command()
+    async def chatgpt(self, ctx, message=discord.Option(str, "Prompt para chatpgt", required=True)):
+        """Envía una prompt a ChatGPT3"""
+        await set_processing(ctx)
+        await send_prompt(ctx, message)
+
+    @commands.command("chatgpt")
+    async def chatgptprefix(self, ctx):
+        message = ""
+        full = ctx.message.content.split(" ")[1:]
+        for word in full:
+            message += word + " "
+        await self.chatgpt(ctx, message)
 
 
 def setup(bot):

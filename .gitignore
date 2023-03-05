@@ -7,3 +7,4 @@ __pycache__
 .VSCodeCounter
 .git
 temp
+.chatgpt_cache.json
