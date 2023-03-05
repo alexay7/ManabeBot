@@ -571,10 +571,10 @@ class Immersion(commands.Cog):
             await create_user(self.db, ctx.author.id, ctx.author.name)
 
         # Verify the user is in the correct channel
-        # if ctx.channel.id not in immersion_logs_channels:
-        #     await send_response(ctx,
-        #                         "Este comando solo puede ser usado en <#950449182043430942>.")
-        #     return
+        if ctx.channel.id not in immersion_logs_channels:
+            await send_response(ctx,
+                                "Este comando solo puede ser usado en <#950449182043430942>.")
+            return
 
         message = descripción
 

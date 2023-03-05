@@ -1,3 +1,5 @@
+import re
+import asyncio
 from datetime import datetime
 import json
 import random
@@ -28,6 +30,20 @@ class Extra(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         print("Cog de cosas random cargado con éxito")
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        ctx = await self.bot.get_context(message)
+        if ctx.message.channel.id == 1082024432182243461 and message.author.id != 1003719195877445642:
+            is_japanese = bool(
+                re.search("[\u3040-\u30FF\u3400-\u4DBF\u4E00-\u9FFF]", message.content))
+
+            if not is_japanese:
+                return
+
+            await message.add_reaction("✅")
+            await set_processing(ctx)
+            await send_prompt(ctx, message.content, "1ab72f53-7a91-494b-a063-89a6f6aa36e2")
 
     @commands.slash_command(guild_ids=[main_guild])
     async def say(self, ctx,
@@ -177,10 +193,20 @@ class Extra(commands.Cog):
         await self.aleatorio(ctx)
 
     @commands.slash_command()
+    @commands.max_concurrency(10)
     async def chatgpt(self, ctx, message=discord.Option(str, "Prompt para chatpgt", required=True)):
         """Envía una prompt a ChatGPT3"""
+        if not ctx.guild:
+            return await send_error_message(ctx, "No se puede usar ChatGPT en mensajes privados.")
+
+        is_japanese = bool(
+            re.search("[\u3040-\u30FF\u3400-\u4DBF\u4E00-\u9FFF]", message))
+
+        if not is_japanese:
+            return await send_error_message(ctx, "En este servidor solo puedes hablar con ChatGPT en japonés.")
+
         await set_processing(ctx)
-        await send_prompt(ctx, message)
+        asyncio.create_task(send_prompt(ctx, message))
 
     @commands.command("chatgpt")
     async def chatgptprefix(self, ctx):

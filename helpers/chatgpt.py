@@ -2,22 +2,34 @@ import os
 
 from helpers.general import send_response
 from revChatGPT.V1 import Chatbot
+import functools
+import asyncio
+import typing
 
 
-async def official_handle_response(message) -> str:
+def to_thread(func: typing.Callable) -> typing.Coroutine:
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        loop = asyncio.get_event_loop()
+        wrapped = functools.partial(func, *args, **kwargs)
+        return await loop.run_in_executor(None, wrapped)
+    return wrapper
+
+
+@to_thread
+def official_handle_response(message, conversation=None) -> str:
     offical_chatbot = Chatbot(
-        config={"email": os.getenv("GPT_EMAIL"), "password": os.getenv("GPT_PASS")})
-    responseMessage = offical_chatbot.ask(message)
+        config={"email": os.getenv("GPT_EMAIL"), "password": os.getenv("GPT_PASS")}, conversation_id=conversation)
 
     prev_text = ""
-    for data in responseMessage:
+    for data in offical_chatbot.ask(message):
         message = data["message"][len(prev_text):]
         prev_text = data["message"]
 
     return prev_text
 
 
-async def send_prompt(ctx, message):
+async def send_prompt(ctx, message, conversation=None):
     if ctx.message:
         author = ctx.message.author.id
     else:
@@ -25,9 +37,10 @@ async def send_prompt(ctx, message):
     try:
         response = '> **' + message + '** - <@' + \
             str(author) + '> \n\n'
-        if ctx.message:
+        if ctx.message and not conversation:
             temp_message = await send_response(ctx, "Generando respuesta... Espere por favor")
-        response = f"{response}{await official_handle_response(message)}"
+        async with ctx.typing():
+            response = f"{response}{await official_handle_response(message,conversation)}"
         char_limit = 1900
         if len(response) > char_limit:
             # Split the response into smaller chunks of no more than 1900 characters each(Discord limit is 2000 per chunk)
@@ -66,8 +79,11 @@ async def send_prompt(ctx, message):
                     await send_response(ctx, chunk)
         else:
             await send_response(ctx, response)
-        if ctx.message:
+        if ctx.message and not conversation:
             await temp_message.delete()
     except Exception as e:
         print(e)
-        await send_response(ctx, "> **Error: Something went wrong, please try again later!**")
+        if ctx.message and not conversation:
+            await temp_message.delete()
+        await send_prompt(ctx, message, conversation)
+        # await send_response(ctx, "> **Error: Los servidores de ChatGPT están petados, repite la pregunta**", delete_after=10.0)
