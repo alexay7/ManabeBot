@@ -85,5 +85,4 @@ async def send_prompt(ctx, message, conversation=None):
         print(e)
         if ctx.message and not conversation:
             await temp_message.delete()
-        await send_prompt(ctx, message, conversation)
-        # await send_response(ctx, "> **Error: Los servidores de ChatGPT están petados, repite la pregunta**", delete_after=10.0)
+        await send_response(ctx, "> **Error: Los servidores de ChatGPT están petados, repite la pregunta más tarde**", delete_after=10.0)
