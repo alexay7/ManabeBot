@@ -29,7 +29,7 @@ def official_handle_response(message, conversation=None) -> str:
     return prev_text
 
 
-async def send_prompt(ctx, message, conversation=None):
+async def send_prompt(ctx, message, conversation=None, try_num=0):
     if ctx.message:
         author = ctx.message.author.id
     else:
@@ -85,4 +85,8 @@ async def send_prompt(ctx, message, conversation=None):
         print(e)
         if ctx.message and not conversation:
             await temp_message.delete()
-        await send_response(ctx, "> **Error: Los servidores de ChatGPT están petados, repite la pregunta más tarde**", delete_after=10.0)
+        if try_num < 2:
+            try_num += 1
+            await send_prompt(ctx, message, conversation=conversation, try_num=try_num)
+        else:
+            await send_response(ctx, "> **Error: Los servidores de ChatGPT están petados, repite la pregunta más tarde**", delete_after=10.0)
