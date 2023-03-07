@@ -43,7 +43,7 @@ class Extra(commands.Cog):
 
             await message.add_reaction("✅")
             await set_processing(ctx)
-            await send_prompt(ctx, message.content, "d1b49ebe-f1be-4af1-a3f4-c222d76c21c5")
+            await send_prompt(ctx, message.content, "33afdd3f-ec8a-4cf2-adea-12cd580a5e26")
 
     @commands.slash_command(guild_ids=[main_guild])
     async def say(self, ctx,
