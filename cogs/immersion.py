@@ -651,7 +651,7 @@ class Immersion(commands.Cog):
                 current_param - int(cantidad), medio.upper())
             level_after = get_media_level(current_param, medio.upper())
 
-            if level_after > level_before:
+            if level_after > level_before and level_after % 5 == 0:
                 if medio.upper() in ["ANIME", "VN", "LECTURA"]:
                     verbo = "inmersados"
                 else:
