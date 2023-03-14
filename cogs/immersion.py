@@ -3,6 +3,7 @@ import csv
 import calendar
 from copy import copy
 from datetime import datetime, timedelta
+import itertools
 import json
 import math
 import numpy as np
@@ -247,7 +248,7 @@ class Immersion(commands.Cog):
     @commands.slash_command(pass_context=True)
     async def me(self, ctx,
                  periodo: discord.Option(str, "Periodo de tiempo para exportar", choices=TIMESTAMP_TYPES, required=False, default="TOTAL"),
-                 gráfica: discord.Option(str, "Gráficos para acompañar los datos", choices=["SECTORES", "BARRAS", "NINGUNO"], required=False, default="SECTORES"),
+                 gráfica: discord.Option(str, "Gráficos para acompañar los datos", choices=["SECTORES", "BARRAS", "VELOCIDAD", "NINGUNO"], required=False, default="SECTORES"),
                  comienzo: discord.Option(str, "Fecha de inicio (DD/MM/YYYY)", required=False),
                  final: discord.Option(str, "Fecha de fin (DD/MM/YYYY)", required=False)):
         """Muestra pequeño resumen de lo inmersado"""
@@ -354,6 +355,65 @@ class Immersion(commands.Cog):
             bardoc = generate_graph(graphlogs, "bars", periodo)
             normal.set_image(url="attachment://image.png")
             await send_response(ctx, embed=normal, file=bardoc)
+        elif gráfica == "VELOCIDAD":
+            # Obtener los logs del usuario
+            manga_logs = await get_user_logs(self.db, ctx.author.id, "TOTAL", "MANGA")
+            read_logs = await get_user_logs(self.db, ctx.author.id, "TOTAL", "LECTURA")
+            logs = itertools.chain(manga_logs, read_logs)
+
+            # Crear un conjunto de todos los meses para los que hay registros en cualquiera de los dos medios
+            months = set()
+            logs_by_medium_and_month = {"MANGA": {}, "LECTURA": {}}
+            for log in logs:
+                if "tiempo" in log:
+                    date = datetime.fromtimestamp(log["timestamp"])
+                    month = date.strftime("%Y-%m")
+                    months.add(month)
+                    medium = log["medio"]
+                    if month not in logs_by_medium_and_month[medium]:
+                        logs_by_medium_and_month[medium][month] = []
+                    logs_by_medium_and_month[medium][month].append(log)
+
+            months = sorted(months)
+
+            # Calcular la velocidad media por mes para cada medio
+            speeds_by_medium_and_month = {"MANGA": {}, "LECTURA": {}}
+            for medium, logs_by_month in logs_by_medium_and_month.items():
+                for month in months:
+                    if month not in logs_by_month:
+                        logs_by_month[month] = []
+                    month_logs = logs_by_month[month]
+                    speeds = []
+                    for log in month_logs:
+                        if log["tiempo"] > 0:
+                            if medium == "MANGA":
+                                speed = int(log["parametro"]) / log["tiempo"]
+                            elif medium == "LECTURA":
+                                speed = (
+                                    int(log["parametro"]) / 335) / log["tiempo"]
+                            speeds.append(speed)
+                    if speeds:
+                        speeds_by_medium_and_month[medium][month] = sum(
+                            speeds) / len(speeds)
+                    else:
+                        speeds_by_medium_and_month[medium][month] = 0
+
+            # Crear la gráfica
+            if speeds_by_medium_and_month["MANGA"] and speeds_by_medium_and_month["LECTURA"]:
+                plt.plot(speeds_by_medium_and_month["MANGA"].keys(
+                ), speeds_by_medium_and_month["MANGA"].values(), label="MANGA")
+                plt.plot(speeds_by_medium_and_month["LECTURA"].keys(
+                ), speeds_by_medium_and_month["LECTURA"].values(), label="LECTURA")
+                plt.xlabel("Mes")
+                plt.ylabel("Páginas leidas por minuto")
+                plt.title(
+                    "Velocidad de lectura mensual para el usuario {}".format(ctx.author.name))
+                plt.legend()
+                plt.savefig("temp/image.png")
+                plt.close()
+                file = discord.File("temp/image.png", filename="image.png")
+                normal.set_image(url="attachment://image.png")
+                await send_response(ctx, embed=normal, file=file)
         else:
             await send_response(ctx, embed=normal)
 
