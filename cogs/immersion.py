@@ -190,6 +190,9 @@ class Immersion(commands.Cog):
             timestring = datetime.fromtimestamp(
                 log["timestamp"]).strftime('%d/%m/%Y')
             line = f"#{log['id']} | {timestring}: {log['medio']} {get_media_element(log['parametro'],log['medio'])} -> {log['puntos']} puntos: {log['descripcion']}\n"
+            if "tiempo" in log:
+                line = line.replace(
+                    "\n", f" | tiempo: {get_media_element(log['tiempo'],'VIDEO')}\n")
             if len(output[overflow]) + len(line) < 1000:
                 output[overflow] += line
             else:
