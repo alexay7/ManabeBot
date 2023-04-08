@@ -51,7 +51,7 @@ def calc_media(points):
         "libro": points,
         "manga": points * 5,
         "vn": points * 350,
-        "anime": points / 95 * 10,
+        "anime": points / 45 * 100 / 24,
         "lectura": points * 350,
         "tiempolectura": points / 45 * 100,
         "output": points/45*100,
@@ -490,7 +490,7 @@ def compute_points(log):
     elif log["medio"] == "VN":
         puntos = round(int(log["parametro"]) / 350, 4)
     elif log["medio"] == "ANIME":
-        puntos = round(int(log["parametro"]) * 95 / 10, 4)
+        puntos = round(int(log["parametro"]) * 45 / 100 * 24, 4)
     elif log["medio"] == "LECTURA":
         puntos = round(int(log["parametro"]) / 350, 4)
     elif log["medio"] == "TIEMPOLECTURA":
