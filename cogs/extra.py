@@ -47,14 +47,14 @@ class Extra(commands.Cog):
 
     @commands.slash_command(guild_ids=[main_guild])
     async def say(self, ctx,
-                  message: discord.Option(str, "Mensaje a enviar", required=True)):
+                  message: discord.Option(str, "Mensaje a enviar", required=True),
+                  channel:discord.Option(str,"Canal a enviar",required=True)):
         "Comando para hablar a través del bot"
-        if ctx.message.author.id in admin_users:
-            channel = self.bot.get_channel(654363913470738462)
-            message = ""
-            for word in ctx.message.content.split(" ")[1:]:
-                message += word + " "
-            await channel.respond(message)
+        
+        if ctx.author.id == 615896601554190346:
+            channel = self.bot.get_channel(int(channel))
+            await channel.send(message)
+            await ctx.respond("Enviado")
 
     @commands.slash_command()
     async def kalise(self, ctx):
