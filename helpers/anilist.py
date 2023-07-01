@@ -84,16 +84,16 @@ async def get_anilist_logs(user_id, page, date):
         url, json={'query': query, 'variables': variables}).json()
 
 
-async def get_anilist_planning(page, user_id, media):
+async def get_anilist_planning(page, user_id, media,status):
     query = '''
-    query($page:Int, $userId:Int,$media:MediaType){
+    query($page:Int, $userId:Int,$media:MediaType,$status:MediaListStatus){
     Page(page:$page,perPage:50){
     pageInfo{
       hasNextPage
       lastPage
       currentPage
     }
-    mediaList(userId: $userId,type:$media,status:PLANNING) {
+    mediaList(userId: $userId,type:$media,status:$status) {
       id
       media{
         title {
@@ -121,7 +121,8 @@ async def get_anilist_planning(page, user_id, media):
     variables = {
         'userId': user_id,
         'page': page,
-        'media': media
+        'media': media,
+        'status':status
     }
 
     url = 'https://graphql.anilist.co'

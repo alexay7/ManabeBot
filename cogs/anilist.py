@@ -83,17 +83,20 @@ class Anilist(commands.Cog):
     async def randommedia(self, ctx,
                           medio: discord.Option(str, "Elegir entre anime o manga aleatorios", choices=MEDIA, required=True),
                           username: discord.Option(str, "Nombre de usuario de anilist", required=True),
+                          status:discord.Option(str,"Estado de visualización (visto/no visto)",choices=["En proceso","Planeando","Completado","Dropeado","Pausado"],required=True),
                           minvols: discord.Option(int, "Número mínimo de volúmenes (en caso de manga)", min_value=1, required=False, default=0),
                           maxvols: discord.Option(int, "Número máximo de volúmenes (en caso de manga)", min_value=1, required=False, default=10000),
-                          status:discord.Option(str,"Estado de publicación",choices=["Terminado","En proceso"],required=False)
+                          mediumstatus:discord.Option(str,"Estado de publicación",choices=["Terminado","En proceso"],required=False)
                           ):
         """Elige un manga o anime aleatorio de tu lista de anilist según los parámetros indicados"""
         formatted_status=""
 
-        if status:
-            formatted_status=status.replace("Terminado","FINISHED").replace("En proceso","RELEASING")
+        if mediumstatus:
+            formatted_status=mediumstatus.replace("Terminado","FINISHED").replace("En proceso","RELEASING")
             if formatted_status not in ["FINISHED","RELEASING"]:
                 formatted_status=""
+
+        status = status.replace("En proceso","CURRRENT").replace("Planeando","PLANNING").replace("Completado","COMPLETED").replace("Dropeado","DROPPED").replace("Pausado","PAUSED")
 
         user_id = await get_anilist_id(username)
         if user_id == -1:
@@ -104,7 +107,7 @@ class Anilist(commands.Cog):
         await set_processing(ctx)
         result = []
         while nextPage:
-            planning = await get_anilist_planning(page, user_id, medio.upper())
+            planning = await get_anilist_planning(page, user_id, medio.upper(),status)
             nextPage = planning["data"]["Page"]["pageInfo"]["hasNextPage"]
             for media in planning["data"]["Page"]["mediaList"]:
                 element = {
