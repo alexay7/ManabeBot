@@ -8,3 +8,4 @@ __pycache__
 .git
 temp
 .chatgpt_cache.json
+script/

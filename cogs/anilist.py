@@ -83,7 +83,17 @@ class Anilist(commands.Cog):
     async def randommedia(self, ctx,
                           medio: discord.Option(str, "Elegir entre anime o manga aleatorios", choices=MEDIA, required=True),
                           username: discord.Option(str, "Nombre de usuario de anilist", required=True),
-                          volumes: discord.Option(int, "Número máximo de volúmenes (en caso de manga)", min_value=1, required=False, default=10000)):
+                          minvols: discord.Option(int, "Número mínimo de volúmenes (en caso de manga)", min_value=1, required=False, default=0),
+                          maxvols: discord.Option(int, "Número máximo de volúmenes (en caso de manga)", min_value=1, required=False, default=10000),
+                          status:discord.Option(str,"Estado de publicación",choices=["Terminado","En proceso"],required=False)
+                          ):
+        """Elige un manga o anime aleatorio de tu lista de anilist según los parámetros indicados"""
+        formatted_status=""
+
+        if status:
+            formatted_status=status.replace("Terminado","FINISHED").replace("En proceso","RELEASING")
+            if formatted_status not in ["FINISHED","RELEASING"]:
+                formatted_status=""
 
         user_id = await get_anilist_id(username)
         if user_id == -1:
@@ -102,13 +112,14 @@ class Anilist(commands.Cog):
                     "romaji": media["media"]["title"]["romaji"],
                     "mean": media["media"]["meanScore"],
                     "status": media["media"]["status"],
-                    "volumes": media["media"]["volumes"],
+                    "volumes": media["media"]["volumes"] or 0,
                     "image": media["media"]["coverImage"]["large"],
                     "episodes": media["media"]["episodes"],
                     "url": media["media"]["siteUrl"]
                 }
-                if (element["volumes"] and element["volumes"] <= int(volumes)) or medio == "ANIME":
-                    result.append(element)
+                if (element["volumes"] and (element["volumes"] <= int(maxvols) and element["volumes"] >= int(minvols))) or medio == "ANIME" or element["status"]=="RELEASING":
+                    if((formatted_status!="" and element["status"]==formatted_status) or formatted_status==""):
+                        result.append(element)
 
             page += 1
         if len(result) == 0:
@@ -126,10 +137,9 @@ class Anilist(commands.Cog):
             name="Estado", value=chosen["status"], inline=False)
         if medio.upper() == "MANGA":
             volumes = chosen["volumes"]
-            if volumes is None:
-                volumes = "Todavía se está publicando"
-            embed.add_field(
-                name="Volúmenes", value=volumes, inline=False)
+            if volumes is not 0:
+                embed.add_field(
+                    name="Volúmenes", value=volumes, inline=False)
         else:
             embed.add_field(
                 name="Capítulos", value=chosen["episodes"], inline=False)
