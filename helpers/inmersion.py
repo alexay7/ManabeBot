@@ -23,7 +23,6 @@ MEDIA_TYPES_ENGLISH = {"BOOK": "LIBRO", "READING": "LECTURA",
 
 TIMESTAMP_TYPES = {"TOTAL", "MES", "SEMANA", "HOY"}
 
-
 def get_media_element(num, media):
     if media in {"MANGA", "LIBRO"}:
         if int(num) == 1:
@@ -238,14 +237,24 @@ async def remove_log(db, userid, logid):
         return 1
     return 0
 
+async def get_all_logs_in_day(db,userid,day):
+    logs = db.logs
+    day_logs = logs.count_documents({
+            'userId': userid,
+            'timestamp': {'$gte': datetime.combine(day, datetime.min.time()).timestamp(),
+                          '$lte': datetime.combine(day, datetime.max.time()).timestamp()}
+        })
+    return day_logs
+
 
 async def remove_last_log(db, userid):
     logs = db.logs
     try:
         newest_log = logs.find({"userId": userid}).sort("_id", -1).limit(1)
+        last_log_id = f"{newest_log[0]['id']}"
         if newest_log:
             logs.delete_one({"_id": newest_log[0]["_id"]})
-            return 1
+            return 1,last_log_id
     except:
         return 0
 
