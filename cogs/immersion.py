@@ -179,11 +179,16 @@ class Immersion(commands.Cog):
     async def logs(self, ctx,
                    periodo: discord.Option(str, "Periodo de tiempo para ver logs", choices=TIMESTAMP_TYPES, required=False, default="TOTAL"),
                    medio: discord.Option(str, "Medio de inmersión para ver logs", choices=MEDIA_TYPES, required=False, default="TOTAL"),
-                   usuario: discord.Option(str, "Usuario del que quieres ver los logs", required=False)):
+                   usuario: discord.Option(str, "ID DEL Usuario del que quieres ver los logs", required=False)):
         """Muestra lista con todos los logs hechos con los parámetros indicados"""
         await set_processing(ctx)
+
         if not usuario:
             usuario = ctx.author.id
+        else:
+            if not usuario.isnumeric():
+                await send_error_message(ctx,"Debes poner el ID del usuario del que quieras saber los logs! (Lo puedes ver al final de los logs que haya hecho)")
+                return
 
         if await check_user(self.db, int(usuario)) is False:
             await send_error_message(ctx, "No se han encontrado logs asociados a esa Id.")
