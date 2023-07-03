@@ -66,7 +66,11 @@ class Immersion(commands.Cog):
 
             if len(message.embeds) > 0 and reaction:
                 if message.embeds[0].title == "Log registrado con éxito" and int(message.embeds[0].footer.text.replace("Id del usuario: ","")) == payload.user_id:
-                    await remove_log(self.db, payload.user_id, message.embeds[0].description.split(" ")[1].replace("#", ""))
+                    await remove_log(self.db, payload.user_id, message.embeds[0].description.split(" ")[2].replace("#", ""))
+                    logdeleted = discord.Embed(color=0x24b14d)
+                    logdeleted.add_field(
+                        name="✅", value=f"Log {message.embeds[0].description.split(' ')[2]} eliminado con éxito", inline=False)
+                    await channel.send(embed=logdeleted, delete_after=10.0)
                     await message.delete()
 
     @commands.slash_command()
