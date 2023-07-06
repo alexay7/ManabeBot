@@ -978,7 +978,7 @@ class Immersion(commands.Cog):
 
         # Loop through the results and group the data by user
         for result in results:
-            user_id = result['_id']['userId']
+            user_id = result['_id']['userId'].replace("_","")
             year = result['_id']['year']
             month = result['_id']['month']
             month_name = calendar.month_name[month]
