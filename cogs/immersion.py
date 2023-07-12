@@ -19,12 +19,13 @@ from pymongo import MongoClient, errors
 
 from helpers.anilist import get_anilist_id, get_anilist_logs
 from helpers.general import intToMonth, send_error_message, send_response, set_processing
-from helpers.inmersion import (MEDIA_TYPES, MEDIA_TYPES_ENGLISH, MONTHS, TIMESTAMP_TYPES, 
-get_media_level, get_param_for_media_level, get_immersion_level, add_log, calc_media, 
-check_user, compute_points, create_user, generate_graph, generate_linear_graph, 
-get_best_user_of_range, get_logs_animation, get_media_element, get_ranking_title, 
-get_sorted_ranking, get_total_immersion_of_month, get_total_parameter_of_media, 
-get_user_logs, remove_last_log, remove_log, send_message_with_buttons, get_all_logs_in_day)
+from helpers.inmersion import (MEDIA_TYPES, MEDIA_TYPES_ENGLISH, MONTHS, TIMESTAMP_TYPES,
+                               get_media_level, get_param_for_media_level, get_immersion_level, add_log, calc_media,
+                               check_user, compute_points, create_user, generate_graph, generate_linear_graph,
+                               get_best_user_of_range, get_logs_animation, get_media_element, get_ranking_title,
+                               get_sorted_ranking, get_total_immersion_of_month, get_total_parameter_of_media,
+                               get_user_logs, remove_last_log, remove_log, send_message_with_buttons, get_all_logs_in_day,
+                               get_last_log)
 
 # ================ GENERAL VARIABLES ================
 with open("config/general.json") as json_file:
@@ -65,7 +66,7 @@ class Immersion(commands.Cog):
             reaction = discord.utils.get(message.reactions, emoji="❌")
 
             if len(message.embeds) > 0 and reaction:
-                if message.embeds[0].title == "Log registrado con éxito" and int(message.embeds[0].footer.text.replace("Id del usuario: ","")) == payload.user_id:
+                if message.embeds[0].title == "Log registrado con éxito" and int(message.embeds[0].footer.text.replace("Id del usuario: ", "")) == payload.user_id:
                     await remove_log(self.db, payload.user_id, message.embeds[0].description.split(" ")[2].replace("#", ""))
                     logdeleted = discord.Embed(color=0x24b14d)
                     logdeleted.add_field(
@@ -187,7 +188,7 @@ class Immersion(commands.Cog):
             usuario = ctx.author.id
         else:
             if not usuario.isnumeric():
-                await send_error_message(ctx,"Debes poner el ID del usuario del que quieras saber los logs! (Lo puedes ver al final de los logs que haya hecho)")
+                await send_error_message(ctx, "Debes poner el ID del usuario del que quieras saber los logs! (Lo puedes ver al final de los logs que haya hecho)")
                 return
 
         if await check_user(self.db, int(usuario)) is False:
@@ -700,14 +701,14 @@ class Immersion(commands.Cog):
             logid = await add_log(self.db, ctx.author.id, newlog, ctx.author.name)
 
             # Get streak
-            current_streak=0
-            current_day=today
+            current_streak = 0
+            current_day = today
 
             while True:
-                day_logs = await get_all_logs_in_day(self.db,ctx.author.id,current_day)
+                day_logs = await get_all_logs_in_day(self.db, ctx.author.id, current_day)
                 if day_logs > 0:
-                    current_streak+=1
-                    current_day-=timedelta(days=1)
+                    current_streak += 1
+                    current_day -= timedelta(days=1)
                 else:
                     break
 
@@ -726,7 +727,8 @@ class Immersion(commands.Cog):
                 embed.add_field(name="Tiempo invertido",
                                 value=get_media_element(tiempo, "VIDEO"), inline=False)
             if current_streak > 1:
-                embed.add_field(name="⚡ Racha actual de logueo ⚡ ",value=f"{current_streak} días")
+                embed.add_field(name="⚡ Racha actual de logueo ⚡ ",
+                                value=f"{current_streak} días")
             if newposition < position:
                 embed.add_field(
                     name="🎉 Has subido en el ranking del mes! 🎉", value=f"**{position+1}º** ---> **{newposition+1}º**", inline=False)
@@ -847,6 +849,39 @@ class Immersion(commands.Cog):
         else:
             await self.puntos(ctx, cantidad, None)
 
+    @commands.command(aliases=["ultimolog"])
+    async def lastlog(self, ctx):
+        # Verify the user has logs
+        await set_processing(ctx)
+        if not await check_user(self.db, ctx.author.id):
+            await send_error_message(ctx, "No tienes ningún log.")
+            return
+        # Verify the user is in the correct channel
+        if ctx.channel.id not in immersion_logs_channels:
+            await send_response(ctx,
+                                "Este comando solo puede ser usado en <#950449182043430942>.")
+            return
+
+        last_log = await get_last_log(self.db, ctx.author.id)
+
+        today = datetime.utcfromtimestamp(last_log["timestamp"])
+
+        embed = discord.Embed(title="Log registrado con éxito",
+                              description=f"Id Log #{last_log['id']} || Fecha: {today.strftime('%d/%m/%Y')}", color=0x24b14d)
+        embed.add_field(
+            name="Usuario", value=ctx.author.name, inline=True)
+        embed.add_field(
+            name="Medio", value=last_log["medio"].upper(), inline=True)
+        embed.add_field(
+            name="Puntos", value=f"{round(last_log['puntos'],2)}", inline=True)
+        embed.add_field(name="Inmersado",
+                        value=get_media_element(int(last_log["parametro"]), last_log["medio"].upper()), inline=True)
+        embed.add_field(name="Descripción",
+                        value=last_log["descripcion"], inline=False)
+        embed.set_footer(
+            text=f"Id del usuario: {ctx.author.id}")
+        return await send_response(ctx, embed=embed)
+
     @commands.slash_command()
     async def undo(self, ctx):
         """Borra el último log hecho"""
@@ -860,7 +895,7 @@ class Immersion(commands.Cog):
             await send_response(ctx,
                                 "Este comando solo puede ser usado en <#950449182043430942>.")
             return
-        result,last_log_id = await remove_last_log(self.db, ctx.author.id)
+        result, last_log_id = await remove_last_log(self.db, ctx.author.id)
         if result == 1:
             logdeleted = discord.Embed(color=0x24b14d)
             logdeleted.add_field(
@@ -978,7 +1013,7 @@ class Immersion(commands.Cog):
 
         # Loop through the results and group the data by user
         for result in results:
-            user_id = result['_id']['userId'].replace("_","")
+            user_id = result['_id']['userId'].replace("_", "")
             year = result['_id']['year']
             month = result['_id']['month']
             month_name = calendar.month_name[month]
