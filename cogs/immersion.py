@@ -880,7 +880,7 @@ class Immersion(commands.Cog):
                         value=last_log["descripcion"], inline=False)
         embed.set_footer(
             text=f"Id del usuario: {ctx.author.id}")
-        return await send_response(ctx, embed=embed, delete_After=10.0)
+        return await send_response(ctx, embed=embed, delete_after=10.0)
 
     @commands.slash_command()
     async def undo(self, ctx):
