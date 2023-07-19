@@ -145,6 +145,7 @@ class Test(commands.Cog):
             if len(questions) == 0:
                 return await send_error_message(ctx, "No tienes preguntas falladas!")
         elif level.upper() in LEVELS and not param:
+            questionnum = 10
             for elem in exercises.aggregate([{"$match": {"level": level.upper()}}, {"$sample": {"size": int(10)}}]):
                 questions.append(elem)
         elif level.upper() in LEVELS and param:
@@ -239,9 +240,9 @@ class Test(commands.Cog):
                 # await onlyUserReaction(userans)
                 sleep(3)
             elif checkanswer(userans, answer):
-                # if(preset_questions):
-                #     users.update_one({"user_id": ctx.message.author.id}, {
-                #                      "$pull": {"questions_failed": question.get("_id")}})
+                if (preset_questions):
+                    users.update_one({"user_id": ctx.message.author.id}, {
+                                     "$pull": {"questions_failed": question.get("_id")}})
                 correct = discord.Embed(
                     title="✅ Respuesta Correcta: " + str(answer) + ") " + question.get("answers")[answer - 1] + ".", color=0x24b14d)
                 await ctx.send(embed=correct)
