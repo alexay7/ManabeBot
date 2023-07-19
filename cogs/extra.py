@@ -11,7 +11,6 @@ import requests
 from bs4 import BeautifulSoup
 from currency_converter import CurrencyConverter
 from translate import Translator
-from helpers.chatgpt import send_prompt
 
 from helpers.general import intToMonth, send_error_message, send_message_for_other, send_response, set_processing
 
@@ -48,9 +47,9 @@ class Extra(commands.Cog):
     @commands.slash_command(guild_ids=[main_guild])
     async def say(self, ctx,
                   message: discord.Option(str, "Mensaje a enviar", required=True),
-                  channel:discord.Option(str,"Canal a enviar",required=True)):
+                  channel: discord.Option(str, "Canal a enviar", required=True)):
         "Comando para hablar a través del bot"
-        
+
         if ctx.author.id == 615896601554190346:
             channel = self.bot.get_channel(int(channel))
             await channel.send(message)

@@ -144,6 +144,9 @@ class Test(commands.Cog):
             questionnum = len(questions)
             if len(questions) == 0:
                 return await send_error_message(ctx, "No tienes preguntas falladas!")
+        elif level.upper() in LEVELS and not param:
+            for elem in exercises.aggregate([{"$match": {"level": level.upper()}}, {"$sample": {"size": int(10)}}]):
+                questions.append(elem)
         elif level.upper() in LEVELS and param:
             if questionnum:
                 if questionnum.lower() == "true":
@@ -152,7 +155,10 @@ class Test(commands.Cog):
             else:
                 questionnum = 5
 
-            if param.lower() == "random":
+            if param.isnumeric():
+                for elem in exercises.aggregate([{"$match": {"level": level.upper()}}, {"$sample": {"size": int(questionnum)}}]):
+                    questions.append(elem)
+            elif param.lower() == "random":
                 param = random.choice(LEVELS[level.upper()]["TYPES"]).lower()
                 for elem in exercises.aggregate([{"$match": {"type": param.lower(), "level": level.upper()}}, {"$sample": {"size": int(questionnum)}}]):
                     questions.append(elem)
