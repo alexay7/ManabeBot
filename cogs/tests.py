@@ -156,7 +156,8 @@ class Test(commands.Cog):
                 questionnum = 5
 
             if param.isnumeric():
-                for elem in exercises.aggregate([{"$match": {"level": level.upper()}}, {"$sample": {"size": int(param)}}]):
+                questionnum = param
+                for elem in exercises.aggregate([{"$match": {"level": level.upper()}}, {"$sample": {"size": int(questionnum)}}]):
                     questions.append(elem)
             elif param.lower() == "random":
                 param = random.choice(LEVELS[level.upper()]["TYPES"]).lower()
