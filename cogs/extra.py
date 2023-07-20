@@ -30,20 +30,6 @@ class Extra(commands.Cog):
     async def on_ready(self):
         print("Cog de cosas random cargado con éxito")
 
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
-        ctx = await self.bot.get_context(message)
-        if ctx.message.channel.id == 1082024432182243461 and message.author.id != 1003719195877445642:
-            is_japanese = bool(
-                re.search("[\u3040-\u30FF\u3400-\u4DBF\u4E00-\u9FFF]", message.content))
-
-            if not is_japanese:
-                return
-
-            await message.add_reaction("✅")
-            await set_processing(ctx)
-            await send_prompt(ctx, message.content, "33afdd3f-ec8a-4cf2-adea-12cd580a5e26")
-
     @commands.slash_command(guild_ids=[main_guild])
     async def say(self, ctx,
                   message: discord.Option(str, "Mensaje a enviar", required=True),
@@ -192,28 +178,68 @@ class Extra(commands.Cog):
         await self.aleatorio(ctx)
 
     @commands.slash_command()
-    @commands.max_concurrency(10)
-    async def chatgpt(self, ctx, message=discord.Option(str, "Prompt para chatpgt", required=True)):
-        """Envía una prompt a ChatGPT3"""
-        if not ctx.guild:
-            return await send_error_message(ctx, "No se puede usar ChatGPT en mensajes privados.")
+    async def grammar(self, ctx, clave: discord.Option(str, "Id de la lección", required=False), forma_gramatical: discord.Option(str, "Punto gramatical que te interesa", required=False)):
+        """Comando para obtener información de diferentes puntos gramaticales"""
+        with open("config/grammar.json", "r", encoding="utf-8") as file:
+            grammar = json.load(file)
 
-        is_japanese = bool(
-            re.search("[\u3040-\u30FF\u3400-\u4DBF\u4E00-\u9FFF]", message))
+        if clave:
+            resultado = None
 
-        if not is_japanese:
-            return await send_error_message(ctx, "En este servidor solo puedes hablar con ChatGPT en japonés.")
+            for elemento in grammar:
+                if elemento['id'] == clave:
+                    resultado = elemento
+                    break
 
-        await set_processing(ctx)
-        asyncio.create_task(send_prompt(ctx, message))
+            embed = discord.Embed(title=resultado["titulo"])
 
-    @commands.command("chatgpt")
-    async def chatgptprefix(self, ctx):
-        message = ""
-        full = ctx.message.content.split(" ")[1:]
-        for word in full:
-            message += word + " "
-        await self.chatgpt(ctx, message)
+            embed.add_field(
+                name=f"📕 {resultado['subtitulo']} 📕", value=f" ")
+
+            resultado = resultado["texto"].split("\nç\n")
+            for elem in resultado:
+                embed.add_field(name=" ",
+                                value=elem, inline=False)
+                embed.set_footer(
+                    text="Explicación cortesía de http://www.guidetojapanese.org/spanish/")
+            return await send_response(ctx, embed=embed)
+
+        elif forma_gramatical:
+            resultados = []
+            for elemento in grammar:
+                if "formas" in elemento and isinstance(elemento["formas"], list):
+                    for forma in elemento["formas"]:
+                        if forma_gramatical == forma:
+                            resultados.append(elemento)
+                            break
+
+            if len(resultados) > 1:
+                embed = discord.Embed(color=0x442255,
+                                      title="Se han encontrado varios resultados con esa forma", description="```Para ver el contenido usa el comando /grammar rellenando el campo \"Clave\" con la clave debajo de cada entrada gramatical```")
+
+                for result in resultados:
+                    embed.add_field(
+                        value=f"Clave: **__{result['id']}__**", name=f"{result['titulo']} || {result['subtitulo']}", inline=False)
+                await send_response(ctx, embed=embed, delete_after=30.0)
+            elif len(resultados) == 0:
+                return await send_error_message(ctx, "No se ha encontrado esa forma gramatical")
+            else:
+                embed = discord.Embed(
+                    title=resultados[0]["titulo"], color=0x11abad)
+
+                embed.add_field(
+                    name=f"📕 {resultados[0]['subtitulo']} 📕", value=f" ")
+
+                resultado = resultados[0]["texto"].split("\nç\n")
+                for elem in resultado:
+                    embed.add_field(name=" ",
+                                    value=elem, inline=False)
+                embed.set_footer(
+                    text="Explicación cortesía de http://www.guidetojapanese.org/spanish/")
+                return await send_response(ctx, embed=embed)
+
+        else:
+            await send_error_message(ctx, "Debes rellenar la forma gramatical a buscar o la clave del elemento!")
 
 
 def setup(bot):
