@@ -807,7 +807,7 @@ class Immersion(commands.Cog):
             return
 
     @commands.command(aliases=["log"])
-    async def logprefix(self, ctx, medio, cantidad, descripcion):
+    async def logprefix(self, ctx, medio, cantidad):
         if medio.upper() not in MEDIA_TYPES:
             if medio.upper() in MEDIA_TYPES_ENGLISH:
                 medio = MEDIA_TYPES_ENGLISH[medio.upper()]
@@ -818,10 +818,14 @@ class Immersion(commands.Cog):
         if int(cantidad) > 5000000:
             return await send_error_message(ctx, "Cantidad de inmersión exagerada")
 
-        extras = False
+        fields_num = len(ctx.message.content.split(" "))
+
+        if fields_num < 4:
+            return await send_error_message(ctx, "Faltan parametros para realizar el log, recuerda que el formato debe ser\n**.log <tipo> <parametro> <descripción>;<tiempo\*>&<caracteres\*>**\n\* Opcionales")
+
         time = "0"
         characters = "0"
-        message = descripcion
+        descripcion = " ".join(ctx.message.content.split(" ")[3:])
 
         if ";" in descripcion:
             split_desc = descripcion.split(";")
@@ -841,6 +845,11 @@ class Immersion(commands.Cog):
             time = split_desc[0]
             characters = split_desc[1]
 
+        print(message)
+        print(time)
+        print(characters)
+
+        return
         await self.log(ctx, medio, cantidad, message, int(time), int(characters))
 
     @commands.slash_command()
