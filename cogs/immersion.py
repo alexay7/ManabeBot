@@ -845,11 +845,6 @@ class Immersion(commands.Cog):
             time = split_desc[0]
             characters = split_desc[1]
 
-        print(message)
-        print(time)
-        print(characters)
-
-        return
         await self.log(ctx, medio, cantidad, message, int(time), int(characters))
 
     @commands.slash_command()
