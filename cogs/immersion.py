@@ -832,13 +832,14 @@ class Immersion(commands.Cog):
             message = split_desc[0]
             time = split_desc[1]
             extras = True
+        else:
+            message = descripcion
         # puede haber un & pegado al mensaje o al tiempo
 
         if "&" in message:
             split_desc = message.split("&")
             message = split_desc[0]
             characters = split_desc[1]
-            extras = True
 
         if "&" in time:
             split_desc = time.split("&")
