@@ -131,13 +131,17 @@
         "log": {
             "categoria": "inmersion",
             "comando": ".log",
-            "short_description": "Loguea tu inmersión",
-            "uso": ".log [medio] [cantidad] [descripción]",
-            "descripcion": "Comando para loguear lo que has hecho.\nIndica el medio de inmersión, la cantidad y una pequeña descripción para que quede registrado.",
+            "short_description": "Loguea tu inmersión (Recomendado usar el comando con / en vez de .)",
+            "uso": ".log [medio] [cantidad] [descripción];(tiempo dedicado)&(caracteres leídos)",
+            "descripcion": "Comando para loguear lo que has hecho.\nIndica el medio de inmersión, la cantidad y una pequeña descripción para que quede registrado.\nLo indicado entre paréntesis es opcional.",
             "Extra": [
                 {
                     "name": "Medios de Inmersión admitidos:",
                     "value": "[LIBRO | MANGA]: Loguear en páginas\n[LECTURA | VN]: Loguear en carácteres\n[ANIME]: Loguear en capítulos\n[TIEMPOLECTURA | OUTPUT | AUDIO | VIDEO]: Loguear en minutos"
+                },
+                {
+                    "name": "Parámetros extra:",
+                    "value": "Ahora se pueden añadir datos de inmersión complementarios a cada log.\n[TIEMPO]: Si quieres apuntar el tiempo dedicado en un medio que no utilice minutos, puedes usar \";\" seguido de un número para indicar el tiempo que te ha tomado.\n[CARACTERES]: Si quieres apuntar los caracteres que has leído en un medio que no utilice caracteres, puedes usar \"&\" seguido de un número para indicar el número total de caracteres que hayas leído.\n\n[AVISO]: Siempre se tomará el mayor valor de puntos de entre todos los parámetros que des."
                 }
             ]
         },
@@ -145,12 +149,16 @@
             "categoria": "inmersion",
             "comando": ".backfill",
             "short_description": "Loguea inmersión hecha en el pasado",
-            "uso": ".backfill [fecha en formato dd/mm/yyyy] [medio] [cantidad] [descripción]",
+            "uso": ".backfill [fecha en formato dd/mm/yyyy] [medio] [cantidad] [descripción];(tiempo dedicado)&(caracteres leídos)",
             "descripcion": "Loguea inmersión en algún momento del pasado para tener datos más consistentes en tu progreso.",
             "Extra": [
                 {
                     "name": "Medios de Inmersión admitidos:",
                     "value": "[LIBRO | MANGA]: Loguear en páginas\n[LECTURA | VN]: Loguear en carácteres\n[ANIME]: Loguear en capítulos\n[TIEMPOLECTURA | OUTPUT | AUDIO | VIDEO]: Loguear en minutos"
+                },
+                {
+                    "name": "Parámetros extra:",
+                    "value": "Ahora se pueden añadir datos de inmersión complementarios a cada log.\n[TIEMPO]: Si quieres apuntar el tiempo dedicado en un medio que no utilice minutos, puedes usar \";\" seguido de un número para indicar el tiempo que te ha tomado.\n[CARACTERES]: Si quieres apuntar los caracteres que has leído en un medio que no utilice caracteres, puedes usar \"&\" seguido de un número para indicar el número total de caracteres que hayas leído.\n\n[AVISO]: Siempre se tomará el mayor valor de puntos de entre todos los parámetros que des."
                 }
             ]
         },

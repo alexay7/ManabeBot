@@ -755,9 +755,15 @@ class Immersion(commands.Cog):
             if tiempo and tiempo > 0:
                 embed.add_field(name="Tiempo invertido",
                                 value=get_media_element(tiempo, "VIDEO"), inline=False)
-            if caracteres and caracteres > 0:
+            if caracteres and int(caracteres) > 0:
                 embed.add_field(name="Caracteres leídos",
                                 value=get_media_element(caracteres, "LECTURA"), inline=False)
+            if (caracteres and caracteres > 0) and tiempo and tiempo > 0:
+                embed.add_field(name="Velocidad media",
+                                value=f"{math.floor(int(caracteres)/tiempo*60)}chars/h", inline=False)
+            elif (medio.upper() in ["LECTURA", "VN"]) and tiempo and tiempo > 0:
+                embed.add_field(name="Velocidad media",
+                                value=f"{math.floor(int(cantidad)/tiempo*60)}chars/h", inline=False)
             if current_streak > 1:
                 embed.add_field(name="⚡ Racha actual de logueo ⚡ ",
                                 value=f"{current_streak} días")
