@@ -99,7 +99,7 @@ class Manga(commands.Cog):
                                     value=found_manga["idAnilist"])
                     embed.set_thumbnail(url=found_manga["thumbnail"])
                     embed.set_footer(
-                        text="Serás informado cuando nuevos volúmenes sean subidos a komga. Si quieres desuscribirte reacciona con ❌ a este mensaje")
+                        text="Serás informado cuando nuevos volúmenes sean subidos a YomiYasu. Si quieres desuscribirte reacciona con ❌ a este mensaje")
                     message = await channel.send(embed=embed, delete_after=30.0)
                     await message.add_reaction("❌")
 
@@ -110,7 +110,7 @@ class Manga(commands.Cog):
                     embed = discord.Embed(
                         title="Subscripción eliminada con éxito", color=0xff6060)
                     embed.set_footer(
-                        text="Ya no serás informado cuando nuevos volúmenes sean subidos a komga.")
+                        text="Ya no serás informado cuando nuevos volúmenes sean subidos a YomiYasu.")
                     await message.delete()
                     return await channel.send(embed=embed, delete_after=30.0)
 
@@ -127,7 +127,7 @@ class Manga(commands.Cog):
                     embed = discord.Embed(
                         title="Subscripción eliminada con éxito", color=0xff6060)
                     embed.set_footer(
-                        text="Ya no serás informado cuando nuevos volúmenes sean subidos a komga.")
+                        text="Ya no serás informado cuando nuevos volúmenes sean subidos a YomiYasu.")
                     return await channel.send(embed=embed, delete_after=30.0)
 
     # Analize messages in search of anilist links to receive the petition
@@ -141,7 +141,7 @@ class Manga(commands.Cog):
                 found_manga = self.db.find_one({"idAnilist": int(manga[2])})
                 if found_manga:
                     await message.add_reaction("❌")
-                    return await send_error_message(ctx, "¡Ese manga ya está en komga!")
+                    return await send_error_message(ctx, "¡Ese manga ya está en YomiYasu!")
                 response = await get_media_info_by_id(manga[2])
                 if response.status_code == 200:
                     if response.json()["data"]["Media"]["meanScore"] is None or int(response.json()["data"]["Media"]["meanScore"]) < 65:
@@ -192,7 +192,7 @@ class Manga(commands.Cog):
             found_manga = self.db.update_one({"idAnilist": anilistid}, {
                                              "$inc": {"volumes": volnum}})
             if found_manga.modified_count < 1:
-                return await send_error_message(ctx, "Ese manga no está en komga.")
+                return await send_error_message(ctx, "Ese manga no está en YomiYasu.")
             updated_manga = self.db.find_one({"idAnilist": anilistid})
 
             if updated_manga['totalVolumes'] < updated_manga['volumes']:
@@ -224,8 +224,8 @@ class Manga(commands.Cog):
                 name="Volúmenes añadidos", value=f">>> {new_volumes}", inline=False)
             notify_embed.add_field(
                 name="Id del manga", value=updated_manga["idAnilist"], inline=False)
-            notify_embed.add_field(name="Link de komga",
-                                   value=f"[{updated_manga['title']}](https://leermangarapido.duckdns.org/series/{updated_manga['komgaId']})")
+            notify_embed.add_field(name="Link de YomiYasu",
+                                   value=f"[{updated_manga['title']}](https://manga.ajr.moe/app/series/{updated_manga['yomiyasuId']})")
             notify_embed.set_footer(
                 text=f"Para suscribirte a este manga reacciona con 📋 a este mensaje")
 
@@ -241,7 +241,7 @@ class Manga(commands.Cog):
                        anilist: discord.Option(int, "Id de anilist", required=True),
                        volúmenes: discord.Option(int, "Número de volúmenes", required=True),
                        volúmenestotales: discord.Option(int, "Número de volúmenes que existen", required=True),
-                       komgaid: discord.Option(str, "Id de komga", required=True),
+                       yomiyasuid: discord.Option(str, "Id de YomiYasu", required=True),
                        interesado: discord.Option(str, "Id del usuario que ha pedido el manga", required=False)):
         """[ADMIN] Añadir mangas a la base de datos"""
         if ctx.user.id in admin_users:
@@ -262,7 +262,7 @@ class Manga(commands.Cog):
                 "idAnilist": anilist,
                 "interested": interested,
                 "thumbnail": manga_info["coverImage"]["large"],
-                "komgaId": komgaid
+                "yomiyasuId": yomiyasuid
             }
 
             try:
@@ -290,8 +290,8 @@ class Manga(commands.Cog):
                 name="Volúmenes totales", value=f"{volúmenes}", inline=False)
             notify_embed.add_field(
                 name="Id del manga", value=anilist, inline=False)
-            notify_embed.add_field(name="Link de komga",
-                                   value=f"[{new_manga['title']}](https://leermangarapido.duckdns.org/series/{komgaid})")
+            notify_embed.add_field(name="Link de YomiYasu",
+                                   value=f"[{new_manga['title']}](https://manga.ajr.moe/app/series/{yomiyasuid})")
             notify_embed.set_footer(
                 text=f"Para suscribirte a este manga reacciona con 📋 a este mensaje")
             petitions = await self.bot.fetch_channel(notification_channel)
@@ -321,10 +321,10 @@ class Manga(commands.Cog):
                             value=found_manga["title"])
             embed.set_thumbnail(url=found_manga["thumbnail"])
             embed.set_footer(
-                text="Serás informado cuando nuevos volúmenes sean subidos a komga.")
+                text="Serás informado cuando nuevos volúmenes sean subidos a YomiYasu.")
             return await send_response(ctx, embed=embed, ephemeral=True)
         else:
-            return await send_error_message(ctx, "Ese manga no está en komga. Puedes solicitarlo en <#1005119887200489552>.")
+            return await send_error_message(ctx, "Ese manga no está en YomiYasu. Puedes solicitarlo en <#1005119887200489552>.")
 
     @ commands.slash_command()
     async def unsubscribe(self, ctx,
@@ -344,16 +344,16 @@ class Manga(commands.Cog):
             embed = discord.Embed(
                 title="Subscripción eliminada con éxito", color=0xff6060)
             embed.set_footer(
-                text="Ya no serás informado cuando nuevos volúmenes sean subidos a komga.")
+                text="Ya no serás informado cuando nuevos volúmenes sean subidos a YomiYasu.")
             return await send_response(ctx, embed=embed, ephemeral=True)
         else:
-            return await send_error_message(ctx, "Ese manga no está en komga. Puedes solicitarlo en <#1005119887200489552>.")
+            return await send_error_message(ctx, "Ese manga no está en YomiYasu. Puedes solicitarlo en <#1005119887200489552>.")
 
     @ commands.slash_command()
     async def buscarmanga(self, ctx,
                           anilistid: discord.Option(int, "Id de anilist del manga a buscar", required=False),
                           title: discord.Option(str, "Título en kanji del manga a buscar", required=False)):
-        """Busca mangas de komga por el id de anilist o el título en kanji"""
+        """Busca mangas de YomiYasu por el id de anilist o el título en kanji"""
         if ctx.guild.id != main_guild:
             return
         if not anilistid and not title:
@@ -361,11 +361,11 @@ class Manga(commands.Cog):
         await set_processing(ctx)
         pipeline = [{"idAnilist": anilistid}]
         if title:
-            pipeline.append({"title": {"$regex": title}})
+            pipeline.append({"title": title})
         found_manga = self.db.find_one(
             {"$or": pipeline})
         if not found_manga:
-            return await send_error_message(ctx, "Ese manga no está en komga. Puedes solicitarlo en <#1005119887200489552>.")
+            return await send_error_message(ctx, "Ese manga no está en YomiYasu. Puedes solicitarlo en <#1005119887200489552>.")
         embed = discord.Embed(
             title="Búsqueda de mangas", color=0x301fa0)
         embed.add_field(name="Nombre del manga",
@@ -374,10 +374,10 @@ class Manga(commands.Cog):
                         value=found_manga["volumes"], inline=False)
         embed.add_field(name="Id de anilist",
                         value=found_manga["idAnilist"], inline=True)
-        embed.add_field(name="Link de komga",
-                        value=f"[{found_manga['title']}](https://leermangarapido.duckdns.org/series/{found_manga['komgaId']})")
+        embed.add_field(name="Link de YomiYasu",
+                        value=f"[{found_manga['title']}](https:/manga.ajr.moe/app/series/{found_manga['yomiyasuId']})")
         embed.set_thumbnail(url=found_manga["thumbnail"])
-        # Añadir campo con enlace a komga
+        # Añadir campo con enlace a YomiYasu
         embed.set_footer(
             text="Para suscribirte a este manga reacciona con 📋 a este mensaje")
         message = await send_response(ctx, embed=embed)
@@ -393,8 +393,8 @@ class Manga(commands.Cog):
         await ctx.send_modal(modal)
 
     @ commands.slash_command()
-    async def komgainfo(self, ctx):
-        """Obtener información sobre komga"""
+    async def yomiyasuinfo(self, ctx):
+        """Obtener información sobre YomiYasu"""
         await set_processing(ctx)
         data = self.db.aggregate([
             {
@@ -414,21 +414,21 @@ class Manga(commands.Cog):
         ])
         for result in data:
             info = result
-        embed = discord.Embed(title="Información Komga AJR", color=0xf4f344)
+        embed = discord.Embed(title="Información YomiYasu AJR", color=0xf4f344)
         embed.add_field(
             name="Datos:", value=f">>> `Total de Series de Manga`: {info['totalSeries']} Series\n`Total de Volúmenes`: {info['totalVolumes']} Volúmenes\n`Total de Volúmenes no Encontrados`: {info['wantedVolumes']} Volúmenes", inline=False)
         links = ""
         if ctx.guild.id == main_guild:
-            links = "[Komga](https://leermangarapido.duckdns.org/)"
+            links = "[YomiYasu](https://manga.ajr.moe/)"
         else:
             links = "[Servidor de Peticiones](https://discord.gg/57hUwdTNBh)"
         embed.add_field(name="Links",
                         value=links)
         await send_response(ctx, embed=embed)
 
-    @ commands.command(aliases=["komgainfo"])
-    async def komgainfoprefix(self, ctx):
-        await self.komgainfo(ctx)
+    @ commands.command(aliases=["yomiyasuinfo"])
+    async def yomiyasuinfoprefix(self, ctx):
+        await self.yomiyasuinfo(ctx)
 
     @commands.command()
     async def adjustmanga(self, ctx):
