@@ -3,6 +3,9 @@ import asyncio
 import csv
 from datetime import datetime, timedelta
 import discord
+from matplotlib.ticker import AutoLocator
+from matplotlib.ticker import MaxNLocator
+
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -377,7 +380,11 @@ def generate_linear_graph(points, horas):
     return file
 
 
-def generate_graph(points, type, timelapse=None):
+def my_autopct(pct):
+    return ('%1.1f%%' % pct) if pct >= 4.99 else ''
+
+
+def generate_graph(points, type, timelapse=None, total_points=None, position=None):
     aux = dict(points)
     if type == "piechart":
         for elem in list(aux):
@@ -393,11 +400,30 @@ def generate_graph(points, type, timelapse=None):
             values.append(y)
 
         fig1, ax1 = plt.subplots()
-        ax1.pie(values, labels=labels, autopct='%1.1f%%',
-                shadow=True, startangle=90, textprops={'color': "w"})
+
+        plt.pie(values, labels=labels,
+                autopct=my_autopct, pctdistance=0.85, textprops={'color': "w"}, shadow=True, startangle=90)
+
         fig1.set_facecolor("#2F3136")
         # Equal aspect ratio ensures that pie is drawn as a circle.
         ax1.axis('equal')
+
+        centre_circle = plt.Circle((0, 0), 0.70, fc='#2F3136')
+        fig1 = plt.gcf()
+
+        # Adding Circle in Pie chart
+        fig1.gca().add_artist(centre_circle)
+
+        sumstr = f"{total_points}"
+        # String on the donut center
+        bbox_props = dict(boxstyle="circle,pad=0.3",
+                          edgecolor="#2F3136", facecolor="gold")
+        ax1.text(0., 0.4, position, horizontalalignment='center',
+                 verticalalignment='center_baseline', size=28, color="#2F3136", bbox=bbox_props)
+        ax1.text(0., -0.1, sumstr, horizontalalignment='center',
+                 verticalalignment='center', size=26, color="white")
+        ax1.text(0., -0.35, "Puntos", horizontalalignment='center',
+                 verticalalignment='center_baseline', size=18, color="white")
 
         plt.savefig("temp/image.png")
         plt.close()
@@ -459,11 +485,22 @@ def generate_graph(points, type, timelapse=None):
         plt.bar(labels, output,
                 bottom=read + anime + manga + vn + audio + video, color='#ff5f0c')
         plt.xlabel("FECHA")
+        plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True, prune='both'))
         plt.ylabel("PUNTOS")
         plt.ylim(0, max * 1.05)
         plt.legend(["LECTURA", "ANIME", "MANGA", "VN", "AUDIO",
                     "VIDEO", "OUTPUT"], loc='upper center', bbox_to_anchor=(0.5, 1.25),
                    ncol=3, fancybox=True, shadow=True, labelcolor="black")
+
+        ax.set_facecolor('#36393f')  # Color de fondo similar al de Discord
+        fig1.set_facecolor('#36393f')
+
+        ax.title.set_color('white')
+        ax.xaxis.label.set_color('white')
+        ax.yaxis.label.set_color('white')
+        ax.tick_params(axis='x', colors='white')  # Change tick labels color
+        ax.tick_params(axis='y', colors='white')  # Change tick labels color
+
         plt.savefig("temp/image.png", bbox_inches="tight")
         plt.close()
         file = discord.File("temp/image.png", filename="image.png")

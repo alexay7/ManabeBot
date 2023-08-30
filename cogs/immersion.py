@@ -369,7 +369,8 @@ class Immersion(commands.Cog):
         normal.add_field(name="Medios", value=output, inline=False)
 
         if gráfica == "SECTORES":
-            piedoc = generate_graph(points, "piechart")
+            piedoc = generate_graph(points, "piechart", total_points=round(
+                points["TOTAL"], 2), position=f"{position+1}º")
             normal.set_image(url="attachment://image.png")
             await send_response(ctx, embed=normal, file=piedoc)
         elif gráfica == "BARRAS":
@@ -1130,7 +1131,7 @@ class Immersion(commands.Cog):
                   "#ff1493", "#f5deb3"]
 
         # Create a stacked area chart using Matplotlib
-        fig, ax = plt.subplots(figsize=(10, 6))
+        fig, ax = plt.subplots(figsize=(15, 10))
 
         # Combine the y values for each user and plot them together as a stacked area chart
         stacked_y = [filled_data[user_id]['y']
@@ -1143,13 +1144,16 @@ class Immersion(commands.Cog):
             stack_coll[i].set_color(
                 colors[(i - 1) % len(colors)])
 
+        bbox_props = dict(boxstyle="round,pad=0.3",
+                          edgecolor="black", facecolor="white")
+
         ax.text(max_month, max_points,
-                f"{math.ceil(max_points)}", ha='center', va='bottom', fontsize=12)
+                f"{math.ceil(max_points)}", ha='center', va='bottom', fontsize=12, bbox=bbox_props, color="black")
 
         if max_month != month:
             # Add text annotation for current month points
             ax.text(current_month, current_month_points,
-                    f"{math.ceil(current_month_points)}", ha='center', va='center')
+                    f"{math.ceil(current_month_points)}", ha='center', va='center', bbox=bbox_props, color="black")
 
         # Set the x-axis label
         ax.set_xlabel('Meses')
@@ -1165,7 +1169,26 @@ class Immersion(commands.Cog):
 
         # Create the legend outside the plot
         ax.legend([filled_data[user_id]['label'] for user_id, data in filled_data.items(
-        )], loc='upper left', bbox_to_anchor=(1.05, 1), fontsize='large')
+        )], loc='upper left', bbox_to_anchor=(1.02, 1), fontsize='large')
+
+        handles, labels = ax.get_legend_handles_labels()
+        legend = ax.legend(reversed(handles), reversed(labels),
+                           title='Usuarios', loc='upper left', color="black")
+
+        ax.set_facecolor('#36393f')  # Color de fondo similar al de Discord
+        fig.set_facecolor('#36393f')
+
+        ax.title.set_color('white')
+        ax.xaxis.label.set_color('white')
+        ax.yaxis.label.set_color('white')
+        ax.tick_params(axis='x', colors='white')  # Change tick labels color
+        ax.tick_params(axis='y', colors='white')  # Change tick labels color
+
+        for text in legend.get_texts():
+            text.set_color("black")
+
+        plt.rcParams.update(
+            {'text.color': 'white', 'axes.labelcolor': 'white'})
 
         plt.xticks(rotation=45)
         plt.savefig("temp/image.png", bbox_inches="tight")
