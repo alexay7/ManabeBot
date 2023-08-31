@@ -1173,7 +1173,7 @@ class Immersion(commands.Cog):
 
         handles, labels = ax.get_legend_handles_labels()
         legend = ax.legend(reversed(handles), reversed(labels),
-                           title='Usuarios', loc='upper left', color="black")
+                           title='Usuarios', loc='upper left')
 
         ax.set_facecolor('#36393f')  # Color de fondo similar al de Discord
         fig.set_facecolor('#36393f')
