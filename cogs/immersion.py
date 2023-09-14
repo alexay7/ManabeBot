@@ -713,22 +713,47 @@ class Immersion(commands.Cog):
                 newlog["puntos"] = new_points
 
         if output > 0.01:
+            # Obtiene el ranking previo al log del usuario
             ranking = await get_sorted_ranking(self.db, "MES", "TOTAL")
             newranking = ranking
+
             for user in ranking:
                 if user["username"] == ctx.author.name:
                     position = ranking.index(user)
 
                     ranking[position]["points"] += output
 
+                    # Obtiene el ranking actualizado con los nuevos puntos del usuario
                     newranking = sorted(
                         ranking, key=lambda x: x["points"], reverse=True)
+
             for user in newranking:
                 if user["username"] == ctx.author.name:
+                    # Busca el indice del usuario en el nuevo ranking
                     newposition = newranking.index(user)
+                    # Obtiene el número de puntos del usuario tras el log
                     current_points = user["points"]
 
             logid = await add_log(self.db, ctx.author.id, newlog, ctx.author.name)
+
+            next_user = {
+                "user": "",
+                "difference": 0,
+                "outside": False
+            }
+
+            if newposition > 9:
+                # usuario que va en la posición 10
+                next_user_aux = newranking[9]
+                next_user["outside"] = True
+            elif newposition != 0:
+                # usuario que va delante de ti
+                next_user_aux = newranking[newposition-1]
+
+            if newposition != 0:
+                next_user["user"] = next_user_aux["username"]
+                next_user["difference"] = next_user_aux["points"] - \
+                    current_points
 
             # Get streak
             current_streak = 0
@@ -771,6 +796,14 @@ class Immersion(commands.Cog):
             if newposition < position:
                 embed.add_field(
                     name="🎉 Has subido en el ranking del mes! 🎉", value=f"**{position+1}º** ---> **{newposition+1}º**", inline=False)
+            if newposition != 0:
+                aux_title = f"el {position}º puesto"
+                if next_user["outside"]:
+                    aux_title = "entrar al podio"
+                embed.add_field(
+                    name=f"⚔️ Lucha por {aux_title} ⚔️",
+                    value=f"Tienes a {next_user['user']} a {round(next_user['difference'],2)} puntos. ¡Animo!"
+                )
             embed.set_footer(
                 text=f"Id del usuario: {ctx.author.id}")
             message = await send_response(ctx, embed=embed)
