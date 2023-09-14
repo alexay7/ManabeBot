@@ -792,7 +792,7 @@ class Immersion(commands.Cog):
                                 value=f"{math.floor(int(cantidad)/tiempo*60)}chars/h", inline=False)
             if current_streak > 1:
                 embed.add_field(name="⚡ Racha actual de logueo ⚡ ",
-                                value=f"{current_streak} días")
+                                value=f"{current_streak} días", inline=False)
             if newposition < position:
                 embed.add_field(
                     name="🎉 Has subido en el ranking del mes! 🎉", value=f"**{position+1}º** ---> **{newposition+1}º**", inline=False)
@@ -802,7 +802,8 @@ class Immersion(commands.Cog):
                     aux_title = "entrar al podio"
                 embed.add_field(
                     name=f"⚔️ Lucha por {aux_title} ⚔️",
-                    value=f"Tienes a {next_user['user']} a {round(next_user['difference'],2)} puntos. ¡Animo!"
+                    value=f"Tienes a {next_user['user']} a {round(next_user['difference'],2)} puntos. ¡Animo!",
+                    inline=False
                 )
             embed.set_footer(
                 text=f"Id del usuario: {ctx.author.id}")
