@@ -797,7 +797,9 @@ class Immersion(commands.Cog):
                 embed.add_field(
                     name="🎉 Has subido en el ranking del mes! 🎉", value=f"**{position+1}º** ---> **{newposition+1}º**", inline=False)
             if newposition != 0:
-                aux_title = f"el {position}º puesto"
+                aux_title = f"el {newposition}º puesto"
+                if newposition == 1 or newposition == 3:
+                    aux_title = f"el {newposition}er puesto"
                 if next_user["outside"]:
                     aux_title = "entrar al podio"
                 embed.add_field(
