@@ -202,9 +202,13 @@ class Immersion(commands.Cog):
             "LOGID | FECHA: MEDIO CANTIDAD -> PUNTOS: DESCRIPCIÓN\n------------------------------------\n"]
         overflow = 0
         for log in sorted_res:
+            extra = ""
+            if "bonus" in log:
+                extra = " (Club AJR)"
+
             timestring = datetime.fromtimestamp(
                 log["timestamp"]).strftime('%d/%m/%Y')
-            line = f"#{log['id']} | {timestring}: {log['medio']} {get_media_element(log['parametro'],log['medio'])} -> {log['puntos']} puntos: {log['descripcion']}\n"
+            line = f"#{log['id']} | {timestring}: {log['medio']}{extra} {get_media_element(log['parametro'],log['medio'])} -> {log['puntos']} puntos: {log['descripcion']}\n"
             if "tiempo" in log:
                 line = line.replace(
                     "\n", f" | tiempo: {get_media_element(log['tiempo'],'VIDEO')}\n")
@@ -704,7 +708,8 @@ class Immersion(commands.Cog):
             'timestamp': int(today.timestamp()),
             'descripcion': message,
             'medio': medio.upper(),
-            'parametro': cantidad
+            'parametro': cantidad,
+            "bonus": bonus
         }
         output = compute_points(newlog, bonus)
 
@@ -713,7 +718,7 @@ class Immersion(commands.Cog):
             auxlog = copy(newlog)
             auxlog["medio"] = "TIEMPOLECTURA"
             auxlog["parametro"] = tiempo
-            new_points = compute_points(auxlog)
+            new_points = compute_points(auxlog, bonus)
             if new_points > output:
                 output = new_points
                 newlog["puntos"] = new_points
@@ -723,7 +728,7 @@ class Immersion(commands.Cog):
             auxlog = copy(newlog)
             auxlog["medio"] = "LECTURA"
             auxlog["parametro"] = caracteres
-            new_points = compute_points(auxlog)
+            new_points = compute_points(auxlog, bonus)
             if new_points > output:
                 output = new_points
                 newlog["puntos"] = new_points
@@ -914,7 +919,7 @@ class Immersion(commands.Cog):
             time = split_desc[0]
             characters = split_desc[1]
 
-        await self.log(ctx, medio, cantidad, message, int(time), int(characters))
+        await self.log(ctx, medio, cantidad, message, int(time), int(characters), False)
 
     @commands.slash_command()
     async def puntos(self, ctx,

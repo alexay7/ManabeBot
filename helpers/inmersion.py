@@ -532,7 +532,7 @@ def generate_graph(points, type, timelapse=None, total_points=None, position=Non
             return file
 
 
-def compute_points(log, bonus):
+def compute_points(log, bonus=False):
     # Mejor prevenir que curar
     if log["medio"] not in MEDIA_TYPES:
         return 0
@@ -556,10 +556,11 @@ def compute_points(log, bonus):
         puntos = round(int(log["parametro"]) * 45 / 100, 4)
     elif log["medio"] == "VIDEO":
         puntos = round(int(log["parametro"]) * 45 / 100, 4)
-    log["puntos"] = puntos
 
     if bonus:
         puntos = round(puntos * 1.4, 2)
+
+    log["puntos"] = puntos
 
     return puntos
 
