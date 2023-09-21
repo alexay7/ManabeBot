@@ -100,63 +100,57 @@ class Kotoba(commands.Cog):
                                         return
 
                                     if fontcolor != "rgba(241,115,255,1)" or bgcolor != "rgba(0,0,0,1)":
-                                        if message.channel.id in kotoba_channels:
-                                            await send_error_message(message.channel,
-                                                                     "Ajustes de color erróneos. Revisa que el comando coincida con el indicado por .levelup")
+                                        print(message.channel,
+                                              "Ajustes de color erróneos. Revisa que el comando coincida con el indicado por .levelup")
                                         return
 
                                     if startindex != 0 or endindex != 0 or mc or shuffle is False or isloaded:
-                                        if message.channel.id in kotoba_channels:
-                                            await send_error_message(message.channel,
-                                                                     "Ajustes no permitidos detectados. Revisa que el comando coincida con el indicado por .levelup")
+                                        print(message.channel,
+                                              "Ajustes no permitidos detectados. Revisa que el comando coincida con el indicado por .levelup")
                                         return
 
                                     if scorelimit != myscore:
-                                        if message.channel.id in kotoba_channels:
-                                            await send_error_message(message.channel,
-                                                                     "Quiz fallado. Más suerte la próxima vez!")
+                                        print(message.channel,
+                                              "Quiz fallado. Más suerte la próxima vez!")
                                         return
 
                                     if scorelimit < reqscorelimit:
-                                        if message.channel.id in kotoba_channels:
-                                            await send_error_message(message.channel, "Puntuación mínima establecida demasiado baja. Revisa que el comando coincida con el indicado por .levelup")
+                                        print(
+                                            message.channel, "Puntuación mínima establecida demasiado baja. Revisa que el comando coincida con el indicado por .levelup")
                                         return
 
                                     if usercount > 1:
-                                        if message.channel.id in kotoba_channels:
-                                            await send_error_message(message.channel,
-                                                                     "Demasiados usuarios, haz el quiz solo!")
+                                        print(message.channel,
+                                              "Demasiados usuarios, haz el quiz solo!")
                                         return
 
                                     if reqanswertime < answertimelimitinms:
-                                        if message.channel.id in kotoba_channels:
-                                            await send_error_message(message.channel,
-                                                                     "Tiempo establecido para contestar demasiado alto. Revisa que el comando coincida con el indicado por .levelup")
+                                        print(message.channel,
+                                              "Tiempo establecido para contestar demasiado alto. Revisa que el comando coincida con el indicado por .levelup")
                                         return
 
                                     if reqfontsize < fontsize:
-                                        if message.channel.id in kotoba_channels:
-                                            await send_error_message(message.channel, "Tamaño de fuente demasiado grande. Revisa que el comando coincida con el indicado por .levelup")
+                                        print(
+                                            message.channel, "Tamaño de fuente demasiado grande. Revisa que el comando coincida con el indicado por .levelup")
                                         return
 
                                     if reqfont != 'any':
                                         if font not in reqfont:
-                                            if message.channel.id in kotoba_channels:
-                                                await send_error_message(message.channel,
-                                                                         "Fuente no permitida. Revisa que el comando coincida con el indicado por .levelup")
+                                            print(message.channel,
+                                                  "Fuente no permitida. Revisa que el comando coincida con el indicado por .levelup")
                                             return
 
                                     if failedquestioncount < 0:
-                                        if message.channel.id in kotoba_channels:
-                                            await send_error_message(message.channel, "Quiz abortado por el usuario.")
+                                        print(message.channel,
+                                              "Quiz abortado por el usuario.")
                                         return
 
                                     if failedquestioncount > reqfailed:
-                                        if message.channel.id in kotoba_channels:
-                                            await send_error_message(message.channel, "Demasiadas preguntas incorrectas. Más suerte la próxima vez!")
+                                        print(
+                                            message.channel, "Demasiadas preguntas incorrectas. Más suerte la próxima vez!")
                                         return
 
-                                    if message.channel.id not in kotoba_channels:
+                                    if message.channel.id not in kotoba_channels and message.channel.parent_id not in kotoba_channels:
                                         await send_error_message(message.channel,
                                                                  "Los tests solo serán evaluados en <#796084920790679612>.")
                                         return
