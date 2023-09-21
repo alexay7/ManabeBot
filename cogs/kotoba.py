@@ -109,11 +109,6 @@ class Kotoba(commands.Cog):
                                               "Ajustes no permitidos detectados. Revisa que el comando coincida con el indicado por .levelup")
                                         return
 
-                                    if scorelimit != myscore:
-                                        print(message.channel,
-                                              "Quiz fallado. Más suerte la próxima vez!")
-                                        return
-
                                     if scorelimit < reqscorelimit:
                                         print(
                                             message.channel, "Puntuación mínima establecida demasiado baja. Revisa que el comando coincida con el indicado por .levelup")
@@ -148,6 +143,11 @@ class Kotoba(commands.Cog):
                                     if failedquestioncount > reqfailed:
                                         print(
                                             message.channel, "Demasiadas preguntas incorrectas. Más suerte la próxima vez!")
+                                        return
+
+                                    if scorelimit != myscore:
+                                        await send_error_message(message.channel,
+                                                                 "Quiz fallado. ¡Más suerte la próxima vez!")
                                         return
 
                                     if message.channel.id not in kotoba_channels and message.channel.parent_id not in kotoba_channels:

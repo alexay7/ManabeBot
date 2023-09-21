@@ -453,7 +453,8 @@ class Immersion(commands.Cog):
                        cantidad: discord.Option(int, "Cantidad inmersada", required=True, min_value=1, max_value=5000000),
                        descripción: discord.Option(str, "Pequeño resumen de lo inmersado", required=True),
                        tiempo: discord.Option(int, "Tiempo que te ha llevado en minutos", required=False),
-                       caracteres: discord.Option(int, "Caracteres leídos (para medios que no sean lectura)", required=False)):
+                       caracteres: discord.Option(int, "Caracteres leídos (para medios que no sean lectura)", required=False),
+                       bonus: discord.Option(bool, "Log de un club mensual de AJR", required=False)):
         """Loguear inmersión hecha en el pasado"""
         # Check if the user has logs
         await set_processing(ctx)
@@ -487,7 +488,9 @@ class Immersion(commands.Cog):
             await send_error_message(ctx, "Prohibido viajar en el tiempo")
             return
 
-        message = descripción
+        bonus = "ajrclub" in descripción or bonus
+
+        message = descripción.replace("ajrclub", "").strip()
 
         newlog = {
             'timestamp': datets,
@@ -512,7 +515,7 @@ class Immersion(commands.Cog):
             auxlog = copy(newlog)
             auxlog["medio"] = "LECTURA"
             auxlog["parametro"] = caracteres
-            new_points = compute_points(auxlog)
+            new_points = compute_points(auxlog, bonus)
             if new_points > output:
                 output = new_points
                 newlog["puntos"] = new_points
@@ -533,13 +536,22 @@ class Immersion(commands.Cog):
                     newposition = newranking.index(user)
                     current_points = user["points"]
 
-            embed = discord.Embed(title="Log registrado con éxito",
-                                  description=f"Log #{logid} || {strdate.strftime('%d/%m/%Y')}", color=0x24b14d)
+            color = 0x24b14d
+            extra = ""
+            multiplier = ""
+
+            if bonus:
+                color = 0xbf9000
+                extra = " (club AJR)"
+                multiplier = " (x1.4)"
+
+            embed = discord.Embed(title=f"Log registrado con éxito{extra}",
+                                  description=f"Log #{logid} || {strdate.strftime('%d/%m/%Y')}", color=color)
             embed.add_field(
                 name="Usuario", value=ctx.author.name, inline=True)
             embed.add_field(name="Medio", value=medio.upper(), inline=True)
             embed.add_field(
-                name="Puntos", value=f"{round(current_points,2)} (+{output})", inline=True)
+                name=f"Puntos{multiplier}", value=f"{round(current_points,2)} (+{output})", inline=True)
             embed.add_field(name="Inmersado",
                             value=get_media_element(cantidad, medio.upper()), inline=True)
             embed.add_field(name="Inmersión",
@@ -667,6 +679,8 @@ class Immersion(commands.Cog):
                   descripción: discord.Option(str, "Pequeño resumen de lo inmersado", required=True),
                   tiempo: discord.Option(int, "Tiempo que te ha llevado en minutos", required=False),
                   caracteres: discord.Option(int, "Caracteres leídos (para medios que no sean lectura)", required=False),
+                  bonus: discord.Option(
+                      bool, "Log de un club mensual de AJR", required=False)
                   ):
         """Loguear inmersión"""
         await set_processing(ctx)
@@ -680,7 +694,9 @@ class Immersion(commands.Cog):
                                 "Este comando solo puede ser usado en <#950449182043430942>.")
             return
 
-        message = descripción
+        bonus = "ajrclub" in descripción or bonus
+
+        message = descripción.replace("ajrclub", "").strip()
 
         today = datetime.today()
 
@@ -690,7 +706,7 @@ class Immersion(commands.Cog):
             'medio': medio.upper(),
             'parametro': cantidad
         }
-        output = compute_points(newlog)
+        output = compute_points(newlog, bonus)
 
         if tiempo and tiempo > 0:
             newlog['tiempo'] = math.ceil(tiempo)
@@ -767,13 +783,22 @@ class Immersion(commands.Cog):
                 else:
                     break
 
-            embed = discord.Embed(title="Log registrado con éxito",
-                                  description=f"Id Log #{logid} || Fecha: {today.strftime('%d/%m/%Y')}", color=0x24b14d)
+            color = 0x24b14d
+            extra = ""
+            multiplier = ""
+
+            if bonus:
+                color = 0xbf9000
+                extra = " (club AJR)"
+                multiplier = " (x1.4)"
+
+            embed = discord.Embed(title=f"Log registrado con éxito{extra}",
+                                  description=f"Id Log #{logid} || Fecha: {today.strftime('%d/%m/%Y')}", color=color)
             embed.add_field(
                 name="Usuario", value=ctx.author.name, inline=True)
             embed.add_field(name="Medio", value=medio.upper(), inline=True)
             embed.add_field(
-                name="Puntos", value=f"{round(current_points,2)} (+{output})", inline=True)
+                name=f"Puntos{multiplier}", value=f"{round(current_points,2)} (+{output})", inline=True)
             embed.add_field(name="Inmersado",
                             value=get_media_element(cantidad, medio.upper()), inline=True)
             embed.add_field(name="Descripción",
