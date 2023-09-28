@@ -25,7 +25,7 @@ from helpers.inmersion import (MEDIA_TYPES, MEDIA_TYPES_ENGLISH, MONTHS, TIMESTA
                                get_best_user_of_range, get_logs_animation, get_media_element, get_ranking_title,
                                get_sorted_ranking, get_total_immersion_of_month, get_total_parameter_of_media,
                                get_user_logs, remove_last_log, remove_log, send_message_with_buttons, get_all_logs_in_day,
-                               get_last_log)
+                               get_last_log, check_max_immersion)
 
 # ================ GENERAL VARIABLES ================
 with open("config/general.json") as json_file:
@@ -471,6 +471,10 @@ class Immersion(commands.Cog):
                                 f"Este comando solo puede ser usado en <#{immersion_logs_channels[0]}>.")
             return
 
+        if not check_max_immersion(cantidad, medio.upper()):
+            await send_error_message(ctx, "Esa cantidad de inmersión no es posible en un solo día, considera usar el comando /backfill para indicar las fechas con precisión")
+            return
+
         date = fecha.split("/")
         if len(date) < 3:
             await send_error_message(ctx, "Formato de fecha no válido")
@@ -696,6 +700,10 @@ class Immersion(commands.Cog):
         if ctx.channel.id not in immersion_logs_channels:
             await send_response(ctx,
                                 "Este comando solo puede ser usado en <#950449182043430942>.")
+            return
+
+        if not check_max_immersion(int(cantidad), medio.upper()):
+            await send_error_message(ctx, "Esa cantidad de inmersión no es posible en un solo día, considera usar el comando /backfill para indicar las fechas con precisión")
             return
 
         bonus = "ajrclub" in descripción or bonus

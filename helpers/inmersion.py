@@ -712,3 +712,17 @@ async def send_message_with_buttons(self, ctx, content):
                     await send_error_message(self, ctx, "‼️ Los mensajes con páginas no funcionan bien en DM!")
                 break
                 # ending the loop if user doesn't react after x seconds
+
+
+def check_max_immersion(parameter: int, media: str):
+    if media == "LIBRO":
+        return 2000 >= parameter
+    elif media == "MANGA":
+        return 10000 >= parameter
+    elif media in ["VN", "LECTURA"]:
+        return 720000 >= parameter
+    elif media == "ANIME":
+        return 10000 >= parameter
+    elif media in ["TIEMPOLECTURA", "AUDIO", "OUTPUT", "VIDEO"]:
+        return 1440 >= parameter
+    return
