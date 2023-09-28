@@ -722,7 +722,7 @@ def check_max_immersion(parameter: int, media: str):
     elif media in ["VN", "LECTURA"]:
         return 720000 >= parameter
     elif media == "ANIME":
-        return 10000 >= parameter
+        return 60 >= parameter
     elif media in ["TIEMPOLECTURA", "AUDIO", "OUTPUT", "VIDEO"]:
         return 1440 >= parameter
     return
