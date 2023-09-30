@@ -203,7 +203,8 @@ class Immersion(commands.Cog):
         overflow = 0
         for log in sorted_res:
             extra = ""
-            if "bonus" in log:
+
+            if "bonus" in log and log["bonus"]:
                 extra = " (Club AJR)"
 
             timestring = datetime.fromtimestamp(
@@ -496,9 +497,11 @@ class Immersion(commands.Cog):
             await send_error_message(ctx, "Prohibido viajar en el tiempo")
             return
 
-        bonus = "ajrclub" in descripción or bonus
+        bonus = "ajrclub" in descripción.lower() or bonus or "clubajr" in descripción.lower(
+        ) or "ajr-club" in descripción.lower() or "club-ajr" in descripción.lower()
 
-        message = descripción.replace("ajrclub", "").strip()
+        message = descripción.lower().replace("ajrclub", "").replace(
+            "clubajr", "").replace("ajr-club", "").replace("club.ajr", "").strip()
 
         newlog = {
             'timestamp': datets,
@@ -706,9 +709,11 @@ class Immersion(commands.Cog):
             await send_error_message(ctx, "Esa cantidad de inmersión no es posible en un solo día, considera usar el comando /backfill para indicar las fechas con precisión")
             return
 
-        bonus = "ajrclub" in descripción or bonus
+        bonus = "ajrclub" in descripción.lower() or bonus or "clubajr" in descripción.lower(
+        ) or "ajr-club" in descripción.lower() or "club-ajr" in descripción.lower()
 
-        message = descripción.replace("ajrclub", "").strip()
+        message = descripción.lower().replace("ajrclub", "").replace(
+            "clubajr", "").replace("ajr-club", "").replace("club.ajr", "").strip()
 
         today = datetime.today()
 
