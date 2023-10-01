@@ -1,3 +1,4 @@
+import re
 import json
 import os
 from unicodedata import name
@@ -7,6 +8,9 @@ from discord.ext import commands
 from pymongo import MongoClient, errors
 from helpers.anilist import get_media_info_by_id
 from helpers.general import send_error_message, send_response, set_processing
+from time import sleep
+from discord import Message, ApplicationContext
+from helpers.manga import send_yomiyasu_embed
 
 # ================ GENERAL VARIABLES ================
 with open("config/general.json") as json_file:
@@ -48,9 +52,14 @@ class Manga(commands.Cog):
         try:
             client = MongoClient(os.getenv("MONGOURL"),
                                  serverSelectionTimeoutMS=10000)
+            yomiyasu_client = MongoClient(os.getenv("YOMIYASUURL"),
+                                          serverSelectionTimeoutMS=10000)
             client.server_info()
             db = client.komga
+            yomiyasu_db = yomiyasu_client.tfg
+
             self.db = db.mangas
+            self.yomiyasu_db = yomiyasu_db
             print("Conectado con éxito con mongodb [mangas]")
         except errors.ServerSelectionTimeoutError:
             print("Ha ocurrido un error intentando conectar con la base de datos")
@@ -133,8 +142,19 @@ class Manga(commands.Cog):
     # Analize messages in search of anilist links to receive the petition
 
     @commands.Cog.listener()
-    async def on_message(self, message):
+    async def on_message_edit(self, messageBef: Message, messageAft: Message):
+        ctx: ApplicationContext = await self.bot.get_context(messageAft)
+        embeds = await send_yomiyasu_embed(messageAft, self.db, self.yomiyasu_db)
+        if embeds:
+            await ctx.send(embeds=embeds)
+
+    @commands.Cog.listener()
+    async def on_message(self, message: Message):
         ctx = await self.bot.get_context(message)
+        embeds = await send_yomiyasu_embed(message, self.db, self.yomiyasu_db)
+        if embeds:
+            await ctx.send(embeds=embeds)
+
         if ctx.message.channel.id in petitions_channels:
             if "anilist.co/manga/" in message.content:
                 manga = parse.urlsplit(message.content).path.split("/")
@@ -184,19 +204,19 @@ class Manga(commands.Cog):
     @commands.slash_command()
     @commands.has_permissions(administrator=True)
     async def updatevolumes(self, ctx,
-                            anilistid: discord.Option(int, "Id de manga a actualizar", required=True),
+                            yomiyasuid: discord.Option(int, "Id de manga a actualizar", required=True),
                             volnum: discord.Option(int, "Número de mangas nuevos", required=False, default=1)):
         """[ADMIN] Actualiza el número de volúmenes de un manga"""
         if ctx.user.id in admin_users:
             await set_processing(ctx)
-            found_manga = self.db.update_one({"idAnilist": anilistid}, {
+            found_manga = self.db.update_one({"yomiyasuId": yomiyasuid}, {
                                              "$inc": {"volumes": volnum}})
             if found_manga.modified_count < 1:
                 return await send_error_message(ctx, "Ese manga no está en YomiYasu.")
-            updated_manga = self.db.find_one({"idAnilist": anilistid})
+            updated_manga = self.db.find_one({"yomiyasuId": yomiyasuid})
 
             if updated_manga['totalVolumes'] < updated_manga['volumes']:
-                found_manga = self.db.update_one({"idAnilist": anilistid},
+                found_manga = self.db.update_one({"yomiyasuId": yomiyasuid},
                                                  {"$set": {"totalVolumes": updated_manga['volumes']}})
 
             # Embed for admin
