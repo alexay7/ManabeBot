@@ -398,7 +398,9 @@ def generate_graph(points, type, timelapse=None, total_points=None, position=Non
             if aux[elem] == 0:
                 aux.pop(elem)
         aux.pop("TOTAL")
-        aux.pop("CLUB AJR")
+
+        if "CLUB AJR" in aux:
+            aux.pop("CLUB AJR")
 
         labels = []
         values = []
