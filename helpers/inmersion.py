@@ -46,6 +46,8 @@ def get_media_element(num, media):
         elif int(num) < 120:
             return f"1 hora y {int(num)%60} minutos"
         return f"{int(int(num)/60)} horas y {int(num)%60} minutos"
+    if media == "CLUB AJR":
+        return f"{int(num)} puntos"
 
 
 def calc_media(points):
@@ -309,6 +311,7 @@ async def get_best_user_of_range(db, media, timelapse):
     aux = None
     users = db.users.find({}, {"userId", "username"})
     points = 0
+    tot_parameters = 0
     for user in users:
         userpoints, parameters = await get_user_data(db, user["userId"], timelapse, media)
         newuser = {
@@ -317,10 +320,14 @@ async def get_best_user_of_range(db, media, timelapse):
             "points": round(userpoints[media], 2),
             "parameters": parameters[media]
         }
-        if newuser["points"] > points:
-            points = round(newuser["points"], 2)
-            parameternum = newuser["parameters"]
-            aux = newuser
+        if media == "TOTAL":
+            if newuser["points"] > points:
+                points = round(newuser["points"], 2)
+                aux = newuser
+        else:
+            if newuser["parameters"] > tot_parameters:
+                tot_parameters = round(newuser["parameters"], 2)
+                aux = newuser
     if not (aux is None):
         return aux
     return None
@@ -391,6 +398,7 @@ def generate_graph(points, type, timelapse=None, total_points=None, position=Non
             if aux[elem] == 0:
                 aux.pop(elem)
         aux.pop("TOTAL")
+        aux.pop("CLUB AJR")
 
         labels = []
         values = []

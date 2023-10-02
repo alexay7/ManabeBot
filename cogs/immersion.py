@@ -307,7 +307,8 @@ class Immersion(commands.Cog):
             "OUTPUT": 0,
             "AUDIO": 0,
             "VIDEO": 0,
-            "TOTAL": 0
+            "TOTAL": 0,
+            "CLUB AJR": 0
         }
         parameters = {
             "LIBRO": 0,
@@ -325,16 +326,24 @@ class Immersion(commands.Cog):
 
         output = ""
         for log in logs:
-            points[log["medio"]] += log["puntos"]
+            log_points = log["puntos"]
+            bonus_points = 0
+
+            if "bonus" in log and log["bonus"]:
+                log_points = log["puntos"]/1.4
+                bonus_points = log["puntos"]-log_points
+                points["CLUB AJR"] += bonus_points
+
+            points[log["medio"]] += log_points
             parameters[log["medio"]] += int(log["parametro"])
             points["TOTAL"] += log["puntos"]
             logdate = str(datetime.fromtimestamp(
                 log["timestamp"])).replace("-", "/").split(" ")[0]
 
             if logdate in graphlogs:
-                graphlogs[logdate] += log["puntos"]
+                graphlogs[logdate] += log_points
             else:
-                graphlogs[logdate] = log["puntos"]
+                graphlogs[logdate] = log_points
 
         if points["TOTAL"] == 0:
             output = "No se han encontrado logs"
@@ -357,6 +366,8 @@ class Immersion(commands.Cog):
                 output += f"**AUDIO:** {get_media_element(parameters['AUDIO'],'AUDIO')} -> {round(points['AUDIO'],2)} pts\n"
             if points["VIDEO"] > 0:
                 output += f"**VIDEO:** {get_media_element(parameters['VIDEO'],'VIDEO')} -> {round(points['VIDEO'],2)} pts\n"
+            if points["CLUB AJR"] > 0 and periodo != "TOTAL":
+                output += f"**CLUB AJR:** {round(points['CLUB AJR'],2)} puntos\n"
         ranking = await get_sorted_ranking(self.db, periodo, "TOTAL")
         for user in ranking:
             if user["username"] == ctx.author.name:
@@ -370,7 +381,7 @@ class Immersion(commands.Cog):
         normal.add_field(name="Posición ranking",
                          value=f"{position+1}º", inline=True)
         normal.add_field(name="Horas de tu vida perdidas",
-                         value=math.ceil(points["TOTAL"] / 27), inline=False)
+                         value=math.ceil((points["TOTAL"]-points["CLUB AJR"]) / 27), inline=False)
         normal.add_field(name="Medios", value=output, inline=False)
 
         if gráfica == "SECTORES":
@@ -644,22 +655,29 @@ class Immersion(commands.Cog):
             "TIEMPOLECTURA": 0,
             "OUTPUT": 0,
             "AUDIO": 0,
-            "VIDEO": 0
+            "VIDEO": 0,
+            "CLUB AJR": 0
         }
 
         graphlogs = {}
 
         for log in logs:
-            points[log["medio"]] += log["puntos"]
+            log_points = log["puntos"]
+            if "bonus" in log and log["bonus"]:
+                log_points = log["puntos"]/1.4
+                bonus_points = log["puntos"]-log_points
+                parameters["CLUB AJR"] += bonus_points
+
+            points[log["medio"]] += log_points
             parameters[log["medio"]] += int(log["parametro"])
-            points["TOTAL"] += log["puntos"]
+            points["TOTAL"] += log_points
             logdate = str(datetime.fromtimestamp(
                 log["timestamp"])).replace("-", "/").split(" ")[0]
 
             if logdate in graphlogs:
-                graphlogs[logdate] += log["puntos"]
+                graphlogs[logdate] += log_points
             else:
-                graphlogs[logdate] = log["puntos"]
+                graphlogs[logdate] = log_points
 
         output = "```"
         for key, value in parameters.items():
@@ -1117,7 +1135,16 @@ class Immersion(commands.Cog):
                         'year': {'$year': {'$toDate': {'$multiply': ['$timestamp', 1000]}}},
                         'month': {'$month': {'$toDate': {'$multiply': ['$timestamp', 1000]}}}
                     },
-                    'puntos': {'$sum': '$puntos'}
+                    'totalPuntos': {'$sum': '$puntos'},
+                    'totalBonusPuntos': {
+                        '$sum': {
+                            '$cond': {
+                                'if': {'$eq': ['$bonus', True]},
+                                'then': {'$divide': ['$puntos', 1.4]},
+                                'else': '$puntos'
+                            }
+                        }
+                    }
                 }
             },
             {
@@ -1138,7 +1165,13 @@ class Immersion(commands.Cog):
                     '_id.month': 1,
                     '_id.year': 1,
                     '_id.userId': '$userInfo.username',
-                    'puntos': 1
+                    'puntos': {
+                        '$cond': {
+                            'if': {'$eq': ['$bonus', True]},
+                            'then': '$totalBonusPuntos',
+                            'else': '$totalPuntos'
+                        }
+                    }
                 }
             }
         ]
@@ -1333,9 +1366,15 @@ class Immersion(commands.Cog):
             }
             local_total = 0
             for log in logs:
-                points[log["medio"]] += log["puntos"]
-                local_total += log["puntos"]
-                total += log["puntos"]
+
+                log_points = log["puntos"]
+                if "bonus" in log and log["bonus"]:
+                    log_points = log["puntos"]/1.4
+
+                points[log["medio"]] += log_points
+                local_total += log_points
+                total += log_points
+
             if local_total == 0:
                 real_months -= 1
             if local_total > best_month["points"]:
