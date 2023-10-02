@@ -204,7 +204,7 @@ class Manga(commands.Cog):
     @commands.slash_command()
     @commands.has_permissions(administrator=True)
     async def updatevolumes(self, ctx,
-                            yomiyasuid: discord.Option(int, "Id de manga a actualizar", required=True),
+                            yomiyasuid: discord.Option(str, "Id de manga a actualizar", required=True),
                             volnum: discord.Option(int, "Número de mangas nuevos", required=False, default=1)):
         """[ADMIN] Actualiza el número de volúmenes de un manga"""
         if ctx.user.id in admin_users:
