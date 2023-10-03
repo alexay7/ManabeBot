@@ -373,6 +373,13 @@ class Immersion(commands.Cog):
             if user["username"] == ctx.author.name:
                 position = ranking.index(user)
 
+        days = 0
+
+        if periodo == "SEMANA":
+            days = 7
+        elif periodo == "MES":
+            days = datetime.today().day
+
         normal = discord.Embed(
             title=f"Vista {get_ranking_title(periodo,'ALL')}", color=0xeeff00)
         normal.add_field(name="Usuario", value=ctx.author.name, inline=True)
@@ -380,8 +387,11 @@ class Immersion(commands.Cog):
             points["TOTAL"], 2), inline=True)
         normal.add_field(name="Posición ranking",
                          value=f"{position+1}º", inline=True)
-        normal.add_field(name="Horas de tu vida perdidas",
-                         value=math.ceil((points["TOTAL"]-points["CLUB AJR"]) / 27), inline=False)
+        normal.add_field(name="Horas de inmersión",
+                         value=math.ceil((points["TOTAL"]-points["CLUB AJR"]) / 27), inline=True)
+        if days > 0:
+            normal.add_field(
+                name="Media diaria", value=f"{round(points['TOTAL']/days,2)}", inline=True)
         normal.add_field(name="Medios", value=output, inline=False)
 
         if gráfica == "SECTORES":
