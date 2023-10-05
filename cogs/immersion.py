@@ -578,7 +578,9 @@ class Immersion(commands.Cog):
         ) or "ajr-club" in descripción.lower() or "club-ajr" in descripción.lower()
 
         compiled = re.compile(re.escape("ajrclub"), re.IGNORECASE)
-        message = compiled.sub("", descripción).strip()
+        compiled_2 = re.compile(re.escape("clubajr"), re.IGNORECASE)
+        message_aux = compiled.sub("", descripción).strip()
+        message = compiled_2.sub("", message_aux).strip()
 
         newlog = {
             'timestamp': datets,
@@ -797,7 +799,9 @@ class Immersion(commands.Cog):
         ) or "ajr-club" in descripción.lower() or "club-ajr" in descripción.lower()
 
         compiled = re.compile(re.escape("ajrclub"), re.IGNORECASE)
-        message = compiled.sub("", descripción).strip()
+        compiled_2 = re.compile(re.escape("clubajr"), re.IGNORECASE)
+        message_aux = compiled.sub("", descripción).strip()
+        message = compiled_2.sub("", message_aux).strip()
 
         today = datetime.today()
 
