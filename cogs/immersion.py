@@ -490,12 +490,14 @@ class Immersion(commands.Cog):
                     speeds = []
                     for log in month_logs:
                         if log["tiempo"] > 0:
-                            if medium == "MANGA":
-                                speed = int(log["parametro"]) / log["tiempo"]
+                            if medium == "MANGA" and "caracteres" in log.keys():
+                                speed = int(log["caracteres"]) / \
+                                    log["tiempo"]*60
+                                speeds.append(speed)
                             elif medium == "LECTURA":
                                 speed = (
-                                    int(log["parametro"]) / 335) / log["tiempo"]
-                            speeds.append(speed)
+                                    int(log["parametro"])) / log["tiempo"]*60
+                                speeds.append(speed)
                     if speeds:
                         speeds_by_medium_and_month[medium][month] = sum(
                             speeds) / len(speeds)
@@ -504,15 +506,17 @@ class Immersion(commands.Cog):
 
             # Crear la gráfica
             if speeds_by_medium_and_month["MANGA"] and speeds_by_medium_and_month["LECTURA"]:
+                plt.figure(figsize=(10, 8))
                 plt.plot(speeds_by_medium_and_month["MANGA"].keys(
                 ), speeds_by_medium_and_month["MANGA"].values(), label="MANGA")
                 plt.plot(speeds_by_medium_and_month["LECTURA"].keys(
                 ), speeds_by_medium_and_month["LECTURA"].values(), label="LECTURA")
                 plt.xlabel("Mes")
-                plt.ylabel("Páginas leidas por minuto")
+                plt.ylabel("Caracters leidos por hora")
                 plt.title(
                     "Velocidad de lectura mensual para el usuario {}".format(ctx.author.name))
                 plt.legend()
+                plt.xticks(rotation=45)
                 plt.savefig("temp/image.png")
                 plt.close()
                 file = discord.File("temp/image.png", filename="image.png")
