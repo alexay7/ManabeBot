@@ -92,6 +92,34 @@ def get_ranking_title(timelapse, media):
     return f"{tiempo} {medio}"
 
 
+async def bonus_log(db, log_id, user_id):
+    logs: collection.Collection = db.logs
+    old_log = logs.find_one(
+        {"userId": user_id, "id": int(log_id), "bonus": False})
+
+    if not old_log:
+        return -1
+
+    new_points = old_log["puntos"] * 1.4
+    logs.update_one({"userId": user_id, "id": int(log_id)},
+                    {"$set": {"bonus": True, "puntos": new_points}})
+    return new_points
+
+
+async def unbonus_log(db, log_id, user_id):
+    logs: collection.Collection = db.logs
+    old_log = logs.find_one(
+        {"userId": user_id, "id": int(log_id), "bonus": True})
+
+    if not old_log:
+        return -1
+
+    new_points = old_log["puntos"] / 1.4
+    logs.update_one({"userId": user_id, "id": int(log_id)},
+                    {"$set": {"bonus": False, "puntos": new_points}})
+    return new_points
+
+
 async def add_log(db, userid, log, username):
     logs = db.logs
     users = db.users

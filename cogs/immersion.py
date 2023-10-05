@@ -1,3 +1,4 @@
+import re
 from asyncio import sleep
 import csv
 import calendar
@@ -25,7 +26,7 @@ from helpers.inmersion import (MEDIA_TYPES, MEDIA_TYPES_ENGLISH, MONTHS, TIMESTA
                                get_best_user_of_range, get_logs_animation, get_media_element, get_ranking_title,
                                get_sorted_ranking, get_total_immersion_of_month, get_total_parameter_of_media,
                                get_user_logs, remove_last_log, remove_log, send_message_with_buttons, get_all_logs_in_day,
-                               get_last_log, check_max_immersion)
+                               get_last_log, check_max_immersion, bonus_log, unbonus_log)
 
 # ================ GENERAL VARIABLES ================
 with open("config/general.json") as json_file:
@@ -63,16 +64,71 @@ class Immersion(commands.Cog):
         if payload.channel_id in immersion_logs_channels:
             channel = await self.bot.fetch_channel(payload.channel_id)
             message = await channel.fetch_message(payload.message_id)
-            reaction = discord.utils.get(message.reactions, emoji="❌")
 
-            if len(message.embeds) > 0 and reaction:
-                if message.embeds[0].title == "Log registrado con éxito" and int(message.embeds[0].footer.text.replace("Id del usuario: ", "")) == payload.user_id:
-                    await remove_log(self.db, payload.user_id, message.embeds[0].description.split(" ")[2].replace("#", ""))
-                    logdeleted = discord.Embed(color=0x24b14d)
-                    logdeleted.add_field(
-                        name="✅", value=f"Log {message.embeds[0].description.split(' ')[2]} eliminado con éxito", inline=False)
-                    await channel.send(embed=logdeleted, delete_after=10.0)
-                    await message.delete()
+            if len(message.embeds) > 0:
+                if "Log registrado con éxito" in message.embeds[0].title and int(message.embeds[0].footer.text.replace("Id del usuario: ", "")) == payload.user_id:
+                    log_id = message.embeds[0].description.split(" ")[
+                        2].replace("#", "")
+                    if str(payload.emoji) == "❌":
+                        await remove_log(self.db, payload.user_id, log_id)
+                        logdeleted = discord.Embed(color=0x24b14d)
+                        logdeleted.add_field(
+                            name="✅", value=f"Log {message.embeds[0].description.split(' ')[2]} eliminado con éxito", inline=False)
+                        await channel.send(embed=logdeleted, delete_after=10.0)
+                        await message.delete()
+                    elif str(payload.emoji) == "🟢":
+                        old_embed = message.embeds[0]
+
+                        if "AJR" in old_embed.title:
+                            await send_error_message(channel, "Este log ya está marcado como bonus")
+                            return
+
+                        new_points_aux = await bonus_log(self.db, log_id, payload.user_id)
+
+                        if new_points_aux < 0:
+                            await send_error_message(channel, "Este log ya está marcado como bonus")
+                            return
+
+                        old_points = float(
+                            old_embed.fields[2].value.split(" ")[0])
+                        old_points_added = float(old_embed.fields[2].value.split(" ")[
+                            1].replace("(+", "").replace(")", ""))
+                        new_points = old_points-old_points_added+new_points_aux
+
+                        old_embed.remove_field(2)
+                        old_embed.insert_field_at(
+                            index=2, name="Puntos (x1.4)", value=f"{round(new_points,2)} (+{round(new_points_aux,2)})", inline=True)
+                        old_embed.title = old_embed.title+" (club AJR)"
+                        old_embed.color = 0xbf9000
+                        await message.edit(embed=old_embed)
+                        await message.clear_reaction("🟢")
+                    elif str(payload.emoji == "🔴"):
+                        old_embed = message.embeds[0]
+
+                        if "AJR" not in old_embed.title:
+                            await send_error_message(channel, "Este log no está marcado como bonus")
+                            return
+
+                        new_points_aux = await unbonus_log(self.db, log_id, payload.user_id)
+
+                        if new_points_aux < 0:
+                            await send_error_message(channel, "Este log no está marcado como bonus")
+                            return
+
+                        old_points = float(
+                            old_embed.fields[2].value.split(" ")[0])
+                        old_points_added = float(old_embed.fields[2].value.split(" ")[
+                            1].replace("(+", "").replace(")", ""))
+                        new_points = old_points-old_points_added+new_points_aux
+
+                        old_embed.remove_field(2)
+                        old_embed.insert_field_at(
+                            index=2, name="Puntos", value=f"{round(new_points,2)} (+{round(new_points_aux,2)})", inline=True)
+                        old_embed.title = old_embed.title.replace(
+                            " (club AJR)", "")
+                        old_embed.color = 0x24b14d
+                        await message.edit(embed=old_embed)
+                        await message.clear_reaction("🔴")
 
     @commands.slash_command()
     async def mvp(self, ctx,
@@ -521,8 +577,8 @@ class Immersion(commands.Cog):
         bonus = "ajrclub" in descripción.lower() or bonus or "clubajr" in descripción.lower(
         ) or "ajr-club" in descripción.lower() or "club-ajr" in descripción.lower()
 
-        message = descripción.lower().replace("ajrclub", "").replace(
-            "clubajr", "").replace("ajr-club", "").replace("club.ajr", "").strip()
+        compiled = re.compile(re.escape("ajrclub"), re.IGNORECASE)
+        message = compiled.sub("", descripción).strip()
 
         newlog = {
             'timestamp': datets,
@@ -740,8 +796,8 @@ class Immersion(commands.Cog):
         bonus = "ajrclub" in descripción.lower() or bonus or "clubajr" in descripción.lower(
         ) or "ajr-club" in descripción.lower() or "club-ajr" in descripción.lower()
 
-        message = descripción.lower().replace("ajrclub", "").replace(
-            "clubajr", "").replace("ajr-club", "").replace("club.ajr", "").strip()
+        compiled = re.compile(re.escape("ajrclub"), re.IGNORECASE)
+        message = compiled.sub("", descripción).strip()
 
         today = datetime.today()
 
