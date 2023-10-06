@@ -504,13 +504,27 @@ class Immersion(commands.Cog):
                     else:
                         speeds_by_medium_and_month[medium][month] = 0
 
+            x_values_manga = list(speeds_by_medium_and_month["MANGA"].keys())
+            y_values_manga = list(speeds_by_medium_and_month["MANGA"].values())
+
+            x_values_lectura = list(
+                speeds_by_medium_and_month["LECTURA"].keys())
+            y_values_lectura = list(
+                speeds_by_medium_and_month["LECTURA"].values())
+
+            for i in range(1, len(y_values_manga)):
+                if y_values_manga[i] == 0:
+                    y_values_manga[i] = y_values_manga[i - 1]
+
+            for i in range(1, len(y_values_lectura)):
+                if y_values_lectura[i] == 0:
+                    y_values_lectura[i] = y_values_lectura[i - 1]
+
             # Crear la gráfica
             if speeds_by_medium_and_month["MANGA"] and speeds_by_medium_and_month["LECTURA"]:
                 plt.figure(figsize=(10, 8))
-                plt.plot(speeds_by_medium_and_month["MANGA"].keys(
-                ), speeds_by_medium_and_month["MANGA"].values(), label="MANGA")
-                plt.plot(speeds_by_medium_and_month["LECTURA"].keys(
-                ), speeds_by_medium_and_month["LECTURA"].values(), label="LECTURA")
+                plt.plot(x_values_manga, y_values_manga, label="MANGA")
+                plt.plot(x_values_lectura, y_values_lectura, label="LECTURA")
                 plt.xlabel("Mes")
                 plt.ylabel("Caracters leidos por hora")
                 plt.title(
