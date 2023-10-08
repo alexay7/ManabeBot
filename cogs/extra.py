@@ -1,18 +1,19 @@
 import re
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import random
 from time import gmtime, strftime
 from dateutil.tz import gettz
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import requests
 from bs4 import BeautifulSoup
 from currency_converter import CurrencyConverter
 from translate import Translator
+from time import gmtime
 
-from helpers.general import intToMonth, send_error_message, send_message_for_other, send_response, set_processing
+from helpers.general import intToMonth, send_error_message, send_message_for_other, send_response, set_processing, get_clock_emoji
 
 # ================ GENERAL VARIABLES ================
 with open("config/general.json") as json_file:
@@ -24,11 +25,12 @@ with open("config/general.json") as json_file:
 
 class Extra(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: discord.bot.Bot = bot
 
     @commands.Cog.listener()
     async def on_ready(self):
         print("Cog de cosas random cargado con éxito")
+        self.update_clock.start()
 
     @commands.slash_command(guild_ids=[main_guild])
     async def say(self, ctx,
@@ -40,6 +42,15 @@ class Extra(commands.Cog):
             channel = self.bot.get_channel(int(channel))
             await channel.send(message)
             await ctx.respond("Enviado")
+
+    @tasks.loop(minutes=10)
+    async def update_clock(self):
+        channel = self.bot.get_channel(1160718763965022258)
+        now = datetime.now()
+
+        emoji = await get_clock_emoji(now.hour, now.minute)
+
+        await channel.edit(name=f"{emoji} {now.strftime('%H:%M Hora 🇪🇸')}")
 
     @commands.slash_command()
     async def kalise(self, ctx):
@@ -176,6 +187,19 @@ class Extra(commands.Cog):
     @ commands.command(aliases=['randomyoji', 'yojialeatorio', 'palabraaleatoria', 'randomword', 'aleatorio', 'aleatoria'])
     async def aleatorioprefix(self, ctx):
         await self.aleatorio(ctx)
+
+    # @commands.command()
+    # async def anunciar(self, ctx):
+    #     channel = self.bot.get_channel(892880230761504851)
+    #     embed = discord.Embed(title="📖 ¡Nueva Guía de Aprendizaje Disponible! 📖",
+    #                           description="Después de sangre, sudor y lágrimas. Ya está disponible la nueva [guía de iniciación](https://ajr.moe/) al japonés escrita del puño y letra de <@181041378606841857>, esta da una rutina de 30 días para coger carrerilla y empezar con buen pie el método autodidacta", color=discord.Color.green(), url="https://www.ajr.moe/")
+    #     embed.set_thumbnail(url="https://ajr.moe/assets/logo.jpg")
+    #     embed.add_field(name="¿Donde puedo ver esa guía?",
+    #                     value="La tienes disponible en la página web [ajr.moe](https://ajr.moe/), ahí podrás ver como está estructurado en diferentes categorías explicando que debes hacer cada uno de los 30 días.", inline=False)
+    #     embed.set_footer(
+    #         text="Si olvidas la dirección de la web no te preocupes, puedes usar el comando `?tag guia` y un bot te la recordará.")
+
+    #     await channel.send(embed=embed)
 
     @commands.slash_command()
     async def grammar(self, ctx, clave: discord.Option(str, "Id de la lección", required=False), forma_gramatical: discord.Option(str, "Punto gramatical que te interesa", required=False)):

@@ -90,3 +90,90 @@ async def send_response(ctx, content=None, view=None, embed=None, file=None, eph
 async def set_processing(ctx):
     if not ctx.message:
         await ctx.defer()
+
+
+async def get_clock_emoji(hour, minute):
+    if hour == 0 or hour == 12:
+        if minute < 15:
+            return "🕛"
+        elif minute < 45:
+            return "🕧"
+        else:
+            return "🕐"
+    if hour == 1 or hour == 13:
+        if minute < 15:
+            return "🕐"
+        elif minute < 45:
+            return "🕜"
+        else:
+            return "🕑"
+    if hour == 2 or hour == 14:
+        if minute < 15:
+            return "🕑"
+        elif minute < 45:
+            return "🕝"
+        else:
+            return "🕒"
+    if hour == 3 or hour == 15:
+        if minute < 15:
+            return "🕒"
+        elif minute < 45:
+            return "🕞"
+        else:
+            return "🕓"
+    if hour == 4 or hour == 16:
+        if minute < 15:
+            return "🕓"
+        elif minute < 45:
+            return "🕟"
+        else:
+            return "🕔"
+    if hour == 5 or hour == 17:
+        if minute < 15:
+            return "🕔"
+        elif minute < 45:
+            return "🕠"
+        else:
+            return "🕕"
+    if hour == 6 or hour == 18:
+        if minute < 15:
+            return "🕕"
+        elif minute < 45:
+            return "🕡"
+        else:
+            return "🕖"
+    if hour == 7 or hour == 19:
+        if minute < 15:
+            return "🕖"
+        elif minute < 45:
+            return "🕢"
+        else:
+            return "🕗"
+    if hour == 8 or hour == 20:
+        if minute < 15:
+            return "🕗"
+        elif minute < 45:
+            return "🕣"
+        else:
+            return "🕘"
+    if hour == 9 or hour == 21:
+        if minute < 15:
+            return "🕘"
+        elif minute < 45:
+            return "🕤"
+        else:
+            return "🕙"
+    if hour == 10 or hour == 22:
+        if minute < 15:
+            return "🕙"
+        elif minute < 45:
+            return "🕥"
+        else:
+            return "🕚"
+    if hour == 11 or hour == 23:
+        if minute < 15:
+            return "🕚"
+        elif minute < 45:
+            return "🕦"
+        else:
+            return "🕛"
