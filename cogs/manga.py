@@ -11,6 +11,8 @@ from helpers.general import send_error_message, send_response, set_processing
 from time import sleep
 from discord import Message, ApplicationContext
 from helpers.manga import send_yomiyasu_embed
+from helpers.inmersion import send_message_with_buttons
+from discord.ext.pages import Paginator
 
 # ================ GENERAL VARIABLES ================
 with open("config/general.json") as json_file:
@@ -200,6 +202,28 @@ class Manga(commands.Cog):
             else:
                 if not ctx.message.author.bot:
                     await message.delete()
+
+    @commands.slash_command()
+    @commands.has_permissions(administrator=True)
+    async def updatetotalvolumes(self, ctx,
+                                 yomiyasuid: discord.Option(str, "Id de manga a actualizar", required=True),
+                                 volnum: discord.Option(int, "Número de mangas nuevos", required=False, default=1)):
+        """[ADMIN] Actualiza el número de volúmenes totales de un manga"""
+        if ctx.user.id in admin_users:
+            await set_processing(ctx)
+            found_manga = self.db.update_one({"yomiyasuId": yomiyasuid}, {
+                                             "$inc": {"totalVolumes": volnum}})
+            if found_manga.modified_count < 1:
+                return await send_error_message(ctx, "Ese manga no está en YomiYasu.")
+            updated_manga = self.db.find_one({"yomiyasuId": yomiyasuid})
+
+            # Embed for admin
+            admin_embed = discord.Embed(title="Manga modificado con éxito")
+            admin_embed.add_field(name="Nombre del manga",
+                                  value=updated_manga["title"])
+            admin_embed.add_field(name="Volúmenes totales nuevos",
+                                  value=updated_manga["volumes"])
+            await send_response(ctx, embed=admin_embed)
 
     @commands.slash_command()
     @commands.has_permissions(administrator=True)
@@ -450,21 +474,58 @@ class Manga(commands.Cog):
     async def yomiyasuinfoprefix(self, ctx):
         await self.yomiyasuinfo(ctx)
 
-    @commands.command()
-    async def adjustmanga(self, ctx):
-        all_mangas = self.db.find({"patatas": {"$exists": False}})
-        await set_processing(ctx)
-        for manga in all_mangas:
-            response = await get_media_info_by_id(manga["idAnilist"])
-            print(response.json())
-            volumes = response.json()["data"]["Media"]["volumes"]
-            if volumes:
-                self.db.update_one({"idAnilist": manga["idAnilist"], "totalVolumes": {"$exists": False}}, {"$set": {
-                                   "totalVolumes": volumes, "patatas": True}})
+    @ commands.command(aliases=["quefalta", "volumenesrestantes", "buscaycaptura", "buscando"])
+    async def yomiyasuinfoprefix(self, ctx):
+        await self.buscaycaptura(ctx)
+
+    @commands.slash_command()
+    async def buscaycaptura(self, ctx):
+        data = self.db.aggregate([
+            {
+                '$project': {
+                    'title': 1,
+                    'diff': {
+                        '$subtract': [
+                            '$totalVolumes', '$volumes'
+                        ]
+                    }
+                }
+            }, {
+                '$match': {
+                    'diff': {
+                        '$gt': 0
+                    }
+                }
+            }, {
+                '$project': {
+                    'title': 1,
+                    'diff': 1
+                }
+            }, {
+                '$sort': {
+                    'diff': -1
+                }
+            }
+        ])
+        output = [
+            "Volúmenes en busca y captura\n------------------------------------\n"]
+        overflow = 0
+        for elem in data:
+            line = f">> {elem['title']} - Faltan {elem['diff']} volúmenes\n"
+            if len(output[overflow]) + len(line) < 1000:
+                output[overflow] += line
             else:
-                self.db.update_one({"idAnilist": manga["idAnilist"]}, {
-                                   "$set": {"patatas": True}})
-                print(response.json()["data"]["Media"]["title"]["native"])
+                overflow += 1
+                output.append(line)
+        if len(output[0]) > 0:
+            if ctx.message:
+                await send_message_with_buttons(self, ctx, output)
+            else:
+                pages = []
+                for page in output:
+                    pages.append(f"```{page}```")
+                paginator = Paginator(pages=pages,)
+                await paginator.respond(ctx.interaction)
 
     # @commands.command()
     # async def apaño(self, ctx):
