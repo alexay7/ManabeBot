@@ -329,9 +329,12 @@ async def get_user_data(db, userid, timelapse, media="TOTAL"):
     }
 
     for log in logs:
-        points[log["medio"]] += log["puntos"]
+        log_points = log["puntos"]
+        if "bonus" in log and log["bonus"] and media != "TOTAL":
+            log_points = log["puntos"]/1.4
+        points[log["medio"]] += log_points
         parameters[log["medio"]] += int(log["parametro"])
-        points["TOTAL"] += log["puntos"]
+        points["TOTAL"] += log_points
     return points, parameters
 
 
