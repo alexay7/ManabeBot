@@ -182,7 +182,7 @@ class Immersion(commands.Cog):
     @commands.slash_command()
     async def podio(self, ctx,
                     periodo: discord.Option(str, "Periodo de tiempo que cubre el ranking", choices=TIMESTAMP_TYPES, required=False, default="MES"),
-                    medio: discord.Option(str, "Medio de inmersión que cubre el ranking", choices=MEDIA_TYPES, required=False, default="TOTAL"),
+                    medio: discord.Option(str, "Medio de inmersión que cubre el ranking", choices=MEDIA_TYPES.union(["CARACTERES"]), required=False, default="TOTAL"),
                     comienzo: discord.Option(str, "Fecha de inicio (DD/MM/YYYY)", required=False),
                     final: discord.Option(str, "Fecha de fin (DD/MM/YYYY)", required=False),
                     extendido: discord.Option(
@@ -197,7 +197,12 @@ class Immersion(commands.Cog):
             periodo = comienzo + "-" + final
 
         await set_processing(ctx)
-        sortedlist = await get_sorted_ranking(self.db, periodo, medio)
+
+        chars = medio == "CARACTERES"
+        if chars:
+            medio = "TOTAL"
+
+        sortedlist = await get_sorted_ranking(self.db, periodo, medio, chars)
         message = ""
         position = 1
         total_users = 10
@@ -205,7 +210,11 @@ class Immersion(commands.Cog):
             total_users = len(sortedlist)
         for user in sortedlist[0:total_users]:
             if user["points"] != 0:
-                message += f"**{str(position)}º {user['username']}:** {str(round(user['points'],2))} puntos"
+                if chars:
+                    if user["parameters"] != 0:
+                        message += f"**{str(position)}º {user['username']}:** {str(round(user['parameters'],2))} caracteres"
+                else:
+                    message += f"**{str(position)}º {user['username']}:** {str(round(user['points'],2))} puntos"
                 if "param" in user:
                     message += f" -> {get_media_element(user['param'],medio)}\n"
                 else:

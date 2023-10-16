@@ -301,7 +301,7 @@ async def remove_last_log(db, userid):
         return 0
 
 
-async def get_user_data(db, userid, timelapse, media="TOTAL"):
+async def get_user_data(db, userid, timelapse, media="TOTAL", chars=False):
     logs = await get_user_logs(db, userid, timelapse, media)
     points = {
         "LIBRO": 0,
@@ -332,9 +332,20 @@ async def get_user_data(db, userid, timelapse, media="TOTAL"):
         log_points = log["puntos"]
         if "bonus" in log and log["bonus"] and media != "TOTAL":
             log_points = log["puntos"]/1.4
-        points[log["medio"]] += log_points
-        parameters[log["medio"]] += int(log["parametro"])
-        points["TOTAL"] += log_points
+
+        if chars:
+            if log["medio"] in ["LECTURA", "VN"]:
+                parameters["TOTAL"] += int(log["parametro"])
+            else:
+                if "caracteres" in log:
+                    parameters["TOTAL"] += int(log["caracteres"])
+            points[log["medio"]] += log_points
+            points["TOTAL"] += log_points
+        else:
+            points[log["medio"]] += log_points
+            parameters[log["medio"]] += int(log["parametro"])
+            points["TOTAL"] += log_points
+
     return points, parameters
 
 
@@ -364,21 +375,26 @@ async def get_best_user_of_range(db, media, timelapse):
     return None
 
 
-async def get_sorted_ranking(db, timelapse, media):
+async def get_sorted_ranking(db, timelapse, media, caracteres=False):
     leaderboard = []
     users = db.users.find({})
     counter = 0
     for user in users:
         points, parameters = await get_user_data(
-            db, user["userId"], timelapse, media)
+            db, user["userId"], timelapse, media, caracteres)
         leaderboard.append({
             "username": user["username"],
-            "points": points["TOTAL"]})
-        if media in MEDIA_TYPES:
+            "points": points["TOTAL"],
+            "parameters": parameters[media]})
+        if media in MEDIA_TYPES or media == "CARACTERES":
             leaderboard[counter]["param"] = parameters[media]
         counter += 1
-    return sorted(
-        leaderboard, key=lambda x: x["points"], reverse=True)
+    if caracteres:
+        return sorted(
+            leaderboard, key=lambda x: x["parameters"], reverse=True)
+    else:
+        return sorted(
+            leaderboard, key=lambda x: x["points"], reverse=True)
 
 
 async def check_user(db, userid):
