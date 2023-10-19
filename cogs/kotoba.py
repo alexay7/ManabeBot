@@ -63,12 +63,13 @@ class Kotoba(commands.Cog):
                                     scorelimit = kotobadict["settings"]["scoreLimit"]
                                     failedquestioncount = questioncount - scorelimit
                                     answertimelimitinms = kotobadict["settings"]["answerTimeLimitInMs"]
-                                    fontcolor = kotobadict["settings"]["fontColor"]
-                                    bgcolor = kotobadict["settings"]["backgroundColor"]
+                                    hardcore = "hardcore" in kotobadict["rawStartCommand"]
                                     fontsize = kotobadict["settings"]["fontSize"]
                                     font = kotobadict["settings"]["font"]
                                     shuffle = kotobadict["settings"]["shuffle"]
                                     isloaded = kotobadict["isLoaded"]
+                                    effect = kotobadict["settings"]["effect"] if (
+                                        "effect" in kotobadict["settings"]) else ""
                                     myscore = kotobadict["scores"][0]["score"]
 
                                     # Multideck quiz
@@ -93,13 +94,14 @@ class Kotoba(commands.Cog):
                                         pass
 
                                     try:
-                                        requirements = kotoba_tests[quizname]
-                                        reqscorelimit, reqanswertime, reqfontsize, reqfont, newrankid, reqfailed = requirements
+                                        requirements = kotoba_tests[quizname.strip(
+                                        )]
+                                        reqscorelimit, reqanswertime, reqfontsize, reqfont, newrankid, reqfailed, shortname = requirements
                                     except KeyError:
                                         print("Ese no es un test del Noken")
                                         return
 
-                                    if fontcolor != "rgba(241,115,255,1)" or bgcolor != "rgba(0,0,0,1)":
+                                    if effect != "antiocr":
                                         print(message.channel,
                                               "Ajustes de color erróneos. Revisa que el comando coincida con el indicado por .levelup")
                                         return
@@ -107,6 +109,11 @@ class Kotoba(commands.Cog):
                                     if startindex != 0 or endindex != 0 or mc or shuffle is False or isloaded:
                                         print(message.channel,
                                               "Ajustes no permitidos detectados. Revisa que el comando coincida con el indicado por .levelup")
+                                        return
+
+                                    if not hardcore:
+                                        print(message.channel,
+                                              "Modo hardcore no detectado. Revisa que el comando coincida con el indicado por .levelup")
                                         return
 
                                     if scorelimit < reqscorelimit:
@@ -142,7 +149,7 @@ class Kotoba(commands.Cog):
 
                                     if failedquestioncount > reqfailed:
                                         print(
-                                            message.channel, "Demasiadas preguntas incorrectas. Más suerte la próxima vez!")
+                                            message.channel, "Demasiadas respuestas incorrectas. Revisa que el comando coincida con el indicado por .levelup")
                                         return
 
                                     if scorelimit != myscore:
@@ -173,7 +180,7 @@ class Kotoba(commands.Cog):
                                         await quizwinner.add_roles(newrole)
                                         announcementchannel = self.bot.get_channel(
                                             announcement_channel)
-                                        await announcementchannel.send(f'<@!{mainuserid}> ha aprobado el {quizname}!\n'
+                                        await announcementchannel.send(f'<@!{mainuserid}> ha aprobado el examen de{shortname}!\n'
                                                                        f'Escribe `.levelup` en <#796084920790679612> para ver los requisitos del siguiente nivel.')
 
             except TypeError:
@@ -191,12 +198,11 @@ class Kotoba(commands.Cog):
         for role in member.roles:
             if role.id in quiz_ranks:
                 # String is cut down for easy copy and paste.
-                currentcommand = re.search(
-                    r"`(.*)`", levelup_messages[role.id]).group(1)
-                await send_response(ctx, currentcommand, ephemeral=True)
+                await send_response(ctx, levelup_messages[role.id], ephemeral=True)
+                return
 
         await send_response(ctx,
-                            "Lucha por el N5:\n`k!quiz n5 nodelay atl=8 10 size=40 mmq=1 color=rgba(241,115,255,1) bgcolor=rgba(0,0,0,1) font=1`", ephemeral=True)
+                            levelup_messages[654352144664887297], ephemeral=True)
 
     @commands.command(aliases=["levelup"])
     async def levelupprefix(self, ctx):
