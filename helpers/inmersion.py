@@ -389,7 +389,7 @@ async def get_sorted_ranking(db, timelapse, media, caracteres=False):
         if media in MEDIA_TYPES or media == "CARACTERES":
             leaderboard[counter]["param"] = parameters[media]
         counter += 1
-    if caracteres:
+    if caracteres or media != "TOTAL":
         return sorted(
             leaderboard, key=lambda x: x["parameters"], reverse=True)
     else:
