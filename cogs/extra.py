@@ -10,6 +10,8 @@ from discord.ext import commands, tasks
 import requests
 from bs4 import BeautifulSoup
 from currency_converter import CurrencyConverter
+from discord.raw_models import RawReactionActionEvent
+from discord import Member, Guild
 from translate import Translator
 from time import gmtime
 
@@ -20,6 +22,9 @@ with open("config/general.json") as json_file:
     general_config = json.load(json_file)
     admin_users = general_config["admin_users"]
     main_guild = general_config["trusted_guilds"][1]
+
+with open("config/roles.json", encoding="utf-8") as roles_file:
+    roles_config = json.load(roles_file)
 # ====================================================
 
 
@@ -31,6 +36,30 @@ class Extra(commands.Cog):
     async def on_ready(self):
         print("Cog de cosas random cargado con éxito")
         self.update_clock.start()
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload: RawReactionActionEvent):
+        message_id = str(payload.message_id)
+        if message_id in roles_config.keys():
+            guild: Guild = await self.bot.fetch_guild(654351832734498836)
+            user: Member = await guild.fetch_member(payload.user_id)
+            role_config = roles_config[message_id]
+            if str(payload.emoji) == role_config["emoji"]:
+                newrole = discord.utils.get(
+                    guild.roles, id=int(role_config["role"]))
+                await user.add_roles(newrole)
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_remove(self, payload: RawReactionActionEvent):
+        message_id = str(payload.message_id)
+        if message_id in roles_config.keys():
+            guild: Guild = await self.bot.fetch_guild(654351832734498836)
+            user: Member = await guild.fetch_member(payload.user_id)
+            role_config = roles_config[message_id]
+            if str(payload.emoji) == role_config["emoji"]:
+                newrole = discord.utils.get(
+                    guild.roles, id=int(role_config["role"]))
+                await user.remove_roles(newrole)
 
     @commands.slash_command(guild_ids=[main_guild])
     async def say(self, ctx,
@@ -190,14 +219,11 @@ class Extra(commands.Cog):
 
     # @commands.command()
     # async def anunciar(self, ctx):
-    #     channel = self.bot.get_channel(892880230761504851)
-    #     embed = discord.Embed(title="📖 ¡Nueva Guía de Aprendizaje Disponible! 📖",
-    #                           description="Después de sangre, sudor y lágrimas. Ya está disponible la nueva [guía de iniciación](https://ajr.moe/) al japonés escrita del puño y letra de <@181041378606841857>, esta da una rutina de 30 días para coger carrerilla y empezar con buen pie el método autodidacta", color=discord.Color.green(), url="https://www.ajr.moe/")
-    #     embed.set_thumbnail(url="https://ajr.moe/assets/logo.jpg")
-    #     embed.add_field(name="¿Donde puedo ver esa guía?",
-    #                     value="La tienes disponible en la página web [ajr.moe](https://ajr.moe/), ahí podrás ver como está estructurado en diferentes categorías explicando que debes hacer cada uno de los 30 días.", inline=False)
+    #     channel = self.bot.get_channel(1167606735360503859)
+    #     embed = discord.Embed(title="🎮 ¡Club de VN y juegs🎮
+    #                           description="Reacciona a este mensaje con 🎮 para recibir notificaciones sobre el club de VN y juegos", color=discord.Color.from_rgb(230, 126, 34), url="https://discord.com/channels/654351832734498836/1142399071236132944")
     #     embed.set_footer(
-    #         text="Si olvidas la dirección de la web no te preocupes, puedes usar el comando `?tag guia` y un bot te la recordará.")
+    #         text="Al recibir el rol entiendes que podrás recibir varias notificaciones en relación a la participación en las actividades del mes")
 
     #     await channel.send(embed=embed)
 
