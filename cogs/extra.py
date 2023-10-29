@@ -13,7 +13,7 @@ from currency_converter import CurrencyConverter
 from discord.raw_models import RawReactionActionEvent
 from discord import Member, Guild
 from translate import Translator
-from time import gmtime
+from time import gmtime, sleep
 
 from helpers.general import intToMonth, send_error_message, send_message_for_other, send_response, set_processing, get_clock_emoji
 
@@ -36,6 +36,18 @@ class Extra(commands.Cog):
     async def on_ready(self):
         print("Cog de cosas random cargado con éxito")
         self.update_clock.start()
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if "?inmersar" in message.content:
+            channel = message.channel
+            sleep(2)
+            time = message.content.split(" ")[1]
+            if time and int(time) > 16:
+                immerse_role = discord.utils.get(
+                    message.guild.roles, id=865660735761678386)
+                await message.author.remove_roles(immerse_role)
+                await send_error_message(channel, "El tiempo máximo permitido es de 16 horas, si quieres desconectar más tiempo plantéate desinstalar Discord.")
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: RawReactionActionEvent):
