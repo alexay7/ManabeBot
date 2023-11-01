@@ -24,7 +24,7 @@
         "892868404132843560": "Lucha por el N1:\n`k!quiz n1 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
         "892868429877485598": "Ya tienes el N1, listo para un reto?:\n`k!quiz ajrfreq15k+ajrfreq20k 30 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
         "1164576111716478996": "Todavía quieres mas?:\n`k!quiz ajrfreq25k+ajrfreq30k 30 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
-        "1164575116995342438": "Máximo nivel alcanzado, no hay nada más que pueda enseñarte. Pero si no aprecias tu tiempo puedes hacer el test definitivo.\n`k!quiz ajrfreq35k+ajrfreq40k+ajrfreq50k+ajrfreq60k+ajrfreq70k+ajrfreq80k+ajrfreq90k 50 hardcore nd atl=16 mmq=10 dauq=1 font=11 size=100 effect=antiocr`",
+        "1164575116995342438": "Máximo nivel alcanzado, no hay nada más que pueda enseñarte. Pero si no aprecias tu tiempo puedes hacer el test definitivo.\n`k!quiz ajrfreq35k+ajrfreq40k+ajrfreq50k+ajrfreq60k+ajrfreq70k+ajrfreq80k+ajrfreq90k 50 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
         "1169355627764658356": "Por favor, sal que te dé el aire"
     },
     "kotoba_tests": {
@@ -97,7 +97,7 @@
             100,
             "any",
             1169355627764658356,
-            10,
+            5,
             " las 90k palabras mas frecuentes. この人を<@&1169355627764658356>と呼ぶしかない。"
         ]
     }
