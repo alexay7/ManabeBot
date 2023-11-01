@@ -11,7 +11,7 @@ with open("config/general.json") as json_file:
     general_config = json.load(json_file)
     main_guild = general_config["trusted_guilds"][0]
 
-with open("config/kotoba.json") as json_file:
+with open("config/kotoba.json", encoding="utf8") as json_file:
     kotoba_config = json.load(json_file)
     kotoba_id = kotoba_config["kotoba_bot"]
     kotoba_tests = kotoba_config["kotoba_tests"]
@@ -82,6 +82,7 @@ class Kotoba(commands.Cog):
                                             quizname += " " + addname
 
                                     startindex = 0
+                                    print(quizname)
                                     endindex = 0
 
                                     mc = kotobadict["decks"][0]["mc"]
@@ -180,8 +181,8 @@ class Kotoba(commands.Cog):
                                         await quizwinner.add_roles(newrole)
                                         announcementchannel = self.bot.get_channel(
                                             announcement_channel)
-                                        await announcementchannel.send(f'<@!{mainuserid}> ha aprobado el examen de{shortname}!\n'
-                                                                       f'Escribe `.levelup` en <#796084920790679612> para ver los requisitos del siguiente nivel.')
+                                        # await announcementchannel.send(f'<@!{mainuserid}> ha aprobado el examen de{shortname}!\n'
+                                        #                                f'Escribe `.levelup` en <#796084920790679612> para ver los requisitos del siguiente nivel.')
 
             except TypeError:
                 pass

@@ -13,7 +13,8 @@
         892868404132843560,
         892868429877485598,
         1164576111716478996,
-        1164575116995342438
+        1164575116995342438,
+        1169355627764658356
     ],
     "levelup_messages": {
         "654352144664887297": "Lucha por el N5:\n`k!quiz n5 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
@@ -23,11 +24,12 @@
         "892868404132843560": "Lucha por el N1:\n`k!quiz n1 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
         "892868429877485598": "Ya tienes el N1, listo para un reto?:\n`k!quiz ajrfreq15k+ajrfreq20k 30 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
         "1164576111716478996": "Todavía quieres mas?:\n`k!quiz ajrfreq25k+ajrfreq30k 30 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
-        "1164575116995342438": "Máximo nivel alcanzado, no hay nada más que pueda enseñarte."
+        "1164575116995342438": "Máximo nivel alcanzado, no hay nada más que pueda enseñarte. Pero si no aprecias tu tiempo puedes hacer el test definitivo.\n`k!quiz ajrfreq35k+ajrfreq40k+ajrfreq50k+ajrfreq60k+ajrfreq70k+ajrfreq80k+ajrfreq90k 50 hardcore nd atl=16 mmq=10 dauq=1 font=11 size=100 effect=antiocr`",
+        "1169355627764658356": "Por favor, sal que te dé el aire"
     },
     "kotoba_tests": {
         "JLPT N5 Reading Quiz": [
-            1,
+            25,
             16001,
             100,
             "any",
@@ -72,7 +74,7 @@
             "l JLPT N1"
         ],
         "AJR Frecuencia de 10k a 15k AJR Frecuencia de 15k a 20k": [
-            1,
+            30,
             16001,
             100,
             "any",
@@ -88,6 +90,15 @@
             1164575116995342438,
             5,
             " las 30k palabras mas frecuentes. Se une por ello al club de los <@&1164575116995342438>"
+        ],
+        "AJR Frecuencia de 30k a 35k AJR Frecuencia de 35k a 40k AJR Frecuencia de 40k a 50k AJR Frecuencia de 50k a 60k AJR Frecuencia de 60k a 70k AJR Frecuencia de 70k a 80k AJR Frecuencia de 80k a 90k": [
+            50,
+            16001,
+            100,
+            "any",
+            1169355627764658356,
+            10,
+            " las 90k palabras mas frecuentes. この人を<@&1169355627764658356>と呼ぶしかない。"
         ]
     }
 }
