@@ -181,8 +181,8 @@ class Kotoba(commands.Cog):
                                         await quizwinner.add_roles(newrole)
                                         announcementchannel = self.bot.get_channel(
                                             announcement_channel)
-                                        # await announcementchannel.send(f'<@!{mainuserid}> ha aprobado el examen de{shortname}!\n'
-                                        #                                f'Escribe `.levelup` en <#796084920790679612> para ver los requisitos del siguiente nivel.')
+                                        await announcementchannel.send(f'<@!{mainuserid}> ha aprobado el examen de{shortname}!\n'
+                                                                       f'Escribe `.levelup` en <#796084920790679612> para ver los requisitos del siguiente nivel.')
 
             except TypeError:
                 pass
