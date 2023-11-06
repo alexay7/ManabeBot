@@ -91,7 +91,7 @@ class Extra(commands.Cog):
 
         emoji = await get_clock_emoji(now.hour, now.minute)
 
-        await channel.edit(name=f"{emoji} {now.strftime('%H:%M Hora 🇪🇸')}")
+        await channel.edit(name=f"{emoji} {now.strftime('%H:%M Hora ES')}")
 
     @commands.slash_command()
     async def kalise(self, ctx):

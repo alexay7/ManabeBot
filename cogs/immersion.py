@@ -390,6 +390,8 @@ class Immersion(commands.Cog):
         graphlogs = {}
 
         output = ""
+        hours = 0
+        estimated_hours = 0
         for log in logs:
             log_points = log["puntos"]
             bonus_points = 0
@@ -409,6 +411,14 @@ class Immersion(commands.Cog):
                 graphlogs[logdate] += log_points
             else:
                 graphlogs[logdate] = log_points
+
+            if log["medio"] in ["VIDEO", "AUDIO", "TIEMPOLECTURA", "OUTPUT"]:
+                hours += int(log["parametro"])/60
+            elif "tiempo" in log:
+                hours += log["tiempo"]/60
+            else:
+                hours += log_points/27
+                estimated_hours += log_points/27
 
         if points["TOTAL"] == 0:
             output = "No se han encontrado logs"
@@ -453,7 +463,7 @@ class Immersion(commands.Cog):
         normal.add_field(name="Posición ranking",
                          value=f"{position+1}º", inline=True)
         normal.add_field(name="Horas de inmersión",
-                         value=math.ceil((points["TOTAL"]-points["CLUB AJR"]) / 27), inline=True)
+                         value=f"{math.ceil(hours)} horas (de las cuales {math.ceil(estimated_hours)} son estimadas)", inline=True)
         if days > 0:
             normal.add_field(
                 name="Media diaria", value=f"{round(points['TOTAL']/days,2)}", inline=True)
@@ -472,11 +482,12 @@ class Immersion(commands.Cog):
             # Obtener los logs del usuario
             manga_logs = await get_user_logs(self.db, ctx.author.id, "TOTAL", "MANGA")
             read_logs = await get_user_logs(self.db, ctx.author.id, "TOTAL", "LECTURA")
-            logs = itertools.chain(manga_logs, read_logs)
+            vn_logs = await get_user_logs(self.db, ctx.author.id, "TOTAL", "VN")
+            logs = itertools.chain(manga_logs, read_logs, vn_logs)
 
             # Crear un conjunto de todos los meses para los que hay registros en cualquiera de los dos medios
             months = set()
-            logs_by_medium_and_month = {"MANGA": {}, "LECTURA": {}}
+            logs_by_medium_and_month = {"MANGA": {}, "LECTURA": {}, "VN": {}}
             for log in logs:
                 if "tiempo" in log:
                     date = datetime.fromtimestamp(log["timestamp"])
@@ -490,7 +501,7 @@ class Immersion(commands.Cog):
             months = sorted(months)
 
             # Calcular la velocidad media por mes para cada medio
-            speeds_by_medium_and_month = {"MANGA": {}, "LECTURA": {}}
+            speeds_by_medium_and_month = {"MANGA": {}, "LECTURA": {}, "VN": {}}
             for medium, logs_by_month in logs_by_medium_and_month.items():
                 for month in months:
                     if month not in logs_by_month:
@@ -503,7 +514,7 @@ class Immersion(commands.Cog):
                                 speed = int(log["caracteres"]) / \
                                     log["tiempo"]*60
                                 speeds.append(speed)
-                            elif medium == "LECTURA":
+                            elif medium in ["LECTURA", "VN"]:
                                 speed = (
                                     int(log["parametro"])) / log["tiempo"]*60
                                 speeds.append(speed)
@@ -521,6 +532,9 @@ class Immersion(commands.Cog):
             y_values_lectura = list(
                 speeds_by_medium_and_month["LECTURA"].values())
 
+            x_values_vn = list(speeds_by_medium_and_month["VN"].keys())
+            y_values_vn = list(speeds_by_medium_and_month["VN"].values())
+
             for i in range(1, len(y_values_manga)):
                 if y_values_manga[i] == 0:
                     y_values_manga[i] = y_values_manga[i - 1]
@@ -529,16 +543,29 @@ class Immersion(commands.Cog):
                 if y_values_lectura[i] == 0:
                     y_values_lectura[i] = y_values_lectura[i - 1]
 
+            for i in range(1, len(y_values_vn)):
+                if y_values_vn[i] == 0:
+                    y_values_vn[i] = y_values_vn[i - 1]
+
             # Crear la gráfica
             if speeds_by_medium_and_month["MANGA"] and speeds_by_medium_and_month["LECTURA"]:
-                plt.figure(figsize=(10, 8))
+                fig, ax = plt.subplots(figsize=(10, 8))
                 plt.plot(x_values_manga, y_values_manga, label="MANGA")
                 plt.plot(x_values_lectura, y_values_lectura, label="LECTURA")
+                plt.plot(x_values_vn, y_values_vn, label="VN")
                 plt.xlabel("Mes")
                 plt.ylabel("Caracters leidos por hora")
                 plt.title(
                     "Velocidad de lectura mensual para el usuario {}".format(ctx.author.name))
                 plt.legend()
+                fig.set_facecolor("#2F3136")
+                ax.title.set_color('white')
+                ax.set_facecolor('#36393f')
+                ax.title.set_color('white')
+                ax.xaxis.label.set_color('white')
+                ax.yaxis.label.set_color('white')
+                ax.tick_params(axis='x', colors='white')
+                ax.tick_params(axis='y', colors='white')
                 plt.xticks(rotation=45)
                 plt.savefig("temp/image.png")
                 plt.close()
@@ -1217,14 +1244,17 @@ class Immersion(commands.Cog):
 
     @commands.slash_command()
     async def ajrstats(self, ctx,
-                       horas: discord.Option(bool, "Mostrar horas en vez de puntos", required=False, default=False)):
+                       horas: discord.Option(bool, "Mostrar horas en vez de puntos", required=False, default=False),
+                       total: discord.Option(bool, "Mostrar desde que existen datos", required=False, default=False)):
         """Estadísticas totales de todo el servidor de AJR"""
-        pipeline = [
-            {"$match": {
+        pipeline = []
+        if not total:
+            pipeline.append({"$match": {
                 "timestamp": {
                     "$gte": int(datetime(2022, 1, 1, 0, 0, 0).timestamp()),
                 }
-            }},
+            }})
+        pipeline = pipeline + [
             {
                 '$group': {
                     '_id': {
@@ -1406,8 +1436,8 @@ class Immersion(commands.Cog):
         await send_response(ctx, file=file)
 
     @ commands.command(aliases=["ajrstats"])
-    async def ajrstatsprefix(self, ctx, horas=False):
-        return await self.ajrstats(ctx, horas)
+    async def ajrstatsprefix(self, ctx, horas=False, total=False):
+        return await self.ajrstats(ctx, horas, total)
 
     @ commands.slash_command()
     async def progreso(self, ctx,
