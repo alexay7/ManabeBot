@@ -1,5 +1,5 @@
 python-dotenv==0.21.0
-py-cord==2.3.2
+py-cord==2.4.0
 beautifulsoup4==4.11.1
 CurrencyConverter==0.17.4
 matplotlib==3.6.2
