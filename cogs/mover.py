@@ -24,6 +24,31 @@ class Mover(commands.Cog):
     async def on_ready(self):
         print("Cog de mover mensajes cargado con éxito")
 
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        twitter = False
+        new_message = message.content
+        if ("https://twitter" in message.content or
+                "https://www.twitter" in message.content):
+            new_message = new_message.replace("twitter", "fxtwitter")
+            twitter = True
+        elif ("https://x.com" in message.content or
+                "https://www.x.com" in message.content):
+            new_message = new_message.replace("x.com", "fxtwitter.com")
+            twitter = True
+
+        if twitter:
+            await message.delete()
+            channel: TextChannel = await self.bot.fetch_channel(message.channel.id)
+
+            webhook = await channel.create_webhook(name=message.author.name)
+            await webhook.send(
+                content=new_message, username=message.author.display_name, avatar_url=message.author.display_avatar)
+
+            webhooks = await channel.webhooks()
+            for webhook in webhooks:
+                await webhook.delete()
+
     @commands.command(aliases=["move"])
     async def movemessage(self, ctx: ApplicationContext, channel_id):
         if ctx.author.id == 615896601554190346:
