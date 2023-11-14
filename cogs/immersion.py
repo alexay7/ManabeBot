@@ -416,6 +416,8 @@ class Immersion(commands.Cog):
                 hours += int(log["parametro"])/60
             elif "tiempo" in log:
                 hours += log["tiempo"]/60
+            elif log["medio"] == "ANIME":
+                hours += int(log["parametro"])*24/60
             else:
                 hours += log_points/27
                 estimated_hours += log_points/27
@@ -462,8 +464,13 @@ class Immersion(commands.Cog):
             points["TOTAL"], 2), inline=True)
         normal.add_field(name="Posición ranking",
                          value=f"{position+1}º", inline=True)
+        if estimated_hours > 0:
+            value_text = f"{math.ceil(hours)} horas (de las cuales {math.ceil(estimated_hours)} son estimadas)"
+        else:
+            value_text = f"{math.ceil(hours)} horas"
+
         normal.add_field(name="Horas de inmersión",
-                         value=f"{math.ceil(hours)} horas (de las cuales {math.ceil(estimated_hours)} son estimadas)", inline=True)
+                         value=value_text, inline=True)
         if days > 0:
             normal.add_field(
                 name="Media diaria", value=f"{round(points['TOTAL']/days,2)}", inline=True)
