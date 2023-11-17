@@ -38,7 +38,6 @@ class Mover(commands.Cog):
             twitter = True
 
         if twitter:
-            await message.delete()
             channel: TextChannel = await self.bot.fetch_channel(message.channel.id)
 
             webhook = await channel.create_webhook(name=message.author.name)
@@ -48,6 +47,7 @@ class Mover(commands.Cog):
             webhooks = await channel.webhooks()
             for webhook in webhooks:
                 await webhook.delete()
+            await message.delete()
 
     @commands.command(aliases=["move"])
     async def movemessage(self, ctx: ApplicationContext, channel_id):
