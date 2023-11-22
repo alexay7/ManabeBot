@@ -16,6 +16,9 @@ from translate import Translator
 from time import gmtime, sleep
 
 from helpers.general import intToMonth, send_error_message, send_message_for_other, send_response, set_processing, get_clock_emoji
+import discord
+from discord.ext import commands
+import requests
 
 # ================ GENERAL VARIABLES ================
 with open("config/general.json") as json_file:
@@ -302,6 +305,75 @@ class Extra(commands.Cog):
 
         else:
             await send_error_message(ctx, "Debes rellenar la forma gramatical a buscar o la clave del elemento!")
+
+    @commands.command()
+    async def anison(self, ctx, type: str = ""):
+        # Hacer la solicitud de GraphQL
+        if type == "":
+            type = random.choice(["OP", "ED", "OP"])
+
+        if type != "" and type.upper() not in ["OP", "ED"]:
+            return await send_error_message(ctx, "Debes indicar si quieres un OP o un ED")
+
+        url = "https://animethemes.moe/api/graphql"
+        query = '''
+        query RandomTheme {
+            searchTheme(
+        args: {
+            sortBy: "random"
+            filters: [{ key: "has", value: "animethemeentries" }, { key: "nsfw", value: "false" }, { key: "type", value: "'''+type+'''" }]
+        }
+    ) {
+                data {
+                    entries {
+                        videos {
+                            link
+                        }
+                    }
+                    anime {
+                        name
+                        year
+                        season
+                        resources {
+                            link
+                        }
+                        images {
+                            link
+                        }
+                    }
+                    song {
+                        title
+                    }
+                    type
+                }
+            }
+        }
+        '''
+        response = requests.post(url, json={'query': query})
+        data = response.json()
+
+        # Crear el embed con la información obtenida
+        embed = discord.Embed(title="Anison Aleatoria",
+                              color=discord.Color.blue())
+        entry = data['data']['searchTheme']['data'][0]
+
+        anime_name = entry['anime']['name']
+        song_title = entry['song']['title']
+
+        link = entry["entries"][0]["videos"][0]["link"]
+
+        embed.add_field(name="Vídeo", value=link, inline=False)
+        embed.add_field(
+            name="Anime", value=f"[{anime_name}]({entry['anime']['resources'][1]['link']})", inline=False)
+        embed.add_field(name="Song", value=song_title, inline=False)
+        embed.add_field(name="Type", value=entry['type'], inline=False)
+        embed.set_image(url=entry['anime']['images'][0]['link'])
+
+        await ctx.send(embed=embed, content=link)
+
+
+def setup(bot):
+    bot.add_cog(Extra(bot))
 
 
 def setup(bot):
