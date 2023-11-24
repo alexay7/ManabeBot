@@ -26,7 +26,7 @@ from helpers.inmersion import (MEDIA_TYPES, MEDIA_TYPES_ENGLISH, MONTHS, TIMESTA
                                get_best_user_of_range, get_logs_animation, get_media_element, get_ranking_title,
                                get_sorted_ranking, get_total_immersion_of_month, get_total_parameter_of_media,
                                get_user_logs, remove_last_log, remove_log, send_message_with_buttons, get_all_logs_in_day,
-                               get_last_log, check_max_immersion, bonus_log, unbonus_log)
+                               get_last_log, check_max_immersion, bonus_log, unbonus_log, get_log_by_id, update_log)
 
 # ================ GENERAL VARIABLES ================
 with open("config/general.json") as json_file:
@@ -1041,6 +1041,127 @@ class Immersion(commands.Cog):
             await send_error_message(ctx, "Cantidad de inmersión demasiado pequeña")
             return
 
+    @commands.slash_command()
+    async def editlog(self, ctx,
+                      logid: discord.Option(int, "Id del log a editar", required=True),
+                      cantidad: discord.Option(int, "Cantidad inmersada", required=False, min_value=1, max_value=5000000),
+                      descripción: discord.Option(str, "Pequeño resumen de lo inmersado", required=False),
+                      tiempo: discord.Option(int, "Tiempo que te ha llevado en minutos", required=False),
+                      caracteres: discord.Option(int, "Caracteres leídos (para medios que no sean lectura)", required=False)):
+        """Editar un log"""
+        await set_processing(ctx)
+        if not await check_user(self.db, ctx.author.id):
+            return await send_error_message("No tienes ningún log.")
+
+        log = await get_log_by_id(self.db, ctx.author.id, logid)
+
+        previous_points = log["puntos"]
+
+        if not log:
+            return await send_error_message("No tienes ningún log con ese id.")
+
+        if cantidad and not check_max_immersion(cantidad, log["medio"]):
+            await send_error_message(ctx, "Esa cantidad de inmersión no es posible en un solo día, considera usar el comando /backfill para indicar las fechas con precisión")
+            return
+
+        # Add keys to log modification only if values are not None
+        log_modification = {}
+        aux_log = copy(log)
+        if not cantidad is None:
+            log_modification["parametro"] = cantidad
+            aux_log["parametro"] = cantidad
+        if descripción:
+            log_modification["descripcion"] = descripción
+            aux_log["descripcion"] = descripción
+        if not tiempo is None:
+            log_modification["tiempo"] = tiempo
+            aux_log["tiempo"] = tiempo
+        if not caracteres is None:
+            log_modification["caracteres"] = caracteres
+            aux_log["caracteres"] = caracteres
+
+        points = 0
+
+        if not cantidad is None or not tiempo is None or not caracteres is None:
+            output = compute_points(
+                aux_log, aux_log["bonus"] if "bonus" in aux_log else False)
+
+            if "tiempo" in aux_log and aux_log["tiempo"] and aux_log["tiempo"] > 0:
+                aux_log['tiempo'] = math.ceil(aux_log["tiempo"])
+                auxlog = copy(aux_log)
+                auxlog["medio"] = "TIEMPOLECTURA"
+                auxlog["parametro"] = aux_log["tiempo"]
+                new_points = compute_points(
+                    auxlog, aux_log["bonus"] if "bonus" in aux_log else False)
+                if new_points > output:
+                    output = new_points
+                    aux_log["puntos"] = new_points
+
+            if "caracteres" in aux_log and aux_log["caracteres"] and aux_log["caracteres"] > 0 and aux_log["medio"].upper() not in ["LECTURA", "VN"]:
+                aux_log['caracteres'] = math.ceil(aux_log["caracteres"])
+                auxlog = copy(aux_log)
+                auxlog["medio"] = "LECTURA"
+                auxlog["parametro"] = aux_log["caracteres"]
+                new_points = compute_points(
+                    auxlog, aux_log["bonus"] if "bonus" in aux_log else False)
+                if new_points > output:
+                    output = new_points
+                    aux_log["puntos"] = new_points
+
+            if output > 0.01:
+                points = output
+            elif output == 0:
+                await send_error_message(ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, output, audio y video")
+                return
+            elif output == -1:
+                await send_error_message(ctx, "La cantidad de inmersión solo puede expresarse en números enteros")
+                return
+            elif output == -2:
+                await send_error_message(ctx, "Cantidad de inmersión exagerada")
+                return
+
+        if points > 0:
+            aux_log["puntos"] = points
+
+        update_log(self.db, log["_id"], aux_log)
+
+        color = 0x24b14d
+        extra = ""
+        multiplier = ""
+
+        if "bonus" in aux_log and aux_log["bonus"]:
+            color = 0xbf9000
+            extra = " (club AJR)"
+            multiplier = " (x1.4)"
+
+        embed = discord.Embed(title=f"Log registrado con éxito{extra}",
+                              description=f"Id Log #{logid} || Fecha: {datetime.fromtimestamp(aux_log['timestamp']).strftime('%d/%m/%Y')}", color=color)
+        embed.add_field(
+            name="Usuario", value=ctx.author.name, inline=True)
+        embed.add_field(
+            name="Medio", value=aux_log["medio"].upper(), inline=True)
+        embed.add_field(
+            name=f"Puntos{multiplier}", value=f"{previous_points} -> {round(aux_log['puntos'],2)} (+{round(aux_log['puntos']-previous_points,2)})", inline=True)
+        embed.add_field(name="Inmersado",
+                        value=get_media_element(aux_log['parametro'], aux_log["medio"].upper()), inline=True)
+        embed.add_field(name="Descripción",
+                        value=aux_log["descripcion"], inline=False)
+        if "tiempo" in aux_log and aux_log["tiempo"] and aux_log["tiempo"] > 0:
+            embed.add_field(name="Tiempo invertido",
+                            value=get_media_element(aux_log['tiempo'], "VIDEO"), inline=False)
+        if "caracteres" in aux_log and aux_log["caracteres"] and aux_log["caracteres"] > 0:
+            embed.add_field(name="Caracteres leídos",
+                            value=get_media_element(aux_log["caracteres"], "LECTURA"), inline=False)
+        if "caracteres" in aux_log and aux_log["caracteres"] and aux_log["caracteres"] > 0 and "tiempo" in aux_log and aux_log["tiempo"] and aux_log["tiempo"] > 0:
+            embed.add_field(name="Velocidad media",
+                            value=f"{math.floor(int(aux_log['caracteres'])/aux_log['tiempo']*60)}chars/h", inline=False)
+        elif (aux_log['medio'].upper() in ["LECTURA", "VN"]) and "tiempo" in aux_log and aux_log['tiempo'] and aux_log['tiempo'] > 0:
+            embed.add_field(name="Velocidad media",
+                            value=f"{math.floor(int(aux_log['parametro'])/aux_log['tiempo']*60)}chars/h", inline=False)
+        embed.set_footer(
+            text=f"Id del usuario: {ctx.author.id}")
+        return await send_response(ctx, embed=embed)
+
     @commands.command(aliases=["log"])
     async def logprefix(self, ctx, medio, cantidad):
         if medio.upper() not in MEDIA_TYPES:
@@ -1213,7 +1334,6 @@ class Immersion(commands.Cog):
             return
 
         result = await remove_log(self.db, ctx.author.id, logid)
-        print(result)
         if result == 1:
             logdeleted = discord.Embed(color=0x24b14d)
             logdeleted.add_field(

@@ -725,6 +725,11 @@ async def get_logs_animation(db, month, day):
     return
 
 
+async def get_log_by_id(db, userid, logid):
+    logs = db.logs
+    return logs.find_one({"userId": userid, "id": int(logid)})
+
+
 async def send_message_with_buttons(self, ctx, content):
     pages = len(content)
     cur_page = 1
@@ -783,3 +788,9 @@ def check_max_immersion(parameter: int, media: str):
     elif media in ["TIEMPOLECTURA", "AUDIO", "OUTPUT", "VIDEO"]:
         return 1440 >= parameter
     return
+
+
+def update_log(db, logid, log):
+    logs = db.logs
+    # Only update the parameteres that exist in the new log
+    logs.update_one({"_id": logid}, {"$set": log})
