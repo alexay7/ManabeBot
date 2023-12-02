@@ -17,6 +17,7 @@ from dateutil.relativedelta import relativedelta
 from discord.ext import commands
 from discord.ext.pages import Paginator
 from pymongo import MongoClient, errors
+from discord import Option
 
 from helpers.anilist import get_anilist_id, get_anilist_logs
 from helpers.general import intToMonth, send_error_message, send_response, set_processing
@@ -132,8 +133,8 @@ class Immersion(commands.Cog):
 
     @commands.slash_command()
     async def mvp(self, ctx,
-                  medio: discord.Option(str, "Medio de inmersión que cubre el ranking", choices=MEDIA_TYPES, required=False, default="TOTAL"),
-                  año: discord.Option(int, "Año que cubre el ranking (el desglose será mensual)", min_value=2019, max_value=datetime.now().year, required=False, default=datetime.now().year)):
+                  medio: Option(str, "Medio de inmersión que cubre el ranking", choices=MEDIA_TYPES, required=False, default="TOTAL"),
+                  año: Option(int, "Año que cubre el ranking (el desglose será mensual)", min_value=2019, max_value=datetime.now().year, required=False, default=datetime.now().year)):
         """Imprime un desglose mensual con los usuarios que más han inmersado en cada año desde que hay datos"""
         output = ""
         await set_processing(ctx)
@@ -181,11 +182,11 @@ class Immersion(commands.Cog):
 
     @commands.slash_command()
     async def podio(self, ctx,
-                    periodo: discord.Option(str, "Periodo de tiempo que cubre el ranking", choices=TIMESTAMP_TYPES, required=False, default="MES"),
-                    medio: discord.Option(str, "Medio de inmersión que cubre el ranking", choices=MEDIA_TYPES.union(["CARACTERES"]), required=False, default="TOTAL"),
-                    comienzo: discord.Option(str, "Fecha de inicio (DD/MM/YYYY)", required=False),
-                    final: discord.Option(str, "Fecha de fin (DD/MM/YYYY)", required=False),
-                    extendido: discord.Option(
+                    periodo: Option(str, "Periodo de tiempo que cubre el ranking", choices=TIMESTAMP_TYPES, required=False, default="MES"),
+                    medio: Option(str, "Medio de inmersión que cubre el ranking", choices=MEDIA_TYPES.union(["CARACTERES"]), required=False, default="TOTAL"),
+                    comienzo: Option(str, "Fecha de inicio (DD/MM/YYYY)", required=False),
+                    final: Option(str, "Fecha de fin (DD/MM/YYYY)", required=False),
+                    extendido: Option(
                         bool, "Muestra el ranking completo", required=False)
                     ):
         """Imprime un ranking de inmersión según los parámetros indicados"""
@@ -243,9 +244,9 @@ class Immersion(commands.Cog):
 
     @commands.slash_command()
     async def logs(self, ctx,
-                   periodo: discord.Option(str, "Periodo de tiempo para ver logs", choices=TIMESTAMP_TYPES, required=False, default="TOTAL"),
-                   medio: discord.Option(str, "Medio de inmersión para ver logs", choices=MEDIA_TYPES, required=False, default="TOTAL"),
-                   usuario: discord.Option(str, "ID DEL Usuario del que quieres ver los logs", required=False)):
+                   periodo: Option(str, "Periodo de tiempo para ver logs", choices=TIMESTAMP_TYPES, required=False, default="TOTAL"),
+                   medio: Option(str, "Medio de inmersión para ver logs", choices=MEDIA_TYPES, required=False, default="TOTAL"),
+                   usuario: Option(str, "ID DEL Usuario del que quieres ver los logs", required=False)):
         """Muestra lista con todos los logs hechos con los parámetros indicados"""
         await set_processing(ctx)
 
@@ -306,7 +307,7 @@ class Immersion(commands.Cog):
 
     @commands.slash_command()
     async def export(self, ctx,
-                     periodo: discord.Option(
+                     periodo: Option(
                          str, "Periodo de tiempo para exportar", choices=TIMESTAMP_TYPES, required=False, default="TOTAL")
                      ):
         """Exporta los logs en formato csv"""
@@ -338,10 +339,10 @@ class Immersion(commands.Cog):
 
     @commands.slash_command(pass_context=True)
     async def me(self, ctx,
-                 periodo: discord.Option(str, "Periodo de tiempo para exportar", choices=TIMESTAMP_TYPES, required=False, default="TOTAL"),
-                 gráfica: discord.Option(str, "Gráficos para acompañar los datos", choices=["SECTORES", "BARRAS", "VELOCIDAD", "NINGUNO"], required=False, default="SECTORES"),
-                 comienzo: discord.Option(str, "Fecha de inicio (DD/MM/YYYY)", required=False),
-                 final: discord.Option(str, "Fecha de fin (DD/MM/YYYY)", required=False)):
+                 periodo: Option(str, "Periodo de tiempo para exportar", choices=TIMESTAMP_TYPES, required=False, default="TOTAL"),
+                 gráfica: Option(str, "Gráficos para acompañar los datos", choices=["SECTORES", "BARRAS", "VELOCIDAD", "NINGUNO"], required=False, default="SECTORES"),
+                 comienzo: Option(str, "Fecha de inicio (DD/MM/YYYY)", required=False),
+                 final: Option(str, "Fecha de fin (DD/MM/YYYY)", required=False)):
         """Muestra pequeño resumen de lo inmersado"""
         await set_processing(ctx)
         if not await check_user(self.db, ctx.author.id):
@@ -591,13 +592,13 @@ class Immersion(commands.Cog):
 
     @commands.slash_command()
     async def backfill(self, ctx,
-                       fecha: discord.Option(str, "Fecha en formato DD/MM/YYYY", required=True),
-                       medio: discord.Option(str, "Medio inmersado", choices=MEDIA_TYPES, required=True),
-                       cantidad: discord.Option(int, "Cantidad inmersada", required=True, min_value=1, max_value=5000000),
-                       descripción: discord.Option(str, "Pequeño resumen de lo inmersado", required=True),
-                       tiempo: discord.Option(int, "Tiempo que te ha llevado en minutos", required=False),
-                       caracteres: discord.Option(int, "Caracteres leídos (para medios que no sean lectura)", required=False),
-                       bonus: discord.Option(bool, "Log de un club mensual de AJR", required=False)):
+                       fecha: Option(str, "Fecha en formato DD/MM/YYYY", required=True),
+                       medio: Option(str, "Medio inmersado", choices=MEDIA_TYPES, required=True),
+                       cantidad: Option(int, "Cantidad inmersada", required=True, min_value=1, max_value=5000000),
+                       descripción: Option(str, "Pequeño resumen de lo inmersado", required=True),
+                       tiempo: Option(int, "Tiempo que te ha llevado en minutos", required=False),
+                       caracteres: Option(int, "Caracteres leídos (para medios que no sean lectura)", required=False),
+                       bonus: Option(bool, "Log de un club mensual de AJR", required=False)):
         """Loguear inmersión hecha en el pasado"""
         # Check if the user has logs
         await set_processing(ctx)
@@ -736,7 +737,7 @@ class Immersion(commands.Cog):
             pass
 
     @commands.slash_command()
-    async def logros(self, ctx, userid: discord.Option(str, "Usuario del que quieres ver los logs", required=False)):
+    async def logros(self, ctx, userid: Option(str, "Usuario del que quieres ver los logs", required=False)):
         """Obtener tus logros de inmersión"""
         await self.achievements_(ctx, userid)
 
@@ -832,12 +833,12 @@ class Immersion(commands.Cog):
 
     @commands.slash_command()
     async def log(self, ctx,
-                  medio: discord.Option(str, "Medio inmersado", choices=MEDIA_TYPES, required=True),
-                  cantidad: discord.Option(int, "Cantidad inmersada", required=True, min_value=1, max_value=5000000),
-                  descripción: discord.Option(str, "Pequeño resumen de lo inmersado", required=True),
-                  tiempo: discord.Option(int, "Tiempo que te ha llevado en minutos", required=False),
-                  caracteres: discord.Option(int, "Caracteres leídos (para medios que no sean lectura)", required=False),
-                  bonus: discord.Option(
+                  medio: Option(str, "Medio inmersado", choices=MEDIA_TYPES, required=True),
+                  cantidad: Option(int, "Cantidad inmersada", required=True, min_value=1, max_value=5000000),
+                  descripción: Option(str, "Pequeño resumen de lo inmersado", required=True),
+                  tiempo: Option(int, "Tiempo que te ha llevado en minutos", required=False),
+                  caracteres: Option(int, "Caracteres leídos (para medios que no sean lectura)", required=False),
+                  bonus: Option(
                       bool, "Log de un club mensual de AJR", required=False)
                   ):
         """Loguear inmersión"""
@@ -1043,11 +1044,11 @@ class Immersion(commands.Cog):
 
     @commands.slash_command()
     async def editlog(self, ctx,
-                      logid: discord.Option(int, "Id del log a editar", required=True),
-                      cantidad: discord.Option(int, "Cantidad inmersada", required=False, min_value=1, max_value=5000000),
-                      descripción: discord.Option(str, "Pequeño resumen de lo inmersado", required=False),
-                      tiempo: discord.Option(int, "Tiempo que te ha llevado en minutos", required=False),
-                      caracteres: discord.Option(int, "Caracteres leídos (para medios que no sean lectura)", required=False)):
+                      logid: Option(int, "Id del log a editar", required=True),
+                      cantidad: Option(int, "Cantidad inmersada", required=False, min_value=1, max_value=5000000),
+                      descripción: Option(str, "Pequeño resumen de lo inmersado", required=False),
+                      tiempo: Option(int, "Tiempo que te ha llevado en minutos", required=False),
+                      caracteres: Option(int, "Caracteres leídos (para medios que no sean lectura)", required=False)):
         """Editar un log"""
         await set_processing(ctx)
         if not await check_user(self.db, ctx.author.id):
@@ -1123,11 +1124,43 @@ class Immersion(commands.Cog):
         if points > 0:
             aux_log["puntos"] = points
 
+        preranking = await get_sorted_ranking(self.db, "MES", "TOTAL")
+        for user in preranking:
+            if user["username"] == ctx.author.name:
+                position = preranking.index(user)
+
         update_log(self.db, log["_id"], aux_log)
 
         color = 0x24b14d
         extra = ""
         multiplier = ""
+
+        ranking = await get_sorted_ranking(self.db, "MES", "TOTAL")
+
+        for user in ranking:
+            if user["username"] == ctx.author.name:
+                # Busca el indice del usuario en el nuevo ranking
+                newposition = ranking.index(user)
+                current_points = user["points"]
+
+        next_user = {
+            "user": "",
+            "difference": 0,
+            "outside": False
+        }
+
+        if newposition > 9:
+            # usuario que va en la posición 10
+            next_user_aux = ranking[9]
+            next_user["outside"] = True
+        elif newposition != 0:
+            # usuario que va delante de ti
+            next_user_aux = ranking[newposition-1]
+
+        if newposition != 0:
+            next_user["user"] = next_user_aux["username"]
+            next_user["difference"] = next_user_aux["points"] - \
+                current_points
 
         if "bonus" in aux_log and aux_log["bonus"]:
             color = 0xbf9000
@@ -1158,6 +1191,20 @@ class Immersion(commands.Cog):
         elif (aux_log['medio'].upper() in ["LECTURA", "VN"]) and "tiempo" in aux_log and aux_log['tiempo'] and aux_log['tiempo'] > 0:
             embed.add_field(name="Velocidad media",
                             value=f"{math.floor(int(aux_log['parametro'])/aux_log['tiempo']*60)}chars/h", inline=False)
+        if newposition < position:
+            embed.add_field(
+                name="🎉 Has subido en el ranking del mes! 🎉", value=f"**{position+1}º** ---> **{newposition+1}º**", inline=False)
+        if newposition != 0:
+            aux_title = f"el {newposition}º puesto"
+            if newposition == 1 or newposition == 3:
+                aux_title = f"el {newposition}er puesto"
+            if next_user["outside"]:
+                aux_title = "entrar al podio"
+            embed.add_field(
+                name=f"⚔️ Lucha por {aux_title} ⚔️",
+                value=f"Tienes a {next_user['user']} a {round(next_user['difference'],2)} puntos. ¡Animo!",
+                inline=False
+            )
         embed.set_footer(
             text=f"Id del usuario: {ctx.author.id}")
         return await send_response(ctx, embed=embed)
@@ -1206,8 +1253,8 @@ class Immersion(commands.Cog):
 
     @commands.slash_command()
     async def puntos(self, ctx,
-                     cantidad: discord.Option(int, "Puntos a calcular/cantidad a calcular puntos", min_value=1, required=True),
-                     medio: discord.Option(str, "Medio del que calcular los puntos", choices=MEDIA_TYPES, required=False)):
+                     cantidad: Option(int, "Puntos a calcular/cantidad a calcular puntos", min_value=1, required=True),
+                     medio: Option(str, "Medio del que calcular los puntos", choices=MEDIA_TYPES, required=False)):
         """Calcular cuanta inmersión se necesita para conseguir x puntos y cuantos puntos da x inmersión"""
         await set_processing(ctx)
         if medio:
@@ -1320,7 +1367,7 @@ class Immersion(commands.Cog):
 
     @commands.slash_command()
     async def remlog(self, ctx,
-                     logid: discord.Option(int, "Id del log a borrar", required=True)):
+                     logid: Option(int, "Id del log a borrar", required=True)):
         """Borra un log usando su identificador"""
         # Verify the user has logs
         await set_processing(ctx)
@@ -1371,8 +1418,8 @@ class Immersion(commands.Cog):
 
     @commands.slash_command()
     async def ajrstats(self, ctx,
-                       horas: discord.Option(bool, "Mostrar horas en vez de puntos", required=False, default=False),
-                       total: discord.Option(bool, "Mostrar desde que existen datos", required=False, default=False)):
+                       horas: Option(bool, "Mostrar horas en vez de puntos", required=False, default=False),
+                       total: Option(bool, "Mostrar desde que existen datos", required=False, default=False)):
         """Estadísticas totales de todo el servidor de AJR"""
         pipeline = []
         if not total:
@@ -1568,8 +1615,8 @@ class Immersion(commands.Cog):
 
     @ commands.slash_command()
     async def progreso(self, ctx,
-                       año: discord.Option(int, "Año que cubre el ranking (el desglose será mensual)", min_value=2019, max_value=datetime.now().year, required=False, default=datetime.now().year),
-                       total: discord.Option(bool, "Progreso desde el primer log registrado", required=False, default=False)):
+                       año: Option(int, "Año que cubre el ranking (el desglose será mensual)", min_value=2019, max_value=datetime.now().year, required=False, default=datetime.now().year),
+                       total: Option(bool, "Progreso desde el primer log registrado", required=False, default=False)):
         """Muestra una gráfica temporal con la inmersión segmentada en tipos"""
         await set_processing(ctx)
         if not await check_user(self.db, ctx.author.id):
@@ -1658,8 +1705,8 @@ class Immersion(commands.Cog):
 
     @ commands.slash_command()
     async def findemes(self, ctx,
-                       mes: discord.Option(int, "Mes que ha finalizado", min_value=1, max_value=12, required=False, default=datetime.now().month - 1),
-                       video: discord.Option(bool, "Video o no", required=False, default=True)):
+                       mes: Option(int, "Mes que ha finalizado", min_value=1, max_value=12, required=False, default=datetime.now().month - 1),
+                       video: Option(bool, "Video o no", required=False, default=True)):
         """Video conmemorativo con ranking interactivo de todo el mes"""
         if ctx.author.id not in admin_users:
             return await send_error_message(ctx, "Vuelve a hacer eso y te mato")
@@ -1716,8 +1763,8 @@ class Immersion(commands.Cog):
 
     @ commands.slash_command()
     async def addanilist(self, ctx,
-                         anilistuser: discord.Option(str, "Nombre de usuario anilist", required=True),
-                         fechaminima: discord.Option(str, "Fecha de inicio en formato YYYYMMDD", required=False)):
+                         anilistuser: Option(str, "Nombre de usuario anilist", required=True),
+                         fechaminima: Option(str, "Fecha de inicio en formato YYYYMMDD", required=False)):
         """Añade logs de anime de anilist"""
         if fechaminima and len(fechaminima) != 8:
             await send_error_message(ctx, "La fecha debe tener el formato YYYYMMDD")
