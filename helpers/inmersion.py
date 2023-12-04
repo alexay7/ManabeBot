@@ -89,6 +89,8 @@ def get_ranking_title(timelapse, media):
         medio = "de lectura (tiempo) "
     elif media in {"VN"}:
         medio = "de " + media + " "
+    elif media == "CARACTERES":
+        medio = "de caracteres"
     return f"{tiempo} {medio}"
 
 

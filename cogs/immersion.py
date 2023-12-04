@@ -15,9 +15,9 @@ import pandas as pd
 import bar_chart_race as bcr
 from dateutil.relativedelta import relativedelta
 from discord.ext import commands
-from discord.ext.pages import Paginator
+from discord.ext.pages import Paginator, Page
 from pymongo import MongoClient, errors
-from discord import Option
+from discord import Member, Option
 
 from helpers.anilist import get_anilist_id, get_anilist_logs
 from helpers.general import intToMonth, send_error_message, send_response, set_processing
@@ -185,9 +185,8 @@ class Immersion(commands.Cog):
                     periodo: Option(str, "Periodo de tiempo que cubre el ranking", choices=TIMESTAMP_TYPES, required=False, default="MES"),
                     medio: Option(str, "Medio de inmersión que cubre el ranking", choices=MEDIA_TYPES.union(["CARACTERES"]), required=False, default="TOTAL"),
                     comienzo: Option(str, "Fecha de inicio (DD/MM/YYYY)", required=False),
-                    final: Option(str, "Fecha de fin (DD/MM/YYYY)", required=False),
-                    extendido: Option(
-                        bool, "Muestra el ranking completo", required=False)
+                    final: Option(
+                        str, "Fecha de fin (DD/MM/YYYY)", required=False)
                     ):
         """Imprime un ranking de inmersión según los parámetros indicados"""
         if (comienzo and not final) or (final and not comienzo):
@@ -204,34 +203,51 @@ class Immersion(commands.Cog):
             medio = "TOTAL"
 
         sortedlist = await get_sorted_ranking(self.db, periodo, medio, chars)
-        message = ""
+        # remove users with 0 points
+        sortedlist = [user for user in sortedlist if (user["points"]
+                      != 0) and (not chars or user["parameters"] != 0)]
         position = 1
-        total_users = 10
-        if extendido:
-            total_users = len(sortedlist)
+        total_users = len(sortedlist)
+        pages = []
+        currpage = ""
+        counter = 0
         for user in sortedlist[0:total_users]:
-            if user["points"] != 0:
-                if chars:
-                    if user["parameters"] != 0:
-                        message += f"**{str(position)}º {user['username']}:** {str(round(user['parameters'],2))} caracteres"
-                else:
-                    message += f"**{str(position)}º {user['username']}:** {str(round(user['points'],2))} puntos"
-                if "param" in user:
-                    message += f" -> {get_media_element(user['param'],medio)}\n"
-                else:
-                    message += "\n"
-                position += 1
+            counter += 1
+            positiontext = str(position)+"º"
+            if position == 1:
+                positiontext = "🥇 "
+            elif position == 2:
+                positiontext = "🥈 "
+            elif position == 3:
+                positiontext = "🥉 "
+
+            if chars:
+                if user["parameters"] != 0:
+                    currpage += f"**{positiontext} {user['username']}:** {str(round(user['parameters'],2))} caracteres"
             else:
-                sortedlist.remove(user)
-        append = ""
-        if extendido:
-            append = "extendido"
+                currpage += f"**{positiontext} {user['username']}:** {str(round(user['points'],2))} puntos"
+            if "param" in user:
+                currpage += f" -> {get_media_element(user['param'],medio)}\n"
+            else:
+                currpage += "\n"
+            if position == 3:
+                currpage += "----------------------\n"
+            if counter >= 10 or position == total_users:
+                title = "Ranking " + \
+                    get_ranking_title(
+                        periodo, medio if not chars else "CARACTERES")
+                embed = discord.Embed(color=0x5842ff)
+                embed.add_field(name=title, value=currpage, inline=True)
+                pages.append(Page(embeds=[embed]))
+                currpage = ""
+                counter = 0
+            position += 1
         if len(sortedlist) > 0:
-            title = "Ranking " + \
-                get_ranking_title(periodo, medio) + append
-            embed = discord.Embed(color=0x5842ff)
-            embed.add_field(name=title, value=message, inline=True)
-            await send_response(ctx, embed=embed)
+            paginator = Paginator(pages=pages,)
+            if not ctx.message:
+                return await paginator.respond(ctx.interaction)
+            else:
+                await paginator.send(ctx)
         else:
             await send_error_message(ctx, "Ningún usuario ha inmersado con este medio en el periodo de tiempo indicado")
             return
@@ -240,22 +256,20 @@ class Immersion(commands.Cog):
     async def podioprefix(self, ctx, argument=""):
         if argument != "":
             return await send_error_message(ctx, "Para usar parámetros escribe el comando con / en lugar de .")
-        await self.podio(ctx, "MES", "TOTAL", None, None, None)
+        await self.podio(ctx, "MES", "TOTAL", None, None)
 
     @commands.slash_command()
     async def logs(self, ctx,
                    periodo: Option(str, "Periodo de tiempo para ver logs", choices=TIMESTAMP_TYPES, required=False, default="TOTAL"),
                    medio: Option(str, "Medio de inmersión para ver logs", choices=MEDIA_TYPES, required=False, default="TOTAL"),
-                   usuario: Option(str, "ID DEL Usuario del que quieres ver los logs", required=False)):
+                   usuario: Option(Member, "Usuario del que quieres ver los logs", required=False)):
         """Muestra lista con todos los logs hechos con los parámetros indicados"""
         await set_processing(ctx)
 
         if not usuario:
             usuario = ctx.author.id
         else:
-            if not usuario.isnumeric():
-                await send_error_message(ctx, "Debes poner el ID del usuario del que quieras saber los logs! (Lo puedes ver al final de los logs que haya hecho)")
-                return
+            usuario = usuario.id
 
         if await check_user(self.db, int(usuario)) is False:
             await send_error_message(ctx, "No se han encontrado logs asociados a esa Id.")
@@ -289,7 +303,11 @@ class Immersion(commands.Cog):
                 output.append(line)
         if len(output[0]) > 0:
             if ctx.message:
-                await send_message_with_buttons(self, ctx, output)
+                pages = []
+                for page in output:
+                    pages.append(f"```{page}```")
+                paginator = Paginator(pages=pages,)
+                await paginator.send(ctx)
             else:
                 pages = []
                 for page in output:
@@ -342,10 +360,17 @@ class Immersion(commands.Cog):
                  periodo: Option(str, "Periodo de tiempo para exportar", choices=TIMESTAMP_TYPES, required=False, default="TOTAL"),
                  gráfica: Option(str, "Gráficos para acompañar los datos", choices=["SECTORES", "BARRAS", "VELOCIDAD", "NINGUNO"], required=False, default="SECTORES"),
                  comienzo: Option(str, "Fecha de inicio (DD/MM/YYYY)", required=False),
-                 final: Option(str, "Fecha de fin (DD/MM/YYYY)", required=False)):
+                 final: Option(str, "Fecha de fin (DD/MM/YYYY)", required=False),
+                 usuario: Option(Member, "Usuario del que quieres ver las stats", required=False)):
         """Muestra pequeño resumen de lo inmersado"""
         await set_processing(ctx)
-        if not await check_user(self.db, ctx.author.id):
+
+        if not usuario:
+            usuario = ctx.author
+        else:
+            usuario = usuario
+
+        if not await check_user(self.db, usuario.id):
             await send_error_message(ctx, "No tienes ningún log")
             return
 
@@ -359,7 +384,7 @@ class Immersion(commands.Cog):
             if gráfica == "BARRAS":
                 periodo = "SEMANA"
 
-        logs = await get_user_logs(self.db, ctx.author.id, periodo)
+        logs = await get_user_logs(self.db, usuario.id, periodo)
         if logs == "":
             await send_error_message("Algo ha salido mal, revisa el comando")
             return
@@ -448,7 +473,7 @@ class Immersion(commands.Cog):
                 output += f"**CLUB AJR:** {round(points['CLUB AJR'],2)} puntos\n"
         ranking = await get_sorted_ranking(self.db, periodo, "TOTAL")
         for user in ranking:
-            if user["username"] == ctx.author.name:
+            if user["username"] == usuario.name:
                 position = ranking.index(user)
 
         days = 0
@@ -460,7 +485,7 @@ class Immersion(commands.Cog):
 
         normal = discord.Embed(
             title=f"Vista {get_ranking_title(periodo,'ALL')}", color=0xeeff00)
-        normal.add_field(name="Usuario", value=ctx.author.name, inline=True)
+        normal.add_field(name="Usuario", value=usuario.name, inline=True)
         normal.add_field(name="Puntos", value=round(
             points["TOTAL"], 2), inline=True)
         normal.add_field(name="Posición ranking",
@@ -488,9 +513,9 @@ class Immersion(commands.Cog):
             await send_response(ctx, embed=normal, file=bardoc)
         elif gráfica == "VELOCIDAD":
             # Obtener los logs del usuario
-            manga_logs = await get_user_logs(self.db, ctx.author.id, "TOTAL", "MANGA")
-            read_logs = await get_user_logs(self.db, ctx.author.id, "TOTAL", "LECTURA")
-            vn_logs = await get_user_logs(self.db, ctx.author.id, "TOTAL", "VN")
+            manga_logs = await get_user_logs(self.db, usuario.id, "TOTAL", "MANGA")
+            read_logs = await get_user_logs(self.db, usuario.id, "TOTAL", "LECTURA")
+            vn_logs = await get_user_logs(self.db, usuario.id, "TOTAL", "VN")
             logs = itertools.chain(manga_logs, read_logs, vn_logs)
 
             # Crear un conjunto de todos los meses para los que hay registros en cualquiera de los dos medios
@@ -564,7 +589,7 @@ class Immersion(commands.Cog):
                 plt.xlabel("Mes")
                 plt.ylabel("Caracters leidos por hora")
                 plt.title(
-                    "Velocidad de lectura mensual para el usuario {}".format(ctx.author.name))
+                    "Velocidad de lectura mensual para el usuario {}".format(usuario.name))
                 plt.legend()
                 fig.set_facecolor("#2F3136")
                 ax.title.set_color('white')
@@ -588,7 +613,7 @@ class Immersion(commands.Cog):
         if periodo.upper() in ["SECTORES", "BARRAS"]:
             grafica = periodo
             periodo = "TOTAL"
-        await self.me(ctx, periodo.upper(), grafica.upper(), None, None)
+        await self.me(ctx, periodo.upper(), grafica.upper(), None, None, None)
 
     @commands.slash_command()
     async def backfill(self, ctx,
@@ -737,25 +762,26 @@ class Immersion(commands.Cog):
             pass
 
     @commands.slash_command()
-    async def logros(self, ctx, userid: Option(str, "Usuario del que quieres ver los logs", required=False)):
+    async def logros(self, ctx,
+                     usuario: Option(Member, "Usuario del que quieres ver las stats", required=False)):
         """Obtener tus logros de inmersión"""
-        await self.achievements_(ctx, userid)
+        await self.achievements_(ctx, usuario)
 
     @commands.command(aliases=["achievements", "logros", "level", "nivel"])
-    async def achievements_(self, ctx, userId=None):
+    async def achievements_(self, ctx, usuario=None):
         """Obtener tus logros de inmersión"""
         await set_processing(ctx)
 
-        user_id = ctx.author.id
-        user_name = ctx.author.name
+        user_id = usuario.id if usuario else ctx.author.id
+        user_name = usuario.name if usuario else ctx.author.name
 
-        if userId:
+        if user_id:
             try:
                 users = self.db.users
-                found = users.find_one({"userId": int(userId)})
+                found = users.find_one({"userId": int(user_id)})
                 if found:
                     user_name = found["username"]
-                    user_id = int(userId)
+                    user_id = int(user_id)
                 else:
                     await ctx.message.delete()
                     return
@@ -817,7 +843,7 @@ class Immersion(commands.Cog):
 
         title = f"🎌 Tus logros de inmersión 🎌"
 
-        if userId:
+        if not usuario:
             title = f"🎌 Logros de inmersión de {user_name} 🎌"
 
         normal = discord.Embed(
