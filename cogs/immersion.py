@@ -23,9 +23,9 @@ from helpers.anilist import get_anilist_id, get_anilist_logs
 from helpers.general import intToMonth, send_error_message, send_response, set_processing
 from helpers.inmersion import (MEDIA_TYPES, MEDIA_TYPES_ENGLISH, MONTHS, TIMESTAMP_TYPES,
                                get_media_level, get_param_for_media_level, get_immersion_level, add_log, calc_media,
-                               check_user, compute_points, create_user, generate_graph, generate_linear_graph,
+                               check_user, compute_points, create_user, generate_graph, get_logs_per_day_in_month,
                                get_best_user_of_range, get_logs_animation, get_media_element, get_ranking_title,
-                               get_sorted_ranking, get_total_immersion_of_month, get_total_parameter_of_media,
+                               get_sorted_ranking, get_logs_per_day_in_year, get_total_parameter_of_media,
                                get_user_logs, remove_last_log, remove_log, send_message_with_buttons, get_all_logs_in_day,
                                get_last_log, check_max_immersion, bonus_log, unbonus_log, get_log_by_id, update_log)
 
@@ -257,6 +257,96 @@ class Immersion(commands.Cog):
         if argument != "":
             return await send_error_message(ctx, "Para usar parámetros escribe el comando con / en lugar de .")
         await self.podio(ctx, "MES", "TOTAL", None, None)
+
+    @commands.slash_command()
+    async def constancia(self, ctx,
+                         month: discord.Option(str, "Mes a mostrar", choices=MONTHS, default=MONTHS[datetime.now().month-1], required=False),
+                         year: discord.Option(int, "Año a mostrar", default=datetime.now().year, required=False),
+                         totalyear: discord.Option(bool, "Mostrar el total del año", default=False, required=False)):
+        """Muestra gráfica del mes seleccionado día por día con los puntos acumulados"""
+        await set_processing(ctx)
+
+        if await check_user(self.db, int(ctx.author.id)) is False:
+            await send_error_message(ctx, "No se han encontrado logs asociados a esa Id.")
+            return
+
+        # Get the points of the user in each day of the month in
+        mont_index = MONTHS.index(month)+1
+        if not totalyear:
+            logs = list(await get_logs_per_day_in_month(self.db, ctx.author.id, mont_index, year))
+
+            # Create a dictionary with the accumulated points per day of the month, even those without points
+            points_per_day = {}
+            points = 0
+            for day in range(1, calendar.monthrange(year, mont_index)[1]+1):
+                # If there is a log with an _id for that day in the month, add it to the points
+                for log in logs:
+                    if log["_id"] == day:
+                        points += log["count"]
+                        points_per_day[day] = points
+                    else:
+                        points_per_day[day] = points
+
+            # Create the graph
+            fig, ax = plt.subplots(figsize=(10, 8))
+            plt.plot(list(points_per_day.keys()), list(
+                points_per_day.values()), label="Puntos acumulados")
+            plt.xlabel("Día")
+            plt.ylabel("Puntos acumulados")
+            plt.title(
+                f"Puntos acumulados en el mes de {month} de {year} para el usuario {ctx.author.name}")
+        else:
+            logs = list(await get_logs_per_day_in_year(self.db, ctx.author.id, year))
+
+            # Create a dictionary with the accumulated points per day of the month, even those without points
+            points_per_day = {}
+            points = 0
+            for day in range(1, 366):
+                # If there is a log with an _id for that day in the month, add it to the points
+                for log in logs:
+                    if log["_id"] == day:
+                        points += log["count"]
+                        points_per_day[day] = points
+                    else:
+                        points_per_day[day] = points
+
+            # Create the graph
+            fig, ax = plt.subplots(figsize=(10, 8))
+            # Make the x axis go from january to decembre
+            plt.xticks(np.arange(1, 366, 30.5), MONTHS)
+            plt.plot(list(points_per_day.keys()), list(
+                points_per_day.values()), label="Puntos acumulados")
+            plt.xlabel("Día")
+            plt.ylabel("Puntos acumulados")
+            plt.title(
+                f"Puntos acumulados en el año {year} para el usuario {ctx.author.name}")
+
+        plt.legend()
+        # Fill the inner part of the line with gray
+        plt.fill_between(list(points_per_day.keys()), list(
+            points_per_day.values()), color="#24B14D")
+        # Change line color
+        plt.plot(list(points_per_day.keys()), list(
+            points_per_day.values()), color="#24B14D")
+        fig.set_facecolor("#2F3136")
+        ax.title.set_color('white')
+        ax.set_facecolor('#36393f')
+        ax.title.set_color('white')
+        ax.xaxis.label.set_color('white')
+        ax.yaxis.label.set_color('white')
+        ax.tick_params(axis='x', colors='white')
+        ax.tick_params(axis='y', colors='white')
+        plt.xticks(rotation=45)
+        plt.savefig("temp/image.png")
+        plt.close()
+        file = discord.File("temp/image.png", filename="image.png")
+        await send_response(ctx, file=file)
+
+    @commands.command(aliases=["constancia"])
+    async def constanciaprefix(self, ctx, argument=""):
+        if argument != "":
+            return await send_error_message(ctx, "Para usar parámetros escribe el comando con / en lugar de .")
+        await self.constancia(ctx, MONTHS[datetime.now().month-1], datetime.now().year, False)
 
     @commands.slash_command()
     async def logs(self, ctx,

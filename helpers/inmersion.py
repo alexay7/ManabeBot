@@ -1,3 +1,4 @@
+import calendar
 from pymongo import collection
 import asyncio
 import csv
@@ -282,6 +283,70 @@ async def get_all_logs_in_day(db, userid, day):
                       '$lte': datetime.combine(day, datetime.max.time()).timestamp()}
     })
     return day_logs
+
+
+async def get_logs_per_day_in_month(db, userid, month, year):
+    logs = db.logs
+    month_logs = logs.aggregate([
+        {
+            '$match': {
+                'userId': userid,
+                'timestamp': {
+                    '$gte': datetime(int(year), int(month), 1).timestamp(),
+                    '$lte': datetime(int(year), int(month), calendar.monthrange(int(year), int(month))[1]).timestamp()
+                }
+            }
+        }, {
+            '$group': {
+                '_id': {
+                    '$dayOfMonth': {
+                        'date': {
+                            '$toDate': {
+                                '$multiply': ['$timestamp', 1000]
+                            }
+                        },
+                        'timezone': 'Europe/Madrid'
+                    }
+                },
+                'count': {
+                    '$sum': "$puntos"
+                }
+            }
+        }
+    ])
+    return month_logs
+
+
+async def get_logs_per_day_in_year(db, userid, year):
+    logs = db.logs
+    year_logs = logs.aggregate([
+        {
+            '$match': {
+                'userId': userid,
+                'timestamp': {
+                    '$gte': datetime(int(year), 1, 1).timestamp(),
+                    '$lte': datetime(int(year), 12, 31).timestamp()
+                }
+            }
+        }, {
+            '$group': {
+                '_id': {
+                    '$dayOfYear': {
+                        'date': {
+                            '$toDate': {
+                                '$multiply': ['$timestamp', 1000]
+                            }
+                        },
+                        'timezone': 'Europe/Madrid'
+                    }
+                },
+                'count': {
+                    '$sum': "$puntos"
+                }
+            }
+        }
+    ])
+    return year_logs
 
 
 async def get_last_log(db, userid):
