@@ -4,14 +4,18 @@ from discord import ApplicationContext, TextChannel
 import aiohttp
 import asyncio
 import io
+import os
+from urllib.parse import urlparse
 
 
 async def descargar_imagen(url, spoiler=False):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as respuesta:
+            path = urlparse(url).path
+            ext = os.path.splitext(path)[1]
             if respuesta.status == 200:
                 # Lee los datos de la respuesta y devuelve un objeto discord.File
-                return discord.File(io.BytesIO(await respuesta.read()), filename="imagen.png" if not spoiler else "SPOILER_imagen.png")
+                return discord.File(io.BytesIO(await respuesta.read()), filename=f"imagen.{ext}" if not spoiler else f"SPOILER_imagen.{ext}")
             else:
                 return None
 
