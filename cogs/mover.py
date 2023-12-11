@@ -6,12 +6,12 @@ import asyncio
 import io
 
 
-async def descargar_imagen(url):
+async def descargar_imagen(url, spoiler=False):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as respuesta:
             if respuesta.status == 200:
                 # Lee los datos de la respuesta y devuelve un objeto discord.File
-                return discord.File(io.BytesIO(await respuesta.read()), filename="imagen.png")
+                return discord.File(io.BytesIO(await respuesta.read()), filename="imagen.png" if not spoiler else "SPOILER_imagen.png")
             else:
                 return None
 
@@ -48,6 +48,32 @@ class Mover(commands.Cog):
             for webhook in webhooks:
                 await webhook.delete()
             await message.delete()
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        # If the author of the reaction is not an admin or the author of the message reacted to, do nothing
+        if str(payload.emoji) == "🏴":
+            found_channel = await self.bot.fetch_channel(payload.channel_id)
+            found_message = await found_channel.fetch_message(payload.message_id)
+
+            if payload.member.id != found_message.author.id and payload.member.guild_permissions.administrator is False:
+                return
+
+            files = []
+
+            for objeto in found_message.attachments:
+                url = objeto.url
+                imagen_file = await descargar_imagen(url, True)
+                files.append(imagen_file)
+
+            webhook = await found_channel.create_webhook(name=found_message.author.name)
+            await webhook.send(
+                content="||"+found_message.content.replace("||", "")+"||" if found_message.content else "", files=files, username=found_message.author.display_name, avatar_url=found_message.author.display_avatar)
+
+            webhooks = await found_channel.webhooks()
+            for webhook in webhooks:
+                await webhook.delete()
+            await found_message.delete()
 
     @commands.command(aliases=["move"])
     async def movemessage(self, ctx: ApplicationContext, channel_id):
