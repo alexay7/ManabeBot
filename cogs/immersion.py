@@ -1822,6 +1822,7 @@ class Immersion(commands.Cog):
     @ commands.slash_command()
     async def findemes(self, ctx,
                        mes: Option(int, "Mes que ha finalizado", min_value=1, max_value=12, required=False, default=datetime.now().month - 1),
+                       year: Option(int, "Año", required=False, default=datetime.now().year),
                        video: Option(bool, "Video o no", required=False, default=True)):
         """Video conmemorativo con ranking interactivo de todo el mes"""
         if ctx.author.id not in admin_users:
@@ -1829,9 +1830,9 @@ class Immersion(commands.Cog):
         await set_processing(ctx)
         today = datetime.now()
         next_month = (mes) % 12 + 1
-        day = (datetime(today.year, next_month, 1) - timedelta(days=1)).day
+        day = (datetime(year, next_month, 1) - timedelta(days=1)).day
         await ctx.send("Procesando datos del mes, espere por favor...", delete_after=60.0)
-        await get_logs_animation(self.db, mes, day)
+        await get_logs_animation(self.db, mes, day, year)
         # Generate monthly ranking animation
         df = pd.read_csv('temp/test.csv', index_col='date',
                          parse_dates=['date'])
@@ -1852,7 +1853,7 @@ class Immersion(commands.Cog):
             bcr.bar_chart_race(df, 'temp/video.mp4', figsize=(20, 12), fig=fig,
                                period_fmt="%d/%m/%Y", period_length=2000, steps_per_period=75, bar_size=0.7, interpolate_period=True)
             file = discord.File("temp/video.mp4", filename="ranking.mp4")
-        mvp = await get_best_user_of_range(self.db, "TOTAL", f"{today.year}/{mes}")
+        mvp = await get_best_user_of_range(self.db, "TOTAL", f"{year}/{mes}")
         newrole = discord.utils.get(ctx.guild.roles, name="先輩")
         for user in ctx.guild.members:
             if newrole in user.roles:

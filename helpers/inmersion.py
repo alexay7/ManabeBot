@@ -141,10 +141,10 @@ async def add_log(db, userid, log, username):
     return log["id"]
 
 
-async def get_user_logs(db, userid, timelapse, media=None):
+async def get_user_logs(db, userid, timelapse, media=None, year=None):
     logs = db.logs
     if timelapse in MONTHS:
-        year = datetime.now().year
+        year = year if year else datetime.now().year
         month = MONTHS.index(timelapse) + 1
         timelapse = f"{year}/{month}"
 
@@ -368,8 +368,8 @@ async def remove_last_log(db, userid):
         return 0
 
 
-async def get_user_data(db, userid, timelapse, media="TOTAL", chars=False):
-    logs = await get_user_logs(db, userid, timelapse, media)
+async def get_user_data(db, userid, timelapse, media="TOTAL", chars=False, year=None):
+    logs = await get_user_logs(db, userid, timelapse, media, year)
     points = {
         "LIBRO": 0,
         "MANGA": 0,
@@ -442,13 +442,13 @@ async def get_best_user_of_range(db, media, timelapse):
     return None
 
 
-async def get_sorted_ranking(db, timelapse, media, caracteres=False):
+async def get_sorted_ranking(db, timelapse, media, caracteres=False, year=None):
     leaderboard = []
     users = db.users.find({})
     counter = 0
     for user in users:
         points, parameters = await get_user_data(
-            db, user["userId"], timelapse, media, caracteres)
+            db, user["userId"], timelapse, media, caracteres, year)
         leaderboard.append({
             "username": user["username"],
             "points": points["TOTAL"],
@@ -758,12 +758,12 @@ def get_media_level(parametro, medio):
     return 100
 
 
-async def get_logs_animation(db, month, day):
+async def get_logs_animation(db, month, day, year):
     # Esta función va a tener como parámetro el día, lo pasará a la función get logs y a partir de ahí generará el ranking pertinente
     header = []
     data = []
     header.append("date")
-    monthly_ranking = await get_sorted_ranking(db, MONTHS[int(month) - 1], "TOTAL")
+    monthly_ranking = await get_sorted_ranking(db, MONTHS[int(month) - 1], "TOTAL", False, year)
     userlist = []
     for elem in monthly_ranking:
         if elem["points"] != 0:
@@ -777,9 +777,9 @@ async def get_logs_animation(db, month, day):
     counter = 1
     while counter < int(day) + 1:
         total[str(counter)] = await get_sorted_ranking(
-            db, f"{date.year}/{month}/{counter}", "TOTAL")
+            db, f"{year}/{month}/{counter}", "TOTAL")
         aux = [0 for i in range(len(header))]
-        aux[0] = f"{month}/{counter}/{date.year}"
+        aux[0] = f"{month}/{counter}/{year}"
         for user in total[str(counter)]:
             if user["points"] != 0:
                 aux[header.index(user["username"])] = user["points"]

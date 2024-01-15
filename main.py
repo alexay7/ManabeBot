@@ -17,7 +17,7 @@ with open("config/immersion.json") as json_file:
     immersion_logs_channels = immersion_config["immersion_logs_channels"]
 # ====================================================
 
-load_dotenv(".env")
+load_dotenv(".env", override=True)
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
