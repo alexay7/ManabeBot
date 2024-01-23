@@ -1,14 +1,14 @@
 import discord
 
 
-async def send_error_message(ctx, content):
+async def send_error_message(ctx, content, delete_after=15.0):
     embed = discord.Embed(color=0xff2929)
     embed.add_field(
         name="❌", value=content, inline=False)
     if hasattr(ctx, "message") and not ctx.message:
-        await ctx.respond(embed=embed, delete_after=15.0)
+        await ctx.respond(embed=embed, delete_after=delete_after)
     else:
-        await ctx.send(embed=embed, delete_after=15.0)
+        await ctx.send(embed=embed, delete_after=delete_after)
 
 
 def intToMonth(number):

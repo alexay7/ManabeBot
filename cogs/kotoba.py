@@ -25,7 +25,7 @@ with open("config/kotoba.json", encoding="utf8") as json_file:
 
 
 class Kotoba(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: discord.Bot):
         self.bot = bot
 
     async def getjson(self, url):
@@ -78,11 +78,13 @@ class Kotoba(commands.Cog):
                                     else:
                                         quizname = ""
                                         for deckdict in kotobadict["decks"]:
-                                            addname = deckdict["name"]
+                                            addname = deckdict["name"] + \
+                                                "(" + \
+                                                str(deckdict["appearanceWeight"])+"%)"
                                             quizname += " " + addname
 
                                     startindex = 0
-                                    print(quizname)
+
                                     endindex = 0
 
                                     mc = kotobadict["decks"][0]["mc"]
@@ -168,21 +170,35 @@ class Kotoba(commands.Cog):
                                     currentroleid = 0
                                     for role in quizwinner.roles:
                                         if role.id in quiz_ranks:
-                                            print("Role ID:", role.id)
                                             currentroleid = role.id
 
-                                    if currentroleid not in quiz_ranks or quiz_ranks.index(currentroleid) <= quiz_ranks.index(newrankid) - 1:
+                                    # Si el rol a conseguir está 1 por encima del rol actual, dar el rol.
+                                    if quiz_ranks.index(currentroleid)+1 == quiz_ranks.index(newrankid):
                                         newrole = self.myguild.get_role(
                                             newrankid)
                                         if currentroleid != 0:
                                             currentrole = self.myguild.get_role(
                                                 currentroleid)
-                                            await quizwinner.remove_roles(currentrole)
+                                            # Si el rol a eliminar es el del N1, no eliminarlo.
+                                            if currentroleid != 892868429877485598:
+                                                await quizwinner.remove_roles(currentrole)
                                         await quizwinner.add_roles(newrole)
                                         announcementchannel = self.bot.get_channel(
                                             announcement_channel)
                                         await announcementchannel.send(f'<@!{mainuserid}> ha aprobado el examen de{shortname}!\n'
                                                                        f'Escribe `.levelup` en <#796084920790679612> para ver los requisitos del siguiente nivel.')
+                                    # Si ya tiene el rol, no hacer nada
+                                    elif quiz_ranks.index(currentroleid) == quiz_ranks.index(newrankid):
+                                        return
+                                    else:
+                                        minimumroleid = quiz_ranks[quiz_ranks.index(
+                                            newrankid)-1]
+                                        minimumrole = self.myguild.get_role(
+                                            minimumroleid)
+
+                                        await send_error_message(message.channel,
+                                                                 f"¡Necesitas el nivel {minimumrole.name} para poder hacer este quiz! Escribe .levelup para ver el siguiente nivel del que puedes examinarte", None)
+                                        return
 
             except TypeError:
                 pass
@@ -196,10 +212,12 @@ class Kotoba(commands.Cog):
             return
 
         member = await self.myguild.fetch_member(ctx.author.id)
-        for role in member.roles:
-            if role.id in quiz_ranks:
-                # String is cut down for easy copy and paste.
-                await send_response(ctx, levelup_messages[role.id], ephemeral=True)
+
+        # Reverse travel quiz_ranks and check if user has a role.
+        for roleid in reversed(quiz_ranks):
+            role = self.myguild.get_role(roleid)
+            if role in member.roles:
+                await send_response(ctx, levelup_messages[roleid], ephemeral=True)
                 return
 
         await send_response(ctx,
