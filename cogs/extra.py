@@ -51,6 +51,13 @@ class Extra(commands.Cog):
                     message.guild.roles, id=865660735761678386)
                 await message.author.remove_roles(immerse_role)
                 await send_error_message(channel, "El tiempo máximo permitido es de 16 horas, si quieres desconectar más tiempo plantéate desinstalar Discord.")
+        # Si el canal es el de entrada
+        if message.channel.id == 654351833162055682:
+            if message.reference:
+                msg = await message.channel.fetch_message(message.reference.message_id)
+
+            if len(message.stickers) == 0 or not message.reference or not msg or msg.content != "" or len(msg.stickers) > 0:
+                await message.delete()
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: RawReactionActionEvent):
