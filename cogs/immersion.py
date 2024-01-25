@@ -18,6 +18,7 @@ from discord.ext import commands
 from discord.ext.pages import Paginator, Page
 from pymongo import MongoClient, errors
 from discord import Member, Option
+import locale
 
 from helpers.anilist import get_anilist_id, get_anilist_logs
 from helpers.general import intToMonth, send_error_message, send_response, set_processing
@@ -173,6 +174,60 @@ class Immersion(commands.Cog):
             await send_response(ctx, embed=embed)
         else:
             await send_error_message(ctx, "No existen datos")
+
+    @commands.command(aliases=["protocolonuevomes"])
+    async def avisarclubessugerencias(self, ctx):
+        # Si no es admin, no hacer nada
+        if ctx.author.id not in admin_users:
+            return
+
+        locale.setlocale(locale.LC_ALL, 'es_ES.UTF-8')
+
+        next_month = datetime.now() + relativedelta(months=1)
+        next_month_str = next_month.strftime("%B").capitalize()
+
+        next_year_str = next_month.strftime("%Y")
+
+        timestamp = datetime.now() + relativedelta(days=3)
+        timestamp = timestamp.replace(hour=23, minute=59, second=0)
+
+        timestamp_str = f"<t:{int(timestamp.timestamp())}:f>"
+
+        rol_novelas = "1167607765590605905"
+        rol_manga = "1167607879667298354"
+        rol_anime = "1167607983795085395"
+        rol_vn = "1167608243254722580"
+        rol_pelis = "1165379985171816478"
+
+        club_novelas = await self.bot.fetch_channel(1142202264208019530)
+        club_manga_anime = await self.bot.fetch_channel(756846117567594516)
+        club_vn = await self.bot.fetch_channel(1142399071236132944)
+        club_pelis = await self.bot.fetch_channel(1165379765046345728)
+
+        # NOVELAS
+        msg = await club_novelas.send(f"Se abre el plazo para proponer novelas para el mes de {next_month_str}. El plazo terminará el {timestamp_str}. Podéis escribir vuestras propuestas en el hilo creado a partir de este mensaje. <@&{rol_novelas}>", silent=True)
+
+        await msg.create_thread(name=f"Propuestas novelas {next_month_str} {next_year_str}")
+
+        # MANGA
+        msg = await club_manga_anime.send(f"Se abre el plazo para proponer mangas para el mes de {next_month_str}. El plazo terminará el {timestamp_str}. Podéis escribir vuestras propuestas en el hilo creado a partir de este mensaje. <@&{rol_manga}>", silent=True)
+
+        await msg.create_thread(name=f"Propuestas manga {next_month_str} {next_year_str}")
+
+        # ANIME
+        msg = await club_manga_anime.send(f"Se abre el plazo para proponer animes para el mes de {next_month_str}. El plazo terminará el {timestamp_str}. Podéis escribir vuestras propuestas en el hilo creado a partir de este mensaje. <@&{rol_anime}>", silent=True)
+
+        await msg.create_thread(name=f"Propuestas anime {next_month_str} {next_year_str}")
+
+        # VN
+        msg = await club_vn.send(f"Se abre el plazo para proponer VNs para el mes de {next_month_str}. El plazo terminará el {timestamp_str}. Podéis escribir vuestras propuestas en el hilo creado a partir de este mensaje. <@&{rol_vn}>", silent=True)
+
+        await msg.create_thread(name=f"Propuestas VN {next_month_str} {next_year_str}")
+
+        # PELIS
+        msg = await club_pelis.send(f"Se abre el plazo para proponer live actions para el mes de {next_month_str}. El plazo terminará el {timestamp_str}. Podéis escribir vuestras propuestas en el hilo creado a partir de este mensaje. <@&{rol_pelis}>", silent=True)
+
+        await msg.create_thread(name=f"Propuestas live actions {next_month_str} {next_year_str}")
 
     @commands.command(aliases=["halloffame", "salondelafama", "salonfama", "mvp", "hallofame"])
     async def mvpprefix(self, ctx, argument=""):
