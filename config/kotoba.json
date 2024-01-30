@@ -4,7 +4,7 @@
         796084920790679612,
         751076716168085589
     ],
-    "announcement_channel": 654363835867725859,
+    "announcement_channel": 860091353365872670,
     "quiz_ranks": [
         654352144664887297,
         892868169729986600,
@@ -15,6 +15,13 @@
         1164576111716478996,
         1164575116995342438,
         1169355627764658356
+    ],
+    "special_quiz_ranks": [
+        1202019474371248168,
+        1202029123061415977,
+        1202032130226397196,
+        1202027790799474728,
+        1202030979103850496
     ],
     "levelup_messages": {
         "654352144664887297": "Lucha por el N5:\n`k!quiz n5 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
@@ -27,6 +34,13 @@
         "1164575116995342438": "Máximo nivel alcanzado, no hay nada más que pueda enseñarte. Pero si no aprecias tu tiempo puedes hacer el test definitivo.\n`k!quiz ajrfreq35k(5%)+ajrfreq40k(5%)+ajrfreq50k(10%)+ajrfreq60k(10%)+ajrfreq70k(20%)+ajrfreq80k(25%)+ajrfreq90k(25%) 50 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
         "1169355627764658356": "Por favor, sal que te dé el aire"
     },
+    "special_levelup_messages": {
+        "1202019474371248168": "Medalla de Kanjis\n`k!quiz strokes_kanken(440-end) 50 hardcore nd atl=16 mmq=1 dauq=1`",
+        "1202029123061415977": "Medalla de Números\n`k!quiz numbers 30 hardcore nd atl=16 mmq=1 dauq=1`",
+        "1202032130226397196": "Medalla de Pitch Accent\n`k!quiz pitch(3000-end) 50 hardcore nd atl=16 mmq=1 dauq=1`",
+        "1202027790799474728": "Medalla de Myojis\n`k!quiz myouji 25 hardcore nd atl=16 mmq=1 dauq=1 font=11 size=100 effect=antiocr`",
+        "1202030979103850496": "Medalla de Yojijukugos\n`k!quiz yojijukugo 20 hardcore nd atl=16 mmq=1 dauq=1 font=11 size=100 effect=antiocr`"
+    },
     "kotoba_tests": {
         "JLPT N5 Reading Quiz": [
             25,
@@ -35,7 +49,11 @@
             "any",
             892868169729986600,
             5,
-            "l JLPT N5"
+            "l JLPT N5",
+            true,
+            null,
+            null,
+            null
         ],
         "JLPT N4 Reading Quiz": [
             25,
@@ -44,7 +62,11 @@
             "any",
             892868325724524594,
             5,
-            "l JLPT N4"
+            "l JLPT N4",
+            true,
+            null,
+            null,
+            null
         ],
         "JLPT N3 Reading Quiz": [
             25,
@@ -53,7 +75,11 @@
             "any",
             892868371396296724,
             5,
-            "l JLPT N3"
+            "l JLPT N3",
+            true,
+            null,
+            null,
+            null
         ],
         "JLPT N2 Reading Quiz": [
             25,
@@ -62,7 +88,11 @@
             "any",
             892868404132843560,
             5,
-            "l JLPT N2"
+            "l JLPT N2",
+            true,
+            null,
+            null,
+            null
         ],
         "JLPT N1 Reading Quiz": [
             25,
@@ -71,7 +101,11 @@
             "any",
             892868429877485598,
             5,
-            "l JLPT N1"
+            "l JLPT N1",
+            true,
+            null,
+            null,
+            null
         ],
         "AJR Frecuencia de 10k a 15k(25%) AJR Frecuencia de 15k a 20k(75%)": [
             30,
@@ -80,7 +114,11 @@
             "any",
             1164576111716478996,
             5,
-            " las 20k palabras mas frecuentes. Se une por ello al club de los <@&1164576111716478996>"
+            " las 20k palabras mas frecuentes. Se une por ello al club de los <@&1164576111716478996>",
+            true,
+            null,
+            null,
+            null
         ],
         "AJR Frecuencia de 20k a 25k(25%) AJR Frecuencia de 25k a 30k(75%)": [
             30,
@@ -89,7 +127,11 @@
             "any",
             1164575116995342438,
             5,
-            " las 30k palabras mas frecuentes. Se une por ello al club de los <@&1164575116995342438>"
+            " las 30k palabras mas frecuentes. Se une por ello al club de los <@&1164575116995342438>",
+            true,
+            null,
+            null,
+            null
         ],
         "AJR Frecuencia de 30k a 35k(5%) AJR Frecuencia de 35k a 40k(5%) AJR Frecuencia de 40k a 50k(10%) AJR Frecuencia de 50k a 60k(10%) AJR Frecuencia de 60k a 70k(20%) AJR Frecuencia de 70k a 80k(25%) AJR Frecuencia de 80k a 90k(25%)": [
             50,
@@ -98,7 +140,76 @@
             "any",
             1169355627764658356,
             5,
-            " las 90k palabras mas frecuentes. この人を<@&1169355627764658356>と呼ぶしかない。"
+            " las 90k palabras mas frecuentes. この人を<@&1169355627764658356>と呼ぶしかない。",
+            true,
+            null,
+            null,
+            null
+        ],
+        "漢字検定 Stroke Order Quiz": [
+            50,
+            16001,
+            9999,
+            "any",
+            1202019474371248168,
+            1,
+            " dominio de kanjis. Consigue por ello la **medalla de los 漢字** y se le concede el rol de <@&1202019474371248168>",
+            false,
+            440,
+            null,
+            "kanjis.png"
+        ],
+        "Japanese Numbers Quiz": [
+            30,
+            16001,
+            9999,
+            "any",
+            1202029123061415977,
+            30,
+            " dominio de los números japoneses. Consigue por ello la **medalla de los 数字** y se le concede el rol de <@&1202029123061415977>",
+            false,
+            null,
+            null,
+            "numbers.png"
+        ],
+        "Japanese Pitch Accent": [
+            50,
+            16001,
+            9999,
+            "any",
+            1202032130226397196,
+            30,
+            " dominio del pitch accent. Consigue por ello la **medalla de del pitch accent** y se le concede el rol de <@&1202032130226397196>",
+            false,
+            3000,
+            null,
+            "pitch.png"
+        ],
+        "Myouji Reading Quiz": [
+            25,
+            16001,
+            100,
+            "any",
+            1202027790799474728,
+            1,
+            " dominio de apellidos japoneses. Consigue por ello la **medalla de los 苗字** y se le concede el rol de <@&1202027790799474728>",
+            true,
+            null,
+            null,
+            "names.png"
+        ],
+        "Yojijukugo Reading Quiz": [
+            20,
+            16001,
+            100,
+            "any",
+            1202030979103850496,
+            1,
+            " dominio de los yojis. Consigue por ello la **medalla de los 四字熟語** y se le concede el rol de <@&1202030979103850496>",
+            true,
+            null,
+            null,
+            "yojis.png"
         ]
     }
 }

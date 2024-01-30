@@ -19,7 +19,11 @@ with open("config/kotoba.json", encoding="utf8") as json_file:
     levelup_messages = kotoba_config["levelup_messages"]
     levelup_messages = {int(key): value for key,
                         value in levelup_messages.items()}
+    extra_levelup_messages = kotoba_config["special_levelup_messages"]
+    extra_levelup_messages = {int(key): value for key,
+                              value in extra_levelup_messages.items()}
     quiz_ranks = kotoba_config["quiz_ranks"]
+    special_ranks = kotoba_config["special_quiz_ranks"]
     announcement_channel = kotoba_config["announcement_channel"]
 # ====================================================
 
@@ -96,20 +100,27 @@ class Kotoba(commands.Cog):
                                     except KeyError:
                                         pass
 
+                                    print(quizname)
+
                                     try:
                                         requirements = kotoba_tests[quizname.strip(
                                         )]
-                                        reqscorelimit, reqanswertime, reqfontsize, reqfont, newrankid, reqfailed, shortname = requirements
+                                        reqscorelimit, reqanswertime, reqfontsize, reqfont, newrankid, reqfailed, shortname, reqAntiOcr, reqStartIndex, reqEndIndex, image_name = requirements
                                     except KeyError:
                                         print("Ese no es un test del Noken")
                                         return
 
-                                    if effect != "antiocr":
+                                    if reqAntiOcr and effect != "antiocr":
                                         print(message.channel,
                                               "Ajustes de color erróneos. Revisa que el comando coincida con el indicado por .levelup")
                                         return
 
-                                    if startindex != 0 or endindex != 0 or mc or shuffle is False or isloaded:
+                                    if reqStartIndex == None and reqEndIndex == None:
+                                        if startindex != 0 or endindex != 0 or mc or shuffle is False or isloaded:
+                                            print(message.channel,
+                                                  "Ajustes no permitidos detectados. Revisa que el comando coincida con el indicado por .levelup")
+                                            return
+                                    elif (reqStartIndex != None and reqStartIndex != startindex) or (reqEndIndex != None and reqEndIndex != endindex):
                                         print(message.channel,
                                               "Ajustes no permitidos detectados. Revisa que el comando coincida con el indicado por .levelup")
                                         return
@@ -172,6 +183,23 @@ class Kotoba(commands.Cog):
                                         if role.id in quiz_ranks:
                                             currentroleid = role.id
 
+                                    # Si hay imagen, enviarla.
+                                    if image_name != None:
+                                        # Las imágenes están en la carpeta local medals
+                                        image = discord.File(
+                                            f"medals/{image_name}")
+
+                                    # Si es un rol especial concederlo si no lo tiene.
+                                    if newrankid in special_ranks:
+                                        newrole = self.myguild.get_role(
+                                            newrankid)
+                                        if newrole not in quizwinner.roles:
+                                            await quizwinner.add_roles(newrole)
+                                            announcementchannel = self.bot.get_channel(
+                                                announcement_channel)
+                                            await announcementchannel.send(f'<@!{mainuserid}> ha aprobado el examen de{shortname}!', file=image if image_name else None)
+                                        return
+
                                     # Si el rol a conseguir está 1 por encima del rol actual, dar el rol.
                                     if quiz_ranks.index(currentroleid)+1 == quiz_ranks.index(newrankid):
                                         newrole = self.myguild.get_role(
@@ -186,7 +214,7 @@ class Kotoba(commands.Cog):
                                         announcementchannel = self.bot.get_channel(
                                             announcement_channel)
                                         await announcementchannel.send(f'<@!{mainuserid}> ha aprobado el examen de{shortname}!\n'
-                                                                       f'Escribe `.levelup` en <#796084920790679612> para ver los requisitos del siguiente nivel.')
+                                                                       f'Escribe `.levelup` en <#796084920790679612> para ver los requisitos del siguiente nivel.', file=image if image_name else None)
                                     # Si ya tiene el rol, no hacer nada
                                     elif quiz_ranks.index(currentroleid) == quiz_ranks.index(newrankid):
                                         return
@@ -231,13 +259,23 @@ class Kotoba(commands.Cog):
     async def levelupall(self, ctx):
         """Mostrar todos los comandos para subir de nivel."""
         message_list = []
+
+        message = "# **Niveles normales:**\n"
+
         for rankid in levelup_messages:
             levelupmesssage = levelup_messages[rankid]
-            message_list.append(levelupmesssage)
+            message_list.append("- "+levelupmesssage)
 
         # Delete final level message.
         del message_list[-1]
-        message = "\n".join(message_list)
+        message += "\n".join(message_list)
+
+        message += "\n\n# **Medallas:**"
+
+        # Add extra levels
+        for rankid in extra_levelup_messages:
+            levelupmesssage = extra_levelup_messages[rankid]
+            message += "\n- " + levelupmesssage
 
         await send_response(ctx, message, ephemeral=True)
 
