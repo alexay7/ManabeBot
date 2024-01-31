@@ -2,7 +2,10 @@ import json
 import re
 import aiohttp
 import discord
+import os
 from discord.ext import commands
+from pymongo import MongoClient, errors
+from bson.objectid import ObjectId
 
 from helpers.general import send_error_message, send_response
 
@@ -14,6 +17,7 @@ with open("config/general.json") as json_file:
 with open("config/kotoba.json", encoding="utf8") as json_file:
     kotoba_config = json.load(json_file)
     kotoba_id = kotoba_config["kotoba_bot"]
+    evil_kotoba_id = kotoba_config["evil_kotoba_bot"]
     kotoba_tests = kotoba_config["kotoba_tests"]
     kotoba_channels = kotoba_config["kotoba_channels"]
     levelup_messages = kotoba_config["levelup_messages"]
@@ -31,6 +35,15 @@ with open("config/kotoba.json", encoding="utf8") as json_file:
 class Kotoba(commands.Cog):
     def __init__(self, bot: discord.Bot):
         self.bot = bot
+        try:
+            client = MongoClient(os.getenv("MONGOURL"),
+                                 serverSelectionTimeoutMS=10000)
+            client.server_info()
+            self.db = client.kotoba
+            print("Conectado con éxito con mongodb [logs]")
+        except errors.ServerSelectionTimeoutError:
+            print("Ha ocurrido un error intentando conectar con la base de datos")
+            exit(1)
 
     async def getjson(self, url):
         async with self.aiosession.get(url) as resp:
@@ -44,7 +57,7 @@ class Kotoba(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if message.author.id == kotoba_id:
+        if message.author.id == kotoba_id or message.author.id == evil_kotoba_id:
             kotobaembeds = message.embeds
             try:
                 if kotobaembeds:
@@ -55,10 +68,30 @@ class Kotoba(commands.Cog):
                                 if "[View a report for this game]" in field.value:
                                     quizid = re.search(
                                         r'game_reports/([^)]*)\)', field.value).group(1)
-                                    jsonurl = f"https://kotobaweb.com/api/game_reports/{quizid}"
+                                    if message.author.id == kotoba_id:
+                                        jsonurl = f"https://kotobaweb.com/api/game_reports/{quizid}"
 
-                                    # kotobadict = json.loads(requests.get(jsonurl).text)
-                                    kotobadict = await self.getjson(jsonurl)
+                                        # kotobadict = json.loads(requests.get(jsonurl).text)
+                                        kotobadict = await self.getjson(jsonurl)
+                                    else:
+                                        # Obtain data from mongodb directly
+                                        reports_collection = self.db.gamereports
+                                        # Find report by Object Id
+                                        kotobadicts = reports_collection.aggregate([
+                                            {
+                                                '$match': {
+                                                    '_id': ObjectId(quizid)
+                                                }
+                                            }, {
+                                                '$lookup': {
+                                                    'from': 'users',
+                                                    'localField': 'participants',
+                                                    'foreignField': '_id',
+                                                    'as': 'participants'
+                                                }
+                                            }
+                                        ])
+                                    kotobadict = list(kotobadicts)[0]
                                     usercount = len(kotobadict["participants"])
                                     questioncount = len(
                                         kotobadict["questions"])
@@ -99,8 +132,6 @@ class Kotoba(commands.Cog):
 
                                     except KeyError:
                                         pass
-
-                                    print(quizname)
 
                                     try:
                                         requirements = kotoba_tests[quizname.strip(
