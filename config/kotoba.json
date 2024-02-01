@@ -38,7 +38,7 @@
     "special_levelup_messages": {
         "1202019474371248168": "Medalla de Kanjis\n`k!quiz strokes_kanken(2135-end) 50 hardcore nd atl=16 mmq=1 dauq=1`",
         "1202029123061415977": "Medalla de Números\n`k!quiz numbers 30 hardcore nd atl=16 mmq=1 dauq=1`",
-        "1202032130226397196": "Medalla de Pitch Accent\n`ek!q pitchajr(3000-end) 50 hardcore nd atl=16 mmq=1 dauq=1`",
+        "1202032130226397196": "Medalla de Pitch Accent\n`ek!q pitchajr 50 hardcore nd atl=16 mmq=1 dauq=1`",
         "1202027790799474728": "Medalla de Myoujis\n`k!quiz myouji 25 hardcore nd atl=16 mmq=1 dauq=1 font=11 size=100 effect=antiocr`",
         "1202030979103850496": "Medalla de Yojijukugos\n`k!quiz yojijukugo 20 hardcore nd atl=16 mmq=1 dauq=1 font=11 size=100 effect=antiocr`"
     },
@@ -182,7 +182,7 @@
             30,
             " dominio del pitch accent. Consigue por ello la **medalla de del pitch accent** y se le concede el rol de <@&1202032130226397196>",
             false,
-            3000,
+            null,
             null,
             "pitch.png"
         ],
