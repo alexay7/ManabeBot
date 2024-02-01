@@ -91,7 +91,7 @@ class Kotoba(commands.Cog):
                                                 }
                                             }
                                         ])
-                                    kotobadict = list(kotobadicts)[0]
+                                        kotobadict = list(kotobadicts)[0]
                                     usercount = len(kotobadict["participants"])
                                     questioncount = len(
                                         kotobadict["questions"])
