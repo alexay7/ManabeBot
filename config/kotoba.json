@@ -5,7 +5,7 @@
         796084920790679612,
         751076716168085589
     ],
-    "announcement_channel": 654363835867725859,
+    "announcement_channel": 860091353365872670,
     "quiz_ranks": [
         654352144664887297,
         892868169729986600,
@@ -40,7 +40,7 @@
         "1202029123061415977": "Medalla de Números\n`k!quiz numbers 30 hardcore nd atl=16 mmq=1 dauq=1`",
         "1202032130226397196": "Medalla de Pitch Accent\n`ek!q pitchajr 50 hardcore nd atl=16 mmq=1 dauq=1`",
         "1202027790799474728": "Medalla de Myoujis\n`k!quiz myouji 25 hardcore nd atl=16 mmq=1 dauq=1 font=11 size=100 effect=antiocr`",
-        "1202030979103850496": "Medalla de Yojijukugos\n`k!quiz yojijukugo 20 hardcore nd atl=16 mmq=1 dauq=1 font=11 size=100 effect=antiocr`"
+        "1202030979103850496": "Medalla de Yojijukugos\n`k!quiz ajryojis 20 hardcore nd atl=16 mmq=1 dauq=1 font=11 size=100 effect=antiocr`"
     },
     "kotoba_tests": {
         "JLPT N5 Reading Quiz": [
@@ -199,7 +199,7 @@
             null,
             "names.png"
         ],
-        "Yojijukugo Reading Quiz": [
+        "Yojis Sorted by frequency": [
             20,
             16001,
             100,
