@@ -5,7 +5,7 @@
         796084920790679612,
         751076716168085589
     ],
-    "announcement_channel": 654363835867725859,
+    "announcement_channel": 860091353365872670,
     "quiz_ranks": [
         654352144664887297,
         892868169729986600,
@@ -22,7 +22,8 @@
         1202029123061415977,
         1202032130226397196,
         1202027790799474728,
-        1202030979103850496
+        1202030979103850496,
+        1204531063741747250
     ],
     "levelup_messages": {
         "654352144664887297": "Lucha por el N5:\n`k!quiz n5 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
@@ -40,7 +41,8 @@
         "1202029123061415977": "Medalla de Números\n`k!quiz numbers 30 hardcore nd atl=16 mmq=1 dauq=1`",
         "1202032130226397196": "Medalla de Pitch Accent\n`ek!q pitchajr 50 hardcore nd atl=16 mmq=1 dauq=1`",
         "1202027790799474728": "Medalla de Myoujis\n`k!quiz myouji 25 hardcore nd atl=16 mmq=1 dauq=1 font=11 size=100 effect=antiocr`",
-        "1202030979103850496": "Medalla de Yojijukugos\n`k!quiz ajryojis 20 hardcore nd atl=16 mmq=1 dauq=1 font=11 size=100 effect=antiocr`"
+        "1202030979103850496": "Medalla de Yojijukugos\n`k!quiz ajryojis 20 hardcore nd atl=16 mmq=1 dauq=1 font=11 size=100 effect=antiocr`",
+        "1204531063741747250": "Medalla del lector\nk!quiz ranobe 30 hardcore nd atl=16 mmq=1 dauq=1 font=12 effect=antiocr"
     },
     "kotoba_tests": {
         "JLPT N5 Reading Quiz": [
@@ -211,6 +213,19 @@
             null,
             null,
             "yojis.png"
+        ],
+        "Light Novel Typing Quiz": [
+            30,
+            16001,
+            100,
+            "CP Revenge",
+            1204531063741747250,
+            1,
+            " dominio de la lectura. Consigue por ello la **medalla del 書痴** y se le concede el rol de <@&1204531063741747250>",
+            true,
+            null,
+            null,
+            "read.png"
         ]
     }
 }
