@@ -1,8 +1,10 @@
 import random
 import discord
-from discord.ext import commands
 
-from helpers.anilist import MEDIA, get_anilist_id, get_anilist_planning, get_media_info, get_media_info_by_id
+from discord.ext import commands
+from termcolor import cprint, COLORS
+
+from helpers.anilist import MEDIA, get_anilist_id, get_anilist_planning, get_media_info
 from helpers.general import send_error_message, send_response, set_processing
 
 
@@ -12,7 +14,8 @@ class Anilist(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Cog de anilist cargado con éxito")
+        cprint("- [✅] Cog de anilist cargado con éxito",
+               random.choice(list(COLORS.keys())))
 
     @commands.command(aliases=["animeomanga", "animevsmanga", "animeormanga"])
     async def animeormangaprefix(self, ctx, title=""):
@@ -24,58 +27,85 @@ class Anilist(commands.Cog):
     async def animeormanga(self, ctx,
                            title: discord.Option(str, "Título de la franquicia a analizar", required=True)):
         await set_processing(ctx)
-        manga = await get_media_info(title, "MANGA")
-        anime = await get_media_info(title, "TV")
+        results = await get_media_info(title)
 
-        if "errors" in anime:
+        main = results["data"]["Media"]
+
+        relations = results["data"]["Media"]["relations"]["edges"]
+
+        animes = []
+
+        mangas = [main]
+
+        season = 99999
+
+        for relation in relations:
+            if relation["node"]["type"] == "ANIME" and relation["relationType"] in ["SEQUEL", "PREQUEL", "PARENT", "ADAPTATION", "ALTERNATIVE", "SOURCE"] and relation["node"]["format"] in ["TV", "MOVIE", "ONA"]:
+                animes.append(relation["node"])
+
+                if relation["node"]["seasonInt"] and relation["node"]["seasonInt"] < season:
+                    main["title"] = relation["node"]["title"]
+                    season = relation["node"]["seasonInt"]
+            elif relation["node"]["type"] == "MANGA" and relation["relationType"] in ["SEQUEL", "PREQUEL", "PARENT"] and relation["node"]["format"] == "MANGA":
+                mangas.append(relation["node"])
+
+        if len(animes) == 0:
             return await send_error_message(ctx, "No existe anime para esa serie.")
 
-        if "errors" in manga:
+        if len(mangas) == 0:
             return await send_error_message(ctx, "No existe manga para esa serie.")
 
-        if anime["data"]["Media"]["title"]["native"] != manga["data"]["Media"]["title"]["native"]:
-            manga = await get_media_info(anime["data"]["Media"]["title"]["native"], "MANGA")
-            if "errors" in manga:
-                return await send_error_message(ctx, "No se han podido encontrar coincidencias, escriba el título de forma más exacta.")
+        mean_anime_score = 0
+        mean_manga_score = 0
 
-        if "errors" in manga:
-            return await send_error_message(ctx, "No existe manga para esa serie.")
+        for anime in animes:
+            if anime["meanScore"]:
+                mean_anime_score += anime["meanScore"]
+            else:
+                animes.remove(anime)
 
-        if not anime["data"]["Media"]["meanScore"]:
+        for manga in mangas:
+            if manga["meanScore"]:
+                mean_manga_score += manga["meanScore"]
+            else:
+                mangas.remove(manga)
+
+        mean_anime_score = mean_anime_score / len(animes)
+        mean_manga_score = mean_manga_score / len(mangas)
+
+        if mean_anime_score == 0:
             return await send_error_message(ctx, "Ese anime todavía no tiene puntuación.")
 
-        if not manga["data"]["Media"]["meanScore"]:
+        if mean_manga_score == 0:
             return await send_error_message(ctx, "Ese manga todavía no tiene puntuación.")
 
-        if anime["data"]["Media"]["meanScore"] > manga["data"]["Media"]["meanScore"]:
-            best = anime
+        if mean_anime_score > mean_manga_score:
             best_type = "anime"
             worst_type = "manga"
-        elif anime["data"]["Media"]["meanScore"] < manga["data"]["Media"]["meanScore"]:
-            best = manga
+        elif mean_anime_score < mean_manga_score:
             best_type = "manga"
             worst_type = "anime"
         else:
             embed = discord.Embed(
-                title=f"Tanto el anime como el manga de {anime['data']['Media']['title']['native']} tienen la misma puntuación")
+                title=f"Tanto el anime como el manga de {main['title']['native']} tienen la misma puntuación")
             embed.set_thumbnail(
-                url=anime["data"]["Media"]["coverImage"]["extraLarge"])
+                url=main["coverImage"]["extraLarge"])
             embed.add_field(name="Puntuación",
-                            value=manga["data"]["Media"]["meanScore"])
+                            value=main["meanScore"])
             embed.add_field(
-                name="Link", value=anime["data"]["Media"]["siteUrl"], inline=False)
+                name="Link", value=main["siteUrl"], inline=False)
             return await send_response(ctx, embed=embed)
 
         embed = discord.Embed(
-            title=f"El {best_type} de {best['data']['Media']['title']['native']} es mejor que el {worst_type}")
+            title=f"El {best_type} de {main['title']['native']} es mejor que el {worst_type}")
         embed.set_thumbnail(
-            url=best["data"]["Media"]["coverImage"]["extraLarge"])
+            url=main["coverImage"]["extraLarge"])
         embed.add_field(name="Puntuación del manga",
-                        value=manga["data"]["Media"]["meanScore"])
+                        value=str(round(mean_manga_score, 2)))
         embed.add_field(name="Puntuación del anime",
-                        value=anime["data"]["Media"]["meanScore"])
+                        value=str(round(mean_anime_score, 2)))
         embed.add_field(
-            name="Link", value=best["data"]["Media"]["siteUrl"], inline=False)
+            name="Link", value=main["siteUrl"], inline=False)
 
         return await send_response(ctx, embed=embed)
 
@@ -83,20 +113,23 @@ class Anilist(commands.Cog):
     async def randommedia(self, ctx,
                           medio: discord.Option(str, "Elegir entre anime o manga aleatorios", choices=MEDIA, required=True),
                           username: discord.Option(str, "Nombre de usuario de anilist", required=True),
-                          status:discord.Option(str,"Estado de visualización (visto/no visto)",choices=["En proceso","Planeando","Completado","Dropeado","Pausado"],required=True),
+                          status: discord.Option(str, "Estado de visualización (visto/no visto)", choices=["En proceso", "Planeando", "Completado", "Dropeado", "Pausado"], required=True),
                           minvols: discord.Option(int, "Número mínimo de volúmenes (en caso de manga)", min_value=1, required=False, default=0),
                           maxvols: discord.Option(int, "Número máximo de volúmenes (en caso de manga)", min_value=1, required=False, default=10000),
-                          mediumstatus:discord.Option(str,"Estado de publicación",choices=["Terminado","En proceso"],required=False)
+                          mediumstatus: discord.Option(str, "Estado de publicación", choices=[
+                                                       "Terminado", "En proceso"], required=False)
                           ):
         """Elige un manga o anime aleatorio de tu lista de anilist según los parámetros indicados"""
-        formatted_status=""
+        formatted_status = ""
 
         if mediumstatus:
-            formatted_status=mediumstatus.replace("Terminado","FINISHED").replace("En proceso","RELEASING")
-            if formatted_status not in ["FINISHED","RELEASING"]:
-                formatted_status=""
+            formatted_status = mediumstatus.replace(
+                "Terminado", "FINISHED").replace("En proceso", "RELEASING")
+            if formatted_status not in ["FINISHED", "RELEASING"]:
+                formatted_status = ""
 
-        status = status.replace("En proceso","CURRRENT").replace("Planeando","PLANNING").replace("Completado","COMPLETED").replace("Dropeado","DROPPED").replace("Pausado","PAUSED")
+        status = status.replace("En proceso", "CURRRENT").replace("Planeando", "PLANNING").replace(
+            "Completado", "COMPLETED").replace("Dropeado", "DROPPED").replace("Pausado", "PAUSED")
 
         user_id = await get_anilist_id(username)
         if user_id == -1:
@@ -107,7 +140,7 @@ class Anilist(commands.Cog):
         await set_processing(ctx)
         result = []
         while nextPage:
-            planning = await get_anilist_planning(page, user_id, medio.upper(),status)
+            planning = await get_anilist_planning(page, user_id, medio.upper(), status)
             nextPage = planning["data"]["Page"]["pageInfo"]["hasNextPage"]
             for media in planning["data"]["Page"]["mediaList"]:
                 element = {
@@ -120,8 +153,8 @@ class Anilist(commands.Cog):
                     "episodes": media["media"]["episodes"],
                     "url": media["media"]["siteUrl"]
                 }
-                if (element["volumes"] and (element["volumes"] <= int(maxvols) and element["volumes"] >= int(minvols))) or medio == "ANIME" or element["status"]=="RELEASING":
-                    if((formatted_status!="" and element["status"]==formatted_status) or formatted_status==""):
+                if (element["volumes"] and (element["volumes"] <= int(maxvols) and element["volumes"] >= int(minvols))) or medio == "ANIME" or element["status"] == "RELEASING":
+                    if ((formatted_status != "" and element["status"] == formatted_status) or formatted_status == ""):
                         result.append(element)
 
             page += 1
@@ -140,7 +173,7 @@ class Anilist(commands.Cog):
             name="Estado", value=chosen["status"], inline=False)
         if medio.upper() == "MANGA":
             volumes = chosen["volumes"]
-            if volumes is not 0:
+            if volumes != 0:
                 embed.add_field(
                     name="Volúmenes", value=volumes, inline=False)
         else:

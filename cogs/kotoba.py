@@ -2,12 +2,14 @@ import json
 import re
 import aiohttp
 import discord
-import os
+import random
+
 from discord.ext import commands
-from pymongo import MongoClient, errors
 from bson.objectid import ObjectId
+from termcolor import cprint, COLORS
 
 from helpers.general import send_error_message, send_response
+from helpers.mongo import kotoba_db
 
 # ================ GENERAL VARIABLES ================
 with open("config/general.json") as json_file:
@@ -35,15 +37,6 @@ with open("config/kotoba.json", encoding="utf8") as json_file:
 class Kotoba(commands.Cog):
     def __init__(self, bot: discord.Bot):
         self.bot = bot
-        try:
-            client = MongoClient(os.getenv("MONGOURL"),
-                                 serverSelectionTimeoutMS=10000)
-            client.server_info()
-            self.db = client.kotoba
-            print("Conectado con éxito con mongodb [logs]")
-        except errors.ServerSelectionTimeoutError:
-            print("Ha ocurrido un error intentando conectar con la base de datos")
-            exit(1)
 
     async def getjson(self, url):
         async with self.aiosession.get(url) as resp:
@@ -53,7 +46,8 @@ class Kotoba(commands.Cog):
     async def on_ready(self):
         self.myguild = self.bot.get_guild(main_guild)
         self.aiosession = aiohttp.ClientSession()
-        print("Cog de kotoba cargado con éxito")
+        cprint("- [✅] Cog de kotoba cargado con éxito",
+               random.choice(list(COLORS.keys())))
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -75,7 +69,7 @@ class Kotoba(commands.Cog):
                                         kotobadict = await self.getjson(jsonurl)
                                     else:
                                         # Obtain data from mongodb directly
-                                        reports_collection = self.db.gamereports
+                                        reports_collection = kotoba_db
                                         # Find report by Object Id
                                         kotobadicts = reports_collection.aggregate([
                                             {

@@ -1,13 +1,15 @@
 import discord
 import json
+import random
+
 from discord.utils import find
 from discord.ext import commands
 from discord.raw_models import RawReactionActionEvent
-from helpers.general import send_error_message, send_response
 from datetime import datetime
 from discord.message import Message
 from typing import List
 from discord.channel import DMChannel
+from termcolor import cprint, COLORS
 
 # ================ GENERAL VARIABLES ================
 with open("config/general.json") as json_file:
@@ -22,7 +24,8 @@ class Bookmark(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Cog de bookmarks cargado con éxito")
+        cprint("- [✅] Cog de bookmarks cargado con éxito",
+               random.choice(list(COLORS.keys())))
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: RawReactionActionEvent):

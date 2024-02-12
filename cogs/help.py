@@ -1,10 +1,12 @@
 import json
-from re import U
 import discord
-from discord.ext import commands
-from helpers.general import send_error_message
+import random
 
+from discord.ext import commands
+
+from helpers.general import send_error_message
 from helpers.help import CATEGORIES, COMMANDS
+from termcolor import cprint, COLORS
 
 # ================ GENERAL VARIABLES ================
 with open("config/help.json", encoding="utf8") as json_file:
@@ -18,7 +20,8 @@ class Help(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Cog de ayuda cargado con éxito")
+        cprint("- [✅] Cog de ayuda cargado con éxito",
+               random.choice(list(COLORS.keys())))
 
     @commands.command()
     async def help(self, ctx, command=""):

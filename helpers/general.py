@@ -1,3 +1,4 @@
+import asyncio
 import discord
 
 
@@ -177,3 +178,49 @@ async def get_clock_emoji(hour, minute):
             return "🕦"
         else:
             return "🕛"
+
+
+async def send_message_with_buttons(self, ctx, content):
+    pages = len(content)
+    cur_page = 1
+    message = await ctx.send(f"```\n{content[cur_page-1]}\nPág {cur_page} de {pages}\n```")
+    if pages > 1:
+        await message.add_reaction("◀️")
+        await message.add_reaction("▶️")
+        while True:
+            try:
+                reaction, user = await self.bot.wait_for("reaction_add", timeout=180)
+                if not user.bot:
+                    # waiting for a reaction to be added - times out after x seconds, 60 in this
+                    # example
+
+                    if str(reaction.emoji) == "▶️" and cur_page != pages:
+                        cur_page += 1
+                        await message.edit(content=f"```{content[cur_page-1]}\nPág {cur_page} de {pages}```")
+                        try:
+                            await message.remove_reaction(reaction, user)
+                        except discord.errors.Forbidden:
+                            await send_error_message(ctx, "‼️ Los mensajes con páginas no funcionan bien en DM!")
+
+                    elif str(reaction.emoji) == "◀️" and cur_page > 1:
+                        cur_page -= 1
+                        await message.edit(content=f"```{content[cur_page-1]}\nPág {cur_page} de {pages}```")
+                        try:
+                            await message.remove_reaction(reaction, user)
+                        except discord.errors.Forbidden:
+                            await send_error_message(self, ctx, "‼️ Los mensajes con páginas no funcionan bien en DM!")
+
+                    else:
+                        try:
+                            await message.remove_reaction(reaction, user)
+                        except discord.errors.Forbidden:
+                            await send_error_message(self, ctx, "‼️ Los mensajes con páginas no funcionan bien en DM!")
+                        # removes reactions if the user tries to go forward on the last page or
+                        # backwards on the first page
+            except asyncio.TimeoutError:
+                try:
+                    await message.delete()
+                except discord.errors.Forbidden:
+                    await send_error_message(self, ctx, "‼️ Los mensajes con páginas no funcionan bien en DM!")
+                break
+                # ending the loop if user doesn't react after x seconds

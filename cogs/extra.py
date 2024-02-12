@@ -1,24 +1,22 @@
-import re
-import asyncio
-from datetime import datetime, timezone
+
 import json
 import random
+import discord
+import requests
+import discord
+import requests
+
+from datetime import datetime
 from time import gmtime, strftime
 from dateutil.tz import gettz
-import discord
-from discord.ext import commands, tasks
-import requests
-from bs4 import BeautifulSoup
-from currency_converter import CurrencyConverter
 from discord.raw_models import RawReactionActionEvent
 from discord import Member, Guild
-from translate import Translator
 from time import gmtime, sleep
-
-from helpers.general import intToMonth, send_error_message, send_message_for_other, send_response, set_processing, get_clock_emoji
-import discord
 from discord.ext import commands
-import requests
+from discord.ext import commands, tasks
+from termcolor import cprint, COLORS
+
+from helpers.general import intToMonth, send_error_message, send_response, set_processing, get_clock_emoji
 
 # ================ GENERAL VARIABLES ================
 with open("config/general.json") as json_file:
@@ -37,7 +35,8 @@ class Extra(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Cog de cosas random cargado con éxito")
+        cprint("- [✅] Cog de cosas random cargado con éxito",
+               random.choice(list(COLORS.keys())))
         self.update_clock.start()
 
     @commands.Cog.listener()
@@ -90,6 +89,10 @@ class Extra(commands.Cog):
     @tasks.loop(minutes=10)
     async def update_clock(self):
         channel = self.bot.get_channel(1160718763965022258)
+
+        if not channel:
+            return
+
         now = datetime.now()
 
         emoji = await get_clock_emoji(now.hour, now.minute)
@@ -100,54 +103,21 @@ class Extra(commands.Cog):
     async def kalise(self, ctx):
         "Comprobar si el bot está online"
         photos = ["https://www.alimarket.es/media/images/2014/detalle_art/152964/32612_preview.jpg", "https://pbs.twimg.com/profile_images/446190654356324352/nFIIKVXx_400x400.jpeg",
-                  "https://s03.s3c.es/imag/_v0/225x250/d/4/e/kalise-iniesta.jpg", "https://static.abc.es/Media/201303/27/iniesta-kalise--644x362.jpg", "https://img.europapress.es/fotoweb/fotonoticia_20110407192259_1200.jpg"]
+                  "https://s03.s3c.es/imag/_v0/225x250/d/4/e/kalise-iniesta.jpg", "https://static.abc.es/Media/201303/27/iniesta-kalise--644x362.jpg", "https://img.europapress.es/fotoweb/fotonoticia_20110407192259_1200.jpg", "https://estaticos-cdn.prensaiberica.es/clip/69f0a4ff-9686-400f-85bd-bfdf4751102c_alta-libre-aspect-ratio_default_0.jpg", "https://i.vimeocdn.com/video/226816102-f50001ce1c20544e3ed9d17584b8a9cdec8d5a3e35c39f37a8dc8b3b249a5a79-d?f=webp", "https://i.ytimg.com/vi/iRe1GFRCwWg/maxresdefault.jpg"]
         await send_response(ctx, random.choice(photos))
 
     @commands.command(aliases=["kalise"])
     async def kaliseprefix(self, ctx):
         await self.kalise(ctx)
 
-    @commands.slash_command()
-    async def japonabierto(self, ctx):
-        "Informa sobre si las fronteras de japón están abiertas al turismo"
-
-        translator = Translator(to_lang="es", from_lang="en")
-        await set_processing(ctx)
-        url = "https://isjapanopen.com"
-
-        headers = {
-            'Access-Control-Allow-Origin': ' * ',
-            'Access-Control-Allow-Methods': 'GET',
-            'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Max-Age': '3600',
-            'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0'
-        }
-
-        # Make a GET request to fetch the raw HTML content
-        req = requests.get(url, headers)
-
-        # Parse the html content
-        soup = BeautifulSoup(req.content, 'html.parser')
-        answer = soup.find("h1").text
-        if answer == "Yes":
-            color = 0x00ff00
-        elif answer == "Yes*":
-            color = 0xff8800
-        else:
-            color = 0xff0000
-        embed = discord.Embed(
-            title=":flag_jp: ¿Está japón abierto a turistas? :flag_jp:", color=color)
-        embed.add_field(name="Respuesta",
-                        value=translator.translate(soup.find("h1").text), inline=False)
-        embed.add_field(
-            name="Condiciones", value=f"\n```{translator.translate(' '.join(soup.find('h3').text.split()))}```")
-        await send_response(ctx, embed=embed)
-
     @ commands.slash_command()
     async def japantime(self, ctx):
         "Muestra la hora actual y la de Japón."
         local = datetime.now(gettz('Spain'))
         local_japan = datetime.now(gettz('Japan'))
+        local_chile = datetime.now(gettz('Chile/Continental'))
+        local_venezuela = datetime.now(gettz('America/Caracas'))
+        local_mexico = datetime.now(gettz('America/Mexico_City'))
 
         localtime = strftime("%H:%M", gmtime(
             int(local.hour) * 3600 + int(local.minute) * 60))
@@ -156,23 +126,31 @@ class Extra(commands.Cog):
             int(local_japan.hour) * 3600 + int(local_japan.minute) * 60))
 
         await ctx.send(
-            f"Hora Local: {localtime} del {local.day} de {intToMonth(local.month)} de {local.year}\nHora Japonesa: {japantime} del {local_japan.day} de {intToMonth(local_japan.month)} de {local_japan.year}")
+            f"```matlab\n- \"Hora Japonesa 🇯🇵\": {japantime} del {local_japan.day} de {intToMonth(local_japan.month)} de {local_japan.year}\n- \"Hora Española 🇪🇸\": {localtime} del {local.day} de {intToMonth(local.month)} de {local.year}\n- \"Hora en Chile 🇨🇱\": {strftime('%H:%M', gmtime(int(local_chile.hour) * 3600 + int(local_chile.minute) * 60))} del {local_chile.day} de {intToMonth(local_chile.month)} de {local_chile.year}\n- \"Hora en Venezuela 🇻🇪\": {strftime('%H:%M', gmtime(int(local_venezuela.hour) * 3600 + int(local_venezuela.minute) * 60))} del {local_venezuela.day} de {intToMonth(local_venezuela.month)} de {local_venezuela.year}\n- \"Hora en México 🇲🇽\": {strftime('%H:%M', gmtime(int(local_mexico.hour) * 3600 + int(local_mexico.minute) * 60))} del {local_mexico.day} de {intToMonth(local_mexico.month)} de {local_mexico.year}```")
 
-    @ commands.command(aliases=['tiempojapon', 'horajapon', 'japonhora', 'japontiempo', 'japantime'])
+    @ commands.command(aliases=['tiempojapon', 'horajapon', 'japonhora', 'japontiempo', 'japantime', "hora", "horalocal", "time", "localtime"])
     async def japantimeprefix(self, ctx):
         await self.japantime(ctx)
-
-    @ commands.command(aliases=['canigotojapan', 'quieroirajapon', 'japonabierto'])
-    async def japonabiertoprefix(self, ctx):
-        await self.japonabierto(ctx)
 
     @ commands.slash_command()
     async def yenaeuro(self, ctx,
                        yenes: discord.Option(int, "Cantidad de yenes a convertir", required=True)):
         "Convierte yenes a euros"
         await set_processing(ctx)
-        c = CurrencyConverter()
-        result = round(c.convert(yenes, "JPY", "EUR"), 2)
+
+        # Contactar con https://economia.awesomeapi.com.br/last/EUR-JPY que devuelve en formato JSON
+        url = "https://economia.awesomeapi.com.br/last/EUR-JPY"
+        # Make a GET request to fetch the content
+        req = requests.get(url)
+        # Parse the json content
+        data = req.json()
+
+        # Obtener el valor de la moneda
+        value = float(data["EURJPY"]["bid"])
+
+        # Calcular el valor en euros
+        result = round(yenes / value, 2)
+
         await send_response(ctx, str(yenes) + "¥ equivalen a " + str(result) + "€")
 
     @ commands.command(aliases=['jpytoeur', 'yentoeuro', 'jpyaeur', "yenaeuro"])
@@ -186,8 +164,20 @@ class Extra(commands.Cog):
                        euros: discord.Option(int, "Cantidad de euros a convertir", required=True)):
         "Convierte euros a yenes"
         await set_processing(ctx)
-        c = CurrencyConverter()
-        result = round(c.convert(euros, "EUR", "JPY"))
+
+        # Contactar con https://economia.awesomeapi.com.br/last/EUR-JPY que devuelve en formato JSON
+        url = "https://economia.awesomeapi.com.br/last/EUR-JPY"
+        # Make a GET request to fetch the content
+        req = requests.get(url)
+        # Parse the json content
+        data = req.json()
+
+        # Obtener el valor de la moneda
+        value = float(data["EURJPY"]["bid"])
+
+        # Calcular el valor en euros
+        result = round(euros * value, 2)
+
         await send_response(ctx, str(euros) + "€ equivalen a " + str(result) + "¥")
 
     @ commands.command(aliases=['eurtojpy', 'eurotoyen', 'eurajpy', 'euroayen'])
@@ -198,7 +188,7 @@ class Extra(commands.Cog):
 
     @ commands.slash_command()
     @ commands.cooldown(1, 300, commands.BucketType.user)
-    async def aleatorio(self, ctx):
+    async def yoji(self, ctx):
         "Obtiene un yoji aleatorio de jisho.org (cooldown de 5 min)"
 
         page = random.randint(1, 100)
@@ -228,8 +218,8 @@ class Extra(commands.Cog):
         await send_response(ctx, embed=embed)
 
     @ commands.cooldown(1, 300, commands.BucketType.user)
-    @ commands.command(aliases=['randomyoji', 'yojialeatorio', 'palabraaleatoria', 'randomword', 'aleatorio', 'aleatoria'])
-    async def aleatorioprefix(self, ctx):
+    @ commands.command(aliases=["aleatorio", 'randomyoji', 'yojialeatorio', 'yoji', 'yojijukugo'])
+    async def yoji_(self, ctx):
         await self.aleatorio(ctx)
 
     # @commands.command()
@@ -306,14 +296,15 @@ class Extra(commands.Cog):
         else:
             await send_error_message(ctx, "Debes rellenar la forma gramatical a buscar o la clave del elemento!")
 
-    @commands.command()
-    async def anison(self, ctx, type: str = ""):
-        # Hacer la solicitud de GraphQL
-        if type == "":
-            type = random.choice(["OP", "ED", "OP"])
+    @commands.command(aliases=["grammar", "gramatica"])
+    async def grammar_(self, ctx, forma_gramatical: str = None):
+        await self.grammar(ctx, None, forma_gramatical)
 
-        if type != "" and type.upper() not in ["OP", "ED"]:
-            return await send_error_message(ctx, "Debes indicar si quieres un OP o un ED")
+    @commands.command()
+    async def anison(self, ctx):
+
+        # Get query form message
+        q = ctx.message.content.split(" ")[1:]
 
         url = "https://animethemes.moe/api/graphql"
         query = '''
@@ -321,7 +312,8 @@ class Extra(commands.Cog):
             searchTheme(
         args: {
             sortBy: "random"
-            filters: [{ key: "has", value: "animethemeentries" }, { key: "nsfw", value: "false" }, { key: "type", value: "'''+type+'''" }]
+            filters: [{ key: "has", value: "animethemeentries" }, { key: "nsfw", value: "false" }]
+            query: "'''+" ".join(q)+'''"
         }
     ) {
                 data {

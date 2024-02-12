@@ -84,7 +84,7 @@ async def get_anilist_logs(user_id, page, date):
         url, json={'query': query, 'variables': variables}).json()
 
 
-async def get_anilist_planning(page, user_id, media,status):
+async def get_anilist_planning(page, user_id, media, status):
     query = '''
     query($page:Int, $userId:Int,$media:MediaType,$status:MediaListStatus){
     Page(page:$page,perPage:50){
@@ -122,7 +122,7 @@ async def get_anilist_planning(page, user_id, media,status):
         'userId': user_id,
         'page': page,
         'media': media,
-        'status':status
+        'status': status
     }
 
     url = 'https://graphql.anilist.co'
@@ -161,28 +161,46 @@ async def get_media_info_by_id(id):
     return requests.post(url, json={'query': query, 'variables': variables})
 
 
-async def get_media_info(search, media):
+async def get_media_info(search):
     query = '''
-        query($query:String, $media:MediaFormat){
-        Media(search:$query,format:$media){
-        title {
-        romaji
-        english
-        native
-        userPreferred
-        }
-        meanScore
-        coverImage{
+        query($query:String){
+        Media(search:$query, sort: POPULARITY_DESC, type: MANGA){
+        id
+        coverImage {
             extraLarge
         }
+        title {
+            romaji
+            english
+            native
+            userPreferred
+        }
         siteUrl
+        meanScore
+        seasonInt
+        relations {
+            edges {
+                relationType(version: 2)
+                node {
+                    type
+                    meanScore
+                    title {
+                        romaji
+                        english
+                        native
+                        userPreferred
+                    }
+                    seasonInt
+                    format
+                }
+            }
+        }
     }
     }
     '''
 
     variables = {
-        'query': search,
-        'media': media
+        'query': search
     }
 
     url = 'https://graphql.anilist.co'

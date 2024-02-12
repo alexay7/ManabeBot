@@ -1,31 +1,22 @@
 import calendar
-from pymongo import collection
-import asyncio
 import csv
-from datetime import datetime, timedelta
-import discord
-from matplotlib.ticker import AutoLocator
-from matplotlib.ticker import MaxNLocator
-
-
-import matplotlib.pyplot as plt
-import numpy as np
-
-from helpers.general import intToWeekday, send_error_message
-import math
 import json
+import math
 
+from datetime import datetime, timedelta
+from pymongo import collection
+from helpers.mongo import logs_db
 
 MONTHS = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
           "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"]
 
-MEDIA_TYPES = {"LIBRO", "MANGA", "VN", "ANIME",
-               "LECTURA", "TIEMPOLECTURA", "OUTPUT", "AUDIO", "VIDEO"}
+MEDIA_TYPES = ["ANIME", "AUDIO", "LECTURA", "LIBRO",
+               "MANGA", "OUTPUT", "TIEMPOLECTURA", "VIDEO", "VN"]
 
 MEDIA_TYPES_ENGLISH = {"BOOK": "LIBRO", "READING": "LECTURA",
                        "READTIME": "TIEMPOLECTURA", "LISTENING": "AUDIO"}
 
-TIMESTAMP_TYPES = {"TOTAL", "MES", "SEMANA", "HOY"}
+TIMESTAMP_TYPES = ["TOTAL", "MES", "SEMANA", "HOY"]
 
 
 def get_media_element(num, media):
@@ -95,10 +86,20 @@ def get_ranking_title(timelapse, media):
     return f"{tiempo} {medio}"
 
 
-async def bonus_log(db, log_id, user_id):
-    logs: collection.Collection = db.logs
+async def bonus_log(log_id, user_id):
+    logs: collection.Collection = logs_db.logs
     old_log = logs.find_one(
-        {"userId": user_id, "id": int(log_id), "bonus": False})
+        {"userId": user_id, "id": int(log_id), '$or': [
+            {
+                'bonus': False
+            }, {
+                'bonus': {
+                    '$exists': False
+                }
+            }
+        ]})
+
+    print(old_log)
 
     if not old_log:
         return -1
@@ -109,8 +110,8 @@ async def bonus_log(db, log_id, user_id):
     return new_points
 
 
-async def unbonus_log(db, log_id, user_id):
-    logs: collection.Collection = db.logs
+async def unbonus_log(log_id, user_id):
+    logs: collection.Collection = logs_db.logs
     old_log = logs.find_one(
         {"userId": user_id, "id": int(log_id), "bonus": True})
 
@@ -123,9 +124,9 @@ async def unbonus_log(db, log_id, user_id):
     return new_points
 
 
-async def add_log(db, userid, log, username):
-    logs = db.logs
-    users = db.users
+async def add_log(userid, log, username):
+    logs = logs_db.logs
+    users = logs_db.users
     user = users.find_one({'userId': userid})
     log["id"] = user["lastlog"] + 1
 
@@ -141,8 +142,8 @@ async def add_log(db, userid, log, username):
     return log["id"]
 
 
-async def get_user_logs(db, userid, timelapse, media=None, year=None):
-    logs = db.logs
+async def get_user_logs(userid, timelapse, media=None, year=None):
+    logs = logs_db.logs
     if timelapse in MONTHS:
         year = year if year else datetime.now().year
         month = MONTHS.index(timelapse) + 1
@@ -232,8 +233,8 @@ async def get_user_logs(db, userid, timelapse, media=None, year=None):
     return ""
 
 
-async def get_total_immersion_of_month(db, timelapse):
-    logs = db.logs
+async def get_total_immersion_of_month(timelapse):
+    logs = logs_db.logs
     split_time = timelapse.split("/")
     month = int(split_time[1])
     year = int(split_time[0])
@@ -257,9 +258,9 @@ async def get_total_immersion_of_month(db, timelapse):
     return total
 
 
-async def get_total_parameter_of_media(db, media, userid):
+async def get_total_parameter_of_media(media, userid):
     # ALL LOGS OF A MEDIA TYPE FROM USER
-    logs = await get_user_logs(db, userid, "TOTAL")
+    logs = await get_user_logs(userid, "TOTAL")
     total_param = 0
     for log in logs:
         if log["medio"] == media:
@@ -267,16 +268,16 @@ async def get_total_parameter_of_media(db, media, userid):
     return total_param
 
 
-async def remove_log(db, userid, logid):
-    logs: collection.Collection = db.logs
+async def remove_log(userid, logid):
+    logs: collection.Collection = logs_db.logs
     found_log = logs.delete_one({"userId": userid, "id": int(logid)})
     if found_log.deleted_count > 0:
         return 1
     return 0
 
 
-async def get_all_logs_in_day(db, userid, day):
-    logs = db.logs
+async def get_all_logs_in_day(userid, day):
+    logs = logs_db.logs
     day_logs = logs.count_documents({
         'userId': userid,
         'timestamp': {'$gte': datetime.combine(day, datetime.min.time()).timestamp(),
@@ -285,8 +286,8 @@ async def get_all_logs_in_day(db, userid, day):
     return day_logs
 
 
-async def get_logs_per_day_in_month(db, userid, month, year):
-    logs = db.logs
+async def get_logs_per_day_in_month(userid, month, year):
+    logs = logs_db.logs
     month_logs = logs.aggregate([
         {
             '$match': {
@@ -317,8 +318,8 @@ async def get_logs_per_day_in_month(db, userid, month, year):
     return month_logs
 
 
-async def get_logs_per_day_in_year(db, userid, year):
-    logs = db.logs
+async def get_logs_per_day_in_year(userid, year):
+    logs = logs_db.logs
     year_logs = logs.aggregate([
         {
             '$match': {
@@ -349,15 +350,15 @@ async def get_logs_per_day_in_year(db, userid, year):
     return year_logs
 
 
-async def get_last_log(db, userid):
-    logs = db.logs
+async def get_last_log(userid):
+    logs = logs_db.logs
     newest_log = logs.find({"userId": userid}).sort("_id", -1).limit(1)
     if newest_log:
         return newest_log[0]
 
 
-async def remove_last_log(db, userid):
-    logs = db.logs
+async def remove_last_log(userid):
+    logs = logs_db.logs
     try:
         newest_log = logs.find({"userId": userid}).sort("_id", -1).limit(1)
         last_log_id = f"{newest_log[0]['id']}"
@@ -368,8 +369,8 @@ async def remove_last_log(db, userid):
         return 0
 
 
-async def get_user_data(db, userid, timelapse, media="TOTAL", chars=False, year=None):
-    logs = await get_user_logs(db, userid, timelapse, media, year)
+async def get_user_data(userid, timelapse, media="TOTAL", chars=False, year=None):
+    logs = await get_user_logs(userid, timelapse, media, year)
     points = {
         "LIBRO": 0,
         "MANGA": 0,
@@ -416,13 +417,13 @@ async def get_user_data(db, userid, timelapse, media="TOTAL", chars=False, year=
     return points, parameters
 
 
-async def get_best_user_of_range(db, media, timelapse):
+async def get_best_user_of_range(media, timelapse):
     aux = None
-    users = db.users.find({}, {"userId", "username"})
+    users = logs_db.users.find({}, {"userId", "username"})
     points = 0
     tot_parameters = 0
     for user in users:
-        userpoints, parameters = await get_user_data(db, user["userId"], timelapse, media)
+        userpoints, parameters = await get_user_data(user["userId"], timelapse, media)
         newuser = {
             "id": user["userId"],
             "username": user["username"],
@@ -442,15 +443,32 @@ async def get_best_user_of_range(db, media, timelapse):
     return None
 
 
-async def get_sorted_ranking(db, timelapse, media, caracteres=False, year=None):
+async def get_sorted_ranking(timelapse, media, caracteres=False, year=None, division=None):
     leaderboard = []
-    users = db.users.find({})
+    if division:
+        users = logs_db.users.aggregate([
+            {
+                '$lookup': {
+                    'from': 'divisions',
+                    'localField': 'userId',
+                    'foreignField': 'userId',
+                    'as': 'userWithDivision'
+                }
+            }, {
+                '$match': {
+                    'userWithDivision.division': division
+                }
+            }
+        ])
+    else:
+        users = logs_db.users.find({})
     counter = 0
     for user in users:
         points, parameters = await get_user_data(
-            db, user["userId"], timelapse, media, caracteres, year)
+            user["userId"], timelapse, media, caracteres, year)
         leaderboard.append({
             "username": user["username"],
+            "id": user["userId"],
             "points": points["TOTAL"],
             "parameters": parameters[media]})
         if media in MEDIA_TYPES or media == "CARACTERES":
@@ -464,196 +482,38 @@ async def get_sorted_ranking(db, timelapse, media, caracteres=False, year=None):
             leaderboard, key=lambda x: x["points"], reverse=True)
 
 
-async def check_user(db, userid):
-    users = db.users
-    return users.count_documents({'userId': userid}) > 0
-
-
-async def create_user(db, userid, username):
-    users = db.users
-    newuser = {
-        'userId': userid,
-        'username': username,
-        'lastlog': -1
-    }
-    users.insert_one(newuser)
-
-
-def generate_linear_graph(points, horas):
-    aux = dict(points)
-    labels = []
-    values = []
-    for x, y in aux.items():
-        labels.append(x),
-        values.append(y)
-    plt.plot(labels, values)
-    plt.title("Inmersión en AJR")
-    plt.xticks(rotation=45)
-    plt.xlabel("Tiempo")
-    if horas:
-        plt.ylabel("Horas totales")
-    else:
-        plt.ylabel("Puntos totales")
-    plt.fill_between(labels, values, color="#AAAAF0")
-    plt.savefig("temp/image.png", bbox_inches="tight")
-    plt.close()
-    file = discord.File("temp/image.png", filename="image.png")
-    return file
-
-
-def my_autopct(pct):
-    return ('%1.1f%%' % pct) if pct >= 4.99 else ''
-
-
-def generate_graph(points, type, timelapse=None, total_points=None, position=None):
-    aux = dict(points)
-    if type == "piechart":
-        for elem in list(aux):
-            if aux[elem] == 0:
-                aux.pop(elem)
-        aux.pop("TOTAL")
-
-        if "CLUB AJR" in aux:
-            aux.pop("CLUB AJR")
-
-        labels = []
-        values = []
-
-        for x, y in aux.items():
-            labels.append(x),
-            values.append(y)
-
-        fig1, ax1 = plt.subplots()
-
-        plt.pie(values, labels=labels,
-                autopct=my_autopct, pctdistance=0.85, textprops={'color': "w"}, shadow=True, startangle=90)
-
-        fig1.set_facecolor("#2F3136")
-        # Equal aspect ratio ensures that pie is drawn as a circle.
-        ax1.axis('equal')
-
-        centre_circle = plt.Circle((0, 0), 0.70, fc='#2F3136')
-        fig1 = plt.gcf()
-
-        # Adding Circle in Pie chart
-        fig1.gca().add_artist(centre_circle)
-
-        sumstr = f"{total_points}"
-        # String on the donut center
-        bbox_props = dict(boxstyle="circle,pad=0.3",
-                          edgecolor="#2F3136", facecolor="gold")
-        ax1.text(0., 0.4, position, horizontalalignment='center',
-                 verticalalignment='center_baseline', size=28, color="#2F3136", bbox=bbox_props)
-        ax1.text(0., -0.1, sumstr, horizontalalignment='center',
-                 verticalalignment='center', size=26, color="white")
-        ax1.text(0., -0.35, "Puntos", horizontalalignment='center',
-                 verticalalignment='center_baseline', size=18, color="white")
-
-        plt.savefig("temp/image.png")
-        plt.close()
-        file = discord.File("temp/image.png", filename="image.png")
-        return file
-    elif type == "progress":
-        labels = []
-        values = []
-        media = {"LIBRO": [], "LECTURA": [], "TIEMPOLECTURA": [], "OUTPUT": [], "ANIME": [], "MANGA": [], "VN": [],
-                 "AUDIO": [], "VIDEO": []}
-
-        for x, y in aux.items():
-            labels.append(x),
-            values.append(y)
-        fig1, ax = plt.subplots(figsize=(10, 5))
-        max = 0
-
-        for elem in values:
-            media["LIBRO"].append(elem["LIBRO"])
-            media["MANGA"].append(elem["MANGA"])
-            media["VN"].append(elem["VN"])
-            media["ANIME"].append(elem["ANIME"])
-            media["LECTURA"].append(elem["LECTURA"])
-            media["TIEMPOLECTURA"].append(elem["TIEMPOLECTURA"])
-            media["OUTPUT"].append(elem["OUTPUT"])
-            media["AUDIO"].append(elem["AUDIO"])
-            media["VIDEO"].append(elem["VIDEO"])
-            total = elem["LIBRO"] + elem["MANGA"] + elem["VN"] + elem["ANIME"] +  \
-                elem["LECTURA"] + elem["TIEMPOLECTURA"] + elem["OUTPUT"] +  \
-                elem["AUDIO"] + elem["VIDEO"]
-            if total > max:
-                max = total
-
-        libro = np.array(media["LIBRO"])
-        manga = np.array(media["MANGA"])
-        vn = np.array(media["VN"])
-        anime = np.array(media["ANIME"])
-        lectura = np.array(media["LECTURA"])
-        tiempolectura = np.array(media["TIEMPOLECTURA"])
-        output = np.array(media["OUTPUT"])
-        audio = np.array(media["AUDIO"])
-        video = np.array(media["VIDEO"])
-        read = np.sum([libro, lectura, tiempolectura], axis=0)
-        plt.xticks(rotation=45)
-        # plt.bar(labels, libro, color='#f3054d')
-        # plt.bar(labels, lectura, bottom=libro, color='#f3054d')
-        # plt.bar(labels, tiempolectura, bottom=(
-        #     libro + lectura), color='#f3054d')
-        plt.bar(labels, read, color='#f3054d')
-        plt.bar(labels, anime, bottom=read, color='#ffae00')
-        plt.bar(labels, manga,
-                bottom=read + anime, color='#4Bd0fB')
-        plt.bar(labels, vn,
-                bottom=read + anime + manga, color='#ffa0ff')
-        plt.bar(labels, audio,
-                bottom=read + anime + manga + vn, color='#03D04B')
-        plt.bar(labels, video,
-                bottom=read + anime + manga + vn + audio, color='#0f5f0c')
-        plt.bar(labels, output,
-                bottom=read + anime + manga + vn + audio + video, color='#ff5f0c')
-        plt.xlabel("FECHA")
-        plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True, prune='both'))
-        plt.ylabel("PUNTOS")
-        plt.ylim(0, max * 1.05)
-        plt.legend(["LECTURA", "ANIME", "MANGA", "VN", "AUDIO",
-                    "VIDEO", "OUTPUT"], loc='upper center', bbox_to_anchor=(0.5, 1.25),
-                   ncol=3, fancybox=True, shadow=True, labelcolor="black")
-
-        ax.set_facecolor('#36393f')  # Color de fondo similar al de Discord
-        fig1.set_facecolor('#36393f')
-
-        ax.title.set_color('white')
-        ax.xaxis.label.set_color('white')
-        ax.yaxis.label.set_color('white')
-        ax.tick_params(axis='x', colors='white')  # Change tick labels color
-        ax.tick_params(axis='y', colors='white')  # Change tick labels color
-
-        plt.savefig("temp/image.png", bbox_inches="tight")
-        plt.close()
-        file = discord.File("temp/image.png", filename="image.png")
-        return file
-    else:
-        labels = []
-        values = []
-        if timelapse.upper() == "SEMANA":
-            start = datetime.today().replace(hour=0, minute=0, second=0) - timedelta(days=6)
-            for x in range(0, 7):
-                normaldate = start + timedelta(days=x)
-                auxdate = str(normaldate
-                              ).replace("-", "/").split(" ")[0]
-                labels.append(auxdate + intToWeekday(normaldate.weekday()))
-                if auxdate in points:
-                    values.append(points[auxdate])
-                else:
-                    values.append(0)
-            plt.rc('font', family='Noto Sans CJK JP')
-            fig, ax = plt.subplots()
-            ax.bar(labels, values, color='#24B14D')
-            ax.set_ylabel('Puntos', color="white")
-            ax.tick_params(axis='both', colors='white')
-            fig.set_facecolor("#2F3136")
-            fig.autofmt_xdate()
-            plt.savefig("temp/image.png")
-            plt.close()
-            file = discord.File("temp/image.png", filename="image.png")
-            return file
+async def get_logs_animation(month, day, year):
+    # Esta función va a tener como parámetro el día, lo pasará a la función get logs y a partir de ahí generará el ranking pertinente
+    header = []
+    data = []
+    header.append("date")
+    monthly_ranking = await get_sorted_ranking(MONTHS[int(month) - 1], "TOTAL", False, year, division=1)
+    userlist = []
+    for elem in monthly_ranking:
+        if elem["points"] != 0:
+            userlist.append(elem["username"])
+    for user in userlist:
+        header.append(user)
+    total = dict()
+    date = datetime.today()
+    # if int(day) > date.day:
+    #     day = date.day
+    counter = 1
+    while counter < int(day) + 1:
+        total[str(counter)] = await get_sorted_ranking(
+            f"{year}/{month}/{counter}", "TOTAL", division=1)
+        aux = [0 for i in range(len(header))]
+        aux[0] = f"{month}/{counter}/{year}"
+        for user in total[str(counter)]:
+            if user["points"] != 0:
+                aux[header.index(user["username"])] = user["points"]
+        counter += 1
+        data.append(aux)
+    with open('temp/test.csv', 'w', encoding='utf-8-sig', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        writer.writerows(data)
+    return
 
 
 def compute_points(log, bonus=False):
@@ -758,89 +618,9 @@ def get_media_level(parametro, medio):
     return 100
 
 
-async def get_logs_animation(db, month, day, year):
-    # Esta función va a tener como parámetro el día, lo pasará a la función get logs y a partir de ahí generará el ranking pertinente
-    header = []
-    data = []
-    header.append("date")
-    monthly_ranking = await get_sorted_ranking(db, MONTHS[int(month) - 1], "TOTAL", False, year)
-    userlist = []
-    for elem in monthly_ranking:
-        if elem["points"] != 0:
-            userlist.append(elem["username"])
-    for user in userlist:
-        header.append(user)
-    total = dict()
-    date = datetime.today()
-    # if int(day) > date.day:
-    #     day = date.day
-    counter = 1
-    while counter < int(day) + 1:
-        total[str(counter)] = await get_sorted_ranking(
-            db, f"{year}/{month}/{counter}", "TOTAL")
-        aux = [0 for i in range(len(header))]
-        aux[0] = f"{month}/{counter}/{year}"
-        for user in total[str(counter)]:
-            if user["points"] != 0:
-                aux[header.index(user["username"])] = user["points"]
-        counter += 1
-        data.append(aux)
-    with open('temp/test.csv', 'w', encoding='utf-8-sig', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(header)
-        writer.writerows(data)
-    return
-
-
-async def get_log_by_id(db, userid, logid):
-    logs = db.logs
+async def get_log_by_id(userid, logid):
+    logs = logs_db.logs
     return logs.find_one({"userId": userid, "id": int(logid)})
-
-
-async def send_message_with_buttons(self, ctx, content):
-    pages = len(content)
-    cur_page = 1
-    message = await ctx.send(f"```\n{content[cur_page-1]}\nPág {cur_page} de {pages}\n```")
-    if pages > 1:
-        await message.add_reaction("◀️")
-        await message.add_reaction("▶️")
-        while True:
-            try:
-                reaction, user = await self.bot.wait_for("reaction_add", timeout=180)
-                if not user.bot:
-                    # waiting for a reaction to be added - times out after x seconds, 60 in this
-                    # example
-
-                    if str(reaction.emoji) == "▶️" and cur_page != pages:
-                        cur_page += 1
-                        await message.edit(content=f"```{content[cur_page-1]}\nPág {cur_page} de {pages}```")
-                        try:
-                            await message.remove_reaction(reaction, user)
-                        except discord.errors.Forbidden:
-                            await send_error_message(ctx, "‼️ Los mensajes con páginas no funcionan bien en DM!")
-
-                    elif str(reaction.emoji) == "◀️" and cur_page > 1:
-                        cur_page -= 1
-                        await message.edit(content=f"```{content[cur_page-1]}\nPág {cur_page} de {pages}```")
-                        try:
-                            await message.remove_reaction(reaction, user)
-                        except discord.errors.Forbidden:
-                            await send_error_message(self, ctx, "‼️ Los mensajes con páginas no funcionan bien en DM!")
-
-                    else:
-                        try:
-                            await message.remove_reaction(reaction, user)
-                        except discord.errors.Forbidden:
-                            await send_error_message(self, ctx, "‼️ Los mensajes con páginas no funcionan bien en DM!")
-                        # removes reactions if the user tries to go forward on the last page or
-                        # backwards on the first page
-            except asyncio.TimeoutError:
-                try:
-                    await message.delete()
-                except discord.errors.Forbidden:
-                    await send_error_message(self, ctx, "‼️ Los mensajes con páginas no funcionan bien en DM!")
-                break
-                # ending the loop if user doesn't react after x seconds
 
 
 def check_max_immersion(parameter: int, media: str):
@@ -857,7 +637,22 @@ def check_max_immersion(parameter: int, media: str):
     return
 
 
-def update_log(db, logid, log):
-    logs = db.logs
+def update_log(logid, log):
+    logs = logs_db.logs
     # Only update the parameteres that exist in the new log
     logs.update_one({"_id": logid}, {"$set": log})
+
+
+def ordenar_logs(user_id):
+    logs = logs_db.logs
+    found_logs = logs.find({'userId': user_id})
+    newlogs = sorted(found_logs, key=lambda d: d['timestamp'])
+    counter = 1
+    for elem in newlogs:
+        logs.update_one({"_id": elem["_id"]}, {"$set": {"id": counter}})
+        counter = counter + 1
+
+    users = logs_db.users
+
+    users.update_one({"userId": user_id}, {
+        "$set": {"lastlog": len(newlogs)}})

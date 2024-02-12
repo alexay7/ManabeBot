@@ -1,10 +1,11 @@
 import os
 import discord
+import random
+
 from discord.ext import commands
-
 from saucenao_api import SauceNao, errors
-
 from helpers.general import send_error_message
+from termcolor import cprint, COLORS
 
 
 class Sauce(commands.Cog):
@@ -13,7 +14,8 @@ class Sauce(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Cog de salsa cargado con éxito")
+        cprint("- [✅] Cog de salsa cargado con éxito",
+               random.choice(list(COLORS.keys())))
 
     @commands.command(aliases=["salsa"])
     async def sauce(self, ctx, url=None):

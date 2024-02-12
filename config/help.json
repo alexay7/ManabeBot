@@ -37,6 +37,13 @@
             "uso": ".kalise",
             "descripcion": "Envía una imagen aleatoria"
         },
+        "time": {
+            "categoria": "extras",
+            "comando": ".time",
+            "short_description": "Te dice la hora en varios sitios",
+            "uso": ".time",
+            "descripcion": "Devuelve la hora local en Japón, España, Chile, Venezuela y México"
+        },
         "sauce": {
             "categoria": "extras",
             "comando": ".sauce",
@@ -51,12 +58,19 @@
             "uso": ".japonabierto",
             "descripcion": "Comprueba si las fronteras de japón ya están abiertas al turismo o siguen cerradas por el Covid."
         },
-        "aleatorio": {
+        "yoji": {
             "categoria": "extras",
-            "comando": ".aleatorio",
+            "comando": ".yoji",
             "short_description": "Recibe un 四字熟語 (yojijukugo) aleatorio",
-            "uso": ".aleatorio",
+            "uso": ".yoji",
             "descripcion": "Buscar un 四字熟語 (yojijukugo) en jisho y muestra el significado."
+        },
+        "accent": {
+            "categoria": "extras",
+            "comando": ".accent",
+            "short_description": "Pitch de una palabra o frase",
+            "uso": ".accent [palabra o frase]",
+            "descripcion": "Muestra el pitch accent de una palabra o frase en japonés."
         },
         "animeomanga": {
             "categoria": "extras",
@@ -85,6 +99,20 @@
             "short_description": "Convierte euros a yenes",
             "uso": ".euroayen [cantidad de euros]",
             "descripcion": "Convierte euros a yenes según la cotización del día de hoy"
+        },
+        "grammar": {
+            "categoria": "extras",
+            "comando": ".grammar",
+            "short_description": "Información sobre una forma gramatical",
+            "uso": ".grammar [forma gramatical]",
+            "descripcion": "Devuelve la entrada de Tae-Kim de la forma gramátical que le indiques. Ej: .grammar える es una entrada sobre la forma potencial"
+        },
+        "anison": {
+            "categoria": "extras",
+            "comando": ".anison",
+            "short_description": "Canción de anime aleatoria",
+            "uso": ".anison [anime (opcional)]",
+            "descripcion": "Devuelve una canción de anime aleatoria.\nSi indicas un anime, devolverá una canción de ese anime."
         },
         "levelup": {
             "categoria": "kotoba",
@@ -147,18 +175,27 @@
         },
         "backfill": {
             "categoria": "inmersion",
-            "comando": ".backfill",
+            "comando": "/backfill",
             "short_description": "Loguea inmersión hecha en el pasado",
-            "uso": ".backfill [fecha en formato dd/mm/yyyy] [medio] [cantidad] [descripción];(tiempo dedicado)&(caracteres leídos)",
+            "uso": "/backfill [fecha en formato dd/mm/yyyy] [medio] [cantidad] [descripción];(tiempo dedicado)&(caracteres leídos)",
             "descripcion": "Loguea inmersión en algún momento del pasado para tener datos más consistentes en tu progreso.",
             "Extra": [
                 {
-                    "name": "Medios de Inmersión admitidos:",
-                    "value": "[LIBRO | MANGA]: Loguear en páginas\n[LECTURA | VN]: Loguear en carácteres\n[ANIME]: Loguear en capítulos\n[TIEMPOLECTURA | OUTPUT | AUDIO | VIDEO]: Loguear en minutos"
-                },
+                    "name": "⚠️ Advertencia:",
+                    "value": "Comando muy complejo: Solo está disponible en formato /"
+                }
+            ]
+        },
+        "editlog": {
+            "categoria": "inmersion",
+            "comando": "/editlog",
+            "short_description": "Modifica parámetros de un log",
+            "uso": "/editlog [logid] [fecha en formato dd/mm/yyyy] [medio] [cantidad] [descripción];(tiempo dedicado)&(caracteres leídos)",
+            "descripcion": "Cambia propiedades de un log como la descripción o la cantidad inmersada.",
+            "Extra": [
                 {
-                    "name": "Parámetros extra:",
-                    "value": "Ahora se pueden añadir datos de inmersión complementarios a cada log.\n[TIEMPO]: Si quieres apuntar el tiempo dedicado en un medio que no utilice minutos, puedes usar \";\" seguido de un número para indicar el tiempo que te ha tomado.\n[CARACTERES]: Si quieres apuntar los caracteres que has leído en un medio que no utilice caracteres, puedes usar \"&\" seguido de un número para indicar el número total de caracteres que hayas leído.\n\n[AVISO]: Siempre se tomará el mayor valor de puntos de entre todos los parámetros que des."
+                    "name": "⚠️ Advertencia:",
+                    "value": "Comando muy complejo: Solo está disponible en formato /"
                 }
             ]
         },
@@ -181,7 +218,20 @@
             "comando": ".podio",
             "short_description": "Podio mensual de inmersión",
             "uso": ".podio",
-            "descripcion": "Muestra el podio por puntos de inmersión del mes actual.",
+            "descripcion": "Muestra el podio de la liga de inmersión del mes actual.",
+            "Extra": [
+                {
+                    "name": "⚠️ Advertencia:",
+                    "value": "Comando complejo: Si quieres modificar los parámetros por defecto usa / en lugar de . para ejectuarlo."
+                }
+            ]
+        },
+        "ranking": {
+            "categoria": "inmersion",
+            "comando": ".ranking",
+            "short_description": "Ranking de inmersión en un periodo determinado",
+            "uso": ".ranking",
+            "descripcion": "Muestra el podio de un medio y en un periodo determinado.",
             "Extra": [
                 {
                     "name": "⚠️ Advertencia:",
@@ -215,6 +265,13 @@
                 }
             ]
         },
+        "lastlog": {
+            "categoria": "inmersion",
+            "comando": ".lastlog",
+            "short_description": "Te muestra tu último log",
+            "uso": ".lastlog",
+            "descripcion": "Muestra los detalles del último log que has realizado."
+        },
         "me": {
             "categoria": "inmersion",
             "comando": ".me",
@@ -234,6 +291,33 @@
             "short_description": "Muestra el progreso del ultimo año",
             "uso": ".progreso",
             "descripcion": "Compara lo inmersado durante los meses en el ultimo año.",
+            "Extra": [
+                {
+                    "name": "⚠️ Advertencia:",
+                    "value": "Comando complejo: Si quieres modificar los parámetros por defecto usa / en lugar de . para ejectuarlo."
+                }
+            ]
+        },
+        "ajrstats": {
+            "categoria": "inmersion",
+            "comando": ".ajrstats",
+            "short_description": "Gráfica de inmersión de todo el servidor",
+            "uso": ".ajrstats",
+            "descripcion": "Muestra una gráfica con la inmersión global de todos los miembros del servidor desde la creación del bot."
+        },
+        "logros": {
+            "categoria": "inmersion",
+            "comando": ".logros",
+            "short_description": "Estadísticas del usuario para cada medio",
+            "uso": ".logros",
+            "descripcion": "Observa tu nivel para cada tipo de inmersión"
+        },
+        "constancia": {
+            "categoria": "inmersion",
+            "comando": ".constancia",
+            "short_description": "Gráfica que representa tu constancia en un periodo",
+            "uso": ".constancia",
+            "descripcion": "Muestra una gráfica lineal acumulativa de tu inmersión durante un mes o año.",
             "Extra": [
                 {
                     "name": "⚠️ Advertencia:",

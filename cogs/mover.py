@@ -1,11 +1,13 @@
 import discord
-from discord.ext import commands, tasks
-from discord import ApplicationContext, TextChannel
 import aiohttp
-import asyncio
 import io
 import os
+import random
+
 from urllib.parse import urlparse
+from discord.ext import commands
+from discord import ApplicationContext, TextChannel
+from termcolor import cprint, COLORS
 
 
 async def descargar_imagen(url, spoiler=False):
@@ -26,7 +28,8 @@ class Mover(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Cog de mover mensajes cargado con éxito")
+        cprint("- [✅] Cog de mover mensajes cargado con éxito",
+               random.choice(list(COLORS.keys())))
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):

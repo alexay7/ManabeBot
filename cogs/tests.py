@@ -1,15 +1,15 @@
 """Cog responsible for tests."""
 
 import asyncio
-import json
 import random
-from time import sleep
 import discord
-import os
+
+from time import sleep
 from discord.ext import commands
-from pymongo import MongoClient, errors
 
 from helpers.general import send_error_message
+from helpers.mongo import tests_db
+from termcolor import cprint, COLORS
 
 # BOT'S COMMANDS
 
@@ -85,26 +85,18 @@ class Test(commands.Cog):
         self.bot = bot
         self.busy = False
         self.tasks = dict()
-        try:
-            client = MongoClient(os.getenv("MONGOURL"),
-                                 serverSelectionTimeoutMS=10000)
-            client.server_info()
-            print("Conectado con éxito con mongodb [tests]")
-            self.db = client.Migii
-        except errors.ServerSelectionTimeoutError:
-            print("Ha ocurrido un error intentando conectar con la base de datos.")
-            exit(1)
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Cog de tests cargado con éxito")
+        cprint("- [✅] Cog de tests cargado con éxito",
+               random.choice(list(COLORS.keys())))
 
     @commands.command()
     async def test(self, ctx, level, param=None, questionnum=None, timed="false"):
         if ctx.message.author == self.bot:
             return
-        users = self.db.users
-        exercises = self.db.exercises
+        users = tests_db.users
+        exercises = tests_db.exercises
         preset_questions = False
         questions = []
         if level.lower() == "help":
@@ -277,8 +269,8 @@ class Test(commands.Cog):
     async def testaño(self, ctx, year, month):
         if ctx.message.author == self.bot:
             return
-        users = self.db.users
-        exercises = self.db.exercises
+        users = tests_db.users
+        exercises = tests_db.exercises
         questionnum = 40
         preset_questions = False
         questions = []

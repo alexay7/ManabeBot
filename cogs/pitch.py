@@ -2,9 +2,11 @@ import discord
 from discord.ext import commands
 
 import json
+import random
 import requests
 
 from helpers.general import send_error_message
+from termcolor import cprint, COLORS
 
 SMALLROWKATAKANA = 'ァィゥェォヵㇰヶㇱㇲㇳㇴㇵㇶㇷㇷ゚ㇸㇹㇺャュョㇻㇼㇽㇾㇿヮ'
 
@@ -74,7 +76,12 @@ class Pitch(commands.Cog):
         with open("dicts/nhk.json", "r", encoding="utf8") as f:
             self.nhk = json.load(f)
 
-    @commands.command()
+    @commands.Cog.listener()
+    async def on_ready(self):
+        cprint("- [✅] Cog de pitch accent cargado con éxito",
+               random.choice(list(COLORS.keys())))
+
+    @commands.command(aliases=["acento", "pitch"])
     async def accent(self, ctx: commands.Context, word: str):
         if ctx.channel.id not in kotoba_channels:
             await send_error_message(ctx,
