@@ -1,3 +1,4 @@
+import json
 import discord
 
 from helpers.general import send_error_message
@@ -81,7 +82,7 @@ class BonusButton(discord.ui.Button):
         userId = int(interaction.message.embeds[0].footer.text.split(" ")[-1])
 
         # Si el usuario no es el dueño del log, no hacer nada
-        if userId != interaction.user.id:
+        if userId != interaction.user.id and userId not in admin_users:
             error_embed = create_error_embed(
                 "No puedes editar logs de otros usuarios")
             await interaction.response.send_message(embed=error_embed, ephemeral=True)
@@ -112,7 +113,7 @@ class UnBonusButton(discord.ui.Button):
         userId = int(interaction.message.embeds[0].footer.text.split(" ")[-1])
 
         # Si el usuario no es el dueño del log, no hacer nada
-        if userId != interaction.user.id:
+        if userId != interaction.user.id and userId not in admin_users:
             error_embed = create_error_embed(
                 "No puedes editar logs de otros usuarios")
             await interaction.response.send_message(embed=error_embed, ephemeral=True)
@@ -133,6 +134,11 @@ class UnBonusButton(discord.ui.Button):
         await interaction.edit_original_response(embed=new_embed, view=self.view)
 
 
+with open("config/general.json") as json_file:
+    general_config = json.load(json_file)
+    admin_users = general_config["admin_users"]
+
+
 class LogView(discord.ui.View):
     def __init__(self, bonus=False):
         super().__init__(timeout=None)
@@ -148,7 +154,7 @@ class LogView(discord.ui.View):
         userId = int(interaction.message.embeds[0].footer.text.split(" ")[-1])
 
         # Si el usuario no es el dueño del log, no hacer nada
-        if userId != interaction.user.id:
+        if userId != interaction.user.id and userId not in admin_users:
             error_embed = create_error_embed(
                 "No puedes eliminar logs de otros usuarios")
             await interaction.response.send_message(embed=error_embed, ephemeral=True)

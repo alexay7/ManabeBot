@@ -777,7 +777,7 @@ class Immersion(commands.Cog):
                                 value=f"{current_streak} días", inline=False)
             if newposition < position:
                 embed.add_field(
-                    name=f"🎉 Has subido en el ranking del mes! ({user_division}ª)🎉", value=f"**{position+1}º** ---> **{newposition+1}º**", inline=False)
+                    name=f"🎉 Has subido en el ranking del mes! ({user_division}ª) 🎉", value=f"**{position+1}º** ---> **{newposition+1}º**", inline=False)
             if newposition != 0:
                 aux_title = f"el {newposition}º puesto"
                 if newposition == 1 or newposition == 3:
