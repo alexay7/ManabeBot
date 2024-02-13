@@ -7,6 +7,7 @@ import random
 from discord.ext import commands
 from bson.objectid import ObjectId
 from termcolor import cprint, COLORS
+from helpers.certs import generate_certificate
 
 from helpers.general import send_error_message, send_response
 from helpers.mongo import kotoba_db
@@ -29,6 +30,7 @@ with open("config/kotoba.json", encoding="utf8") as json_file:
     extra_levelup_messages = {int(key): value for key,
                               value in extra_levelup_messages.items()}
     quiz_ranks = kotoba_config["quiz_ranks"]
+    noken_ranks = kotoba_config["noken_ranks"]
     special_ranks = kotoba_config["special_quiz_ranks"]
     announcement_channel = kotoba_config["announcement_channel"]
 # ====================================================
@@ -236,6 +238,17 @@ class Kotoba(commands.Cog):
                                             if currentroleid != 892868429877485598:
                                                 await quizwinner.remove_roles(currentrole)
                                         await quizwinner.add_roles(newrole)
+
+                                        if newrankid in noken_ranks:
+                                            # Get level by position in the list
+                                            level = 5 - \
+                                                noken_ranks.index(newrankid)
+                                            generate_certificate(
+                                                quizwinner.display_name, quizwinner.joined_at, "N"+str(level))
+                                            image = discord.File(
+                                                "temp/certificate.jpg", filename="certificate.jpg")
+                                            image_name = "certificate.jpg"
+
                                         announcementchannel = self.bot.get_channel(
                                             announcement_channel)
                                         await announcementchannel.send(f'<@!{mainuserid}> ha aprobado el examen de{shortname}!\n'

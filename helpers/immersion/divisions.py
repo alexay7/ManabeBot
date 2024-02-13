@@ -51,6 +51,9 @@ def demote_users(users):
 def get_user_division(userId):
     divisions = logs_db.divisions
     user_division = divisions.find_one({"userId": userId})
+    if not user_division:
+        divisions.insert_one({"userId": userId, "division": 2})
+        return 2
     return user_division["division"]
 
 
