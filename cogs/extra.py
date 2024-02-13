@@ -367,7 +367,7 @@ class Extra(commands.Cog):
         embed.add_field(name="Type", value=entry['type'], inline=False)
         embed.set_image(url=entry['anime']['images'][0]['link'])
 
-        await ctx.send(embed=embed, content=link)
+        await send_response(ctx, embed=embed, content=link)
 
     @commands.command(aliases=["anison"])
     async def anison_(self, ctx):
