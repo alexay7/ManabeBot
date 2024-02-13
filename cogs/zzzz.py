@@ -1,9 +1,10 @@
+import discord
 from discord.ext import commands
 from termcolor import cprint
 
 
 class ZZZ(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: discord.Bot):
         self.bot = bot
 
     @commands.Cog.listener()

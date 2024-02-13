@@ -29,7 +29,7 @@ cprint(
                                                   ])
 
 print("=========== CARGANDO BASES DE DATOS ===========\n")
-ajr_client = init_mongo(os.environ.get("MONGO_URI"), "principal")
+ajr_client = init_mongo(os.environ.get("MONGOURL"), "principal")
 yomiyasu_client = init_mongo(os.environ.get("YOMIYASUURL"), "de yomiyasu")
 
 logs_db = ajr_client.ajrlogs

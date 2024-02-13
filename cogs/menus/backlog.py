@@ -1,5 +1,4 @@
 import discord
-import helpers.mongo as mongo
 
 from helpers.immersion.logs import bonus_log, remove_log, unbonus_log
 from helpers.general import send_error_message
@@ -13,7 +12,7 @@ async def unmark_as_bonus(ctx, old_embed, user):
 
     log_id = old_embed.description.split(" ")[2].replace("#", "")
 
-    new_points_aux = await unbonus_log(mongo.db, log_id, user)
+    new_points_aux = await unbonus_log(log_id, user)
 
     if new_points_aux < 0:
         await send_error_message(ctx, "Este log no está marcado como bonus")
@@ -41,7 +40,7 @@ async def mark_as_bonus(ctx, old_embed, user):
 
     log_id = old_embed.description.split(" ")[2].replace("#", "")
 
-    new_points_aux = await bonus_log(mongo.db, log_id, user)
+    new_points_aux = await bonus_log(log_id, user)
 
     if new_points_aux < 0:
         await send_error_message(ctx, "Este log ya está marcado como bonus")
@@ -65,7 +64,7 @@ async def mark_as_bonus(ctx, old_embed, user):
 async def delete_log(old_embed, user):
     log_id = old_embed.description.split(" ")[2].replace("#", "")
 
-    await remove_log(mongo.db, user, log_id)
+    await remove_log(user, log_id)
 
     logdeleted = discord.Embed(color=0x24b14d)
     logdeleted.add_field(

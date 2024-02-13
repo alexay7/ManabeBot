@@ -10,7 +10,7 @@ from datetime import datetime
 from time import gmtime, strftime
 from dateutil.tz import gettz
 from discord.raw_models import RawReactionActionEvent
-from discord import Member, Guild
+from discord import Member, Guild, Option
 from time import gmtime, sleep
 from discord.ext import commands
 from discord.ext import commands, tasks
@@ -300,20 +300,25 @@ class Extra(commands.Cog):
     async def grammar_(self, ctx, forma_gramatical: str = None):
         await self.grammar(ctx, None, forma_gramatical)
 
-    @commands.command()
-    async def anison(self, ctx):
-
-        # Get query form message
-        q = ctx.message.content.split(" ")[1:]
+    @commands.slash_command()
+    async def anison(self, ctx,
+                     nombre: Option(str, "Nombre del anime o canción", required=False),
+                     option: Option(str, "Anime o canción", required=False, default="anime", choices=["anime", "cancion"]),
+                     tipo: Option(str, "Tipo de anison", required=False, default="random", choices=["random", "opening", "ending"])):
+        "Obtiene una anison aleatoria"
 
         url = "https://animethemes.moe/api/graphql"
+
+        has = "animethemeentries" if option == "anime" else "song"
+        tipo = "" if tipo == "random" else tipo
+
         query = '''
         query RandomTheme {
             searchTheme(
         args: {
             sortBy: "random"
-            filters: [{ key: "has", value: "animethemeentries" }, { key: "nsfw", value: "false" }]
-            query: "'''+" ".join(q)+'''"
+            filters: [{ key: "has", value: "'''+has+'''" }, { key: "nsfw", value: "false" },{ key: "type", value: "'''+tipo+'''" 	}]
+            query: "'''+nombre+'''"
         }
     ) {
                 data {
@@ -347,7 +352,8 @@ class Extra(commands.Cog):
         # Crear el embed con la información obtenida
         embed = discord.Embed(title="Anison Aleatoria",
                               color=discord.Color.blue())
-        entry = data['data']['searchTheme']['data'][0]
+        # choose random entry
+        entry = random.choice(data['data']['searchTheme']['data'])
 
         anime_name = entry['anime']['name']
         song_title = entry['song']['title']
@@ -362,6 +368,14 @@ class Extra(commands.Cog):
         embed.set_image(url=entry['anime']['images'][0]['link'])
 
         await ctx.send(embed=embed, content=link)
+
+    @commands.command(aliases=["anison"])
+    async def anison_(self, ctx):
+
+        # Get query form message
+        q = ctx.message.content.split(" ")[1:]
+
+        await self.anison(ctx, " ".join(q), "", "")
 
 
 def setup(bot):

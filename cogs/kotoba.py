@@ -244,7 +244,7 @@ class Kotoba(commands.Cog):
                                             level = 5 - \
                                                 noken_ranks.index(newrankid)
                                             generate_certificate(
-                                                quizwinner.display_name, quizwinner.joined_at, "N"+str(level))
+                                                quizwinner.name, quizwinner.joined_at, "N"+str(level))
                                             image = discord.File(
                                                 "temp/certificate.jpg", filename="certificate.jpg")
                                             image_name = "certificate.jpg"

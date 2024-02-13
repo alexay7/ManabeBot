@@ -1,5 +1,4 @@
 import discord
-import helpers.mongo as mongo
 
 from discord import Interaction
 from discord.ext.pages import Page, Paginator
@@ -10,7 +9,7 @@ from helpers.immersion.logs import MEDIA_TYPES, get_media_element, get_ranking_t
 
 
 async def ranking_command(medio, periodo, chars):
-    sortedlist = await get_sorted_ranking(mongo.db, periodo, medio, chars)
+    sortedlist = await get_sorted_ranking(periodo, medio, chars)
 
     # remove users with 0 points
     sortedlist = [user for user in sortedlist if (user["points"]

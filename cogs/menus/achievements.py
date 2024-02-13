@@ -1,5 +1,4 @@
 import discord
-import helpers.mongo as mongo
 
 from datetime import datetime
 from discord import Interaction
@@ -8,7 +7,7 @@ from helpers.immersion.logs import get_immersion_level, get_media_element, get_m
 
 
 async def logros_command(user_id, user_name):
-    logs = await get_user_logs(mongo.db, user_id, "TOTAL")
+    logs = await get_user_logs(user_id, "TOTAL")
     points = {
         "LIBRO": 0,
         "MANGA": 0,

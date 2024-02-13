@@ -177,7 +177,7 @@ class Immersion(commands.Cog):
     @commands.slash_command()
     async def podio(self, ctx,
                     division: Option(str, "División del podio", choices=[
-                        "Liga AJR", "Liga 上手", "GENERAL", "USUARIO"], required=False, default="USUARIO")
+                        "Liga AJR", "Liga 上手", "USUARIO"], required=False, default="USUARIO")
                     ):
         await set_processing(ctx)
 
@@ -207,8 +207,8 @@ class Immersion(commands.Cog):
         return await paginator.respond(ctx)
 
     @commands.command(aliases=["podio", "lb", "leaderboard"])
-    async def podio_(self, ctx, division="USUARIO", year=datetime.now().year, mes=datetime.now().month):
-        await self.podio(ctx, division, year, mes)
+    async def podio_(self, ctx, division="USUARIO"):
+        await self.podio(ctx, division)
 
     @commands.slash_command()
     async def ranking(self, ctx,
@@ -604,7 +604,7 @@ class Immersion(commands.Cog):
 
         if user_id:
             try:
-                found = find_user(user_id)
+                found = await find_user(user_id)
                 if found:
                     user_name = found["username"]
                     user_id = int(user_id)
@@ -685,7 +685,9 @@ class Immersion(commands.Cog):
 
         if output > 0.01:
             # Obtiene el ranking previo al log del usuario
-            ranking = await get_sorted_ranking("MES", "TOTAL")
+            user_division = get_user_division(ctx.author.id)
+
+            ranking = await get_sorted_ranking("MES", "TOTAL", division=user_division)
             newranking = ranking
 
             for user in ranking:
@@ -775,7 +777,7 @@ class Immersion(commands.Cog):
                                 value=f"{current_streak} días", inline=False)
             if newposition < position:
                 embed.add_field(
-                    name="🎉 Has subido en el ranking del mes! 🎉", value=f"**{position+1}º** ---> **{newposition+1}º**", inline=False)
+                    name=f"🎉 Has subido en el ranking del mes! ({user_division}ª)🎉", value=f"**{position+1}º** ---> **{newposition+1}º**", inline=False)
             if newposition != 0:
                 aux_title = f"el {newposition}º puesto"
                 if newposition == 1 or newposition == 3:
@@ -1124,7 +1126,6 @@ class Immersion(commands.Cog):
         embed.set_footer(
             text=f"Id del usuario: {ctx.author.id}")
         await send_response(ctx, embed=embed, delete_after=10.0)
-        await ctx.message.delete()
 
     @commands.slash_command()
     async def undo(self, ctx):

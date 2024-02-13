@@ -1,10 +1,10 @@
 import calendar
 import math
 import discord
-import helpers.mongo as mongo
 
 from datetime import datetime
 from matplotlib import pyplot as plt
+from helpers.mongo import logs_db
 
 from helpers.views import prepare_response
 
@@ -67,7 +67,7 @@ async def ajr_command(horas):
     ]
 
     # Run the pipeline and get the results
-    results = list(mongo.db.logs.aggregate(pipeline))
+    results = list(logs_db.logs.aggregate(pipeline))
 
     # Create a dictionary to store the data for each user
     user_data = {}

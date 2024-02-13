@@ -1,5 +1,4 @@
 import discord
-import helpers.mongo as mongo
 
 from datetime import datetime
 from discord import Interaction
@@ -15,7 +14,7 @@ async def mvp_command(medio, ano):
     if ano != "TOTAL":
         domain = range(1, 13)
         for x in domain:
-            winner = await get_best_user_of_range(mongo.db, medio, f"{ano}/{x}")
+            winner = await get_best_user_of_range(medio, f"{ano}/{x}")
             if not (winner is None):
                 output += f"**{intToMonth(x)}:** {winner['username']} - {winner['points']} puntos"
                 if medio.upper() in MEDIA_TYPES:
@@ -30,7 +29,7 @@ async def mvp_command(medio, ano):
         end = datetime.today().year
         domain = range(2020, end + 1)
         for x in domain:
-            winner = await get_best_user_of_range(mongo.db, medio, f"{x}")
+            winner = await get_best_user_of_range(medio, f"{x}")
             if not (winner is None):
                 output += f"**{x}:** {winner['username']} - {winner['points']} puntos"
                 if medio.upper() in MEDIA_TYPES:
@@ -99,6 +98,8 @@ class MVPView(discord.ui.View):
         response = await mvp_command(medio, year)
 
         self.enable_all_items()
+
+        year_select = self.get_item("year_select")
 
         select_option(select, medio)
 

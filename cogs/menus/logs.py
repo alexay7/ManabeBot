@@ -1,5 +1,4 @@
 import discord
-import helpers.mongo as mongo
 
 from discord.ext.pages import Paginator
 from datetime import datetime
@@ -12,10 +11,10 @@ from helpers.views import create_error_embed, select_option
 
 
 async def logs_command(authorId, periodo, medio):
-    if await check_user(mongo.db, int(authorId)) is False:
+    if await check_user(int(authorId)) is False:
         return {"embed": create_error_embed("No se han encontrado logs"), "view": LogsView()}
 
-    result = await get_user_logs(mongo.db, int(authorId), periodo, medio)
+    result = await get_user_logs(int(authorId), periodo, medio)
     sorted_res = sorted(result, key=lambda x: x["timestamp"], reverse=True)
 
     output = [

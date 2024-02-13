@@ -1,5 +1,4 @@
 import discord
-import helpers.mongo as mongo
 
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
@@ -7,12 +6,13 @@ from datetime import datetime
 from helpers.views import prepare_response, select_option
 from helpers.immersion.graphs import generate_graph
 from helpers.immersion.logs import MONTHS, get_ranking_title, get_user_logs
+from helpers.mongo import logs_db
 
 
 async def progreso_command(user, ano, total):
     results = {}
     if ano == "TOTAL":
-        data = mongo.db.logs.find(
+        data = logs_db.logs.find(
             {"userId": user.id}).sort("timestamp", 1).limit(1)
         firstlog = data[0]
         start = datetime.fromtimestamp(
@@ -36,7 +36,7 @@ async def progreso_command(user, ano, total):
     }
     while i < steps:
         begin = (start + relativedelta(months=i)).replace(day=1)
-        logs = await get_user_logs(mongo.db, user.id, f"{begin.year}/{begin.month}")
+        logs = await get_user_logs(user.id, f"{begin.year}/{begin.month}")
         i += 1
 
         points = {

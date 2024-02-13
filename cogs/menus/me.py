@@ -1,6 +1,5 @@
 import itertools
 import discord
-import helpers.mongo as mongo
 import math
 
 from datetime import datetime
@@ -14,7 +13,7 @@ from helpers.immersion.logs import TIMESTAMP_TYPES, get_media_element, get_ranki
 
 
 async def me_command(usuario, periodo, graph):
-    logs = await get_user_logs(mongo.db, usuario.id, periodo)
+    logs = await get_user_logs(usuario.id, periodo)
 
     if logs == "":
         return
@@ -102,7 +101,7 @@ async def me_command(usuario, periodo, graph):
             output += f"**VIDEO:** {get_media_element(parameters['VIDEO'],'VIDEO')} -> {round(points['VIDEO'],2)} pts\n"
         if points["CLUB AJR"] > 0 and periodo != "TOTAL":
             output += f"**CLUB AJR:** {round(points['CLUB AJR'],2)} puntos\n"
-    ranking = await get_sorted_ranking(mongo.db, periodo, "TOTAL")
+    ranking = await get_sorted_ranking(periodo, "TOTAL")
     for user in ranking:
         if user["username"] == usuario.name:
             position = ranking.index(user)
@@ -148,9 +147,9 @@ async def me_command(usuario, periodo, graph):
         return {"embed": normal, "view": MeView(user=usuario, graph=graph, periodo=periodo), "file": bardoc}
     elif graph == "VELOCIDAD":
         # Obtener los logs del usuario
-        manga_logs = await get_user_logs(mongo.db, usuario.id, "TOTAL", "MANGA")
-        read_logs = await get_user_logs(mongo.db, usuario.id, "TOTAL", "LECTURA")
-        vn_logs = await get_user_logs(mongo.db, usuario.id, "TOTAL", "VN")
+        manga_logs = await get_user_logs(usuario.id, "TOTAL", "MANGA")
+        read_logs = await get_user_logs(usuario.id, "TOTAL", "LECTURA")
+        vn_logs = await get_user_logs(usuario.id, "TOTAL", "VN")
         logs = itertools.chain(manga_logs, read_logs, vn_logs)
 
         # Crear un conjunto de todos los meses para los que hay registros en cualquiera de los dos medios
