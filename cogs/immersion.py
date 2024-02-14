@@ -778,15 +778,30 @@ class Immersion(commands.Cog):
             if newposition < position:
                 embed.add_field(
                     name=f"🎉 Has subido en el ranking del mes! ({user_division}ª) 🎉", value=f"**{position+1}º** ---> **{newposition+1}º**", inline=False)
-            if newposition != 0:
+
+            total_ranking = await get_sorted_ranking("MES", "TOTAL")
+
+            # Check the points of the 10th user
+            if len(total_ranking) > 9:
+                tenth_user_points = total_ranking[9]["points"]
+
+            if (user_division == 1 and newposition != 0):
                 aux_title = f"el {newposition}º puesto"
                 if newposition == 1 or newposition == 3:
                     aux_title = f"el {newposition}er puesto"
                 if next_user["outside"]:
                     aux_title = "entrar al podio"
+
                 embed.add_field(
                     name=f"⚔️ Lucha por {aux_title} ⚔️",
                     value=f"Tienes a {next_user['user']} a {round(next_user['difference'],2)} puntos. ¡Animo!",
+                    inline=False
+                )
+            elif (user_division == 2 and current_points < tenth_user_points):
+                needed_points = tenth_user_points - current_points
+                embed.add_field(
+                    name=f"🪖 Lucha para subir a primera 🪖",
+                    value=f"Necesitas {str(needed_points)} puntos para entrar en puestos de ascenso",
                     inline=False
                 )
             embed.set_footer(
