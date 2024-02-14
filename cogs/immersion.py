@@ -798,7 +798,7 @@ class Immersion(commands.Cog):
                     inline=False
                 )
             elif (user_division == 2 and current_points < tenth_user_points):
-                needed_points = tenth_user_points - current_points
+                needed_points = round(tenth_user_points - current_points, 1)
                 embed.add_field(
                     name=f"🪖 Lucha para subir a primera 🪖",
                     value=f"Necesitas {str(needed_points)} puntos para entrar en puestos de ascenso",
