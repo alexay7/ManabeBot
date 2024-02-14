@@ -18,7 +18,7 @@ async def create_user(userid, username):
     divisions = logs_db.divisions
     newdivision = {
         'userId': userid,
-        'division': 1
+        'division': 2
     }
     divisions.insert_one(newdivision)
 
