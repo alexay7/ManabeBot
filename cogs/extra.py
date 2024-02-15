@@ -220,7 +220,7 @@ class Extra(commands.Cog):
     @ commands.cooldown(1, 300, commands.BucketType.user)
     @ commands.command(aliases=["aleatorio", 'randomyoji', 'yojialeatorio', 'yoji', 'yojijukugo'])
     async def yoji_(self, ctx):
-        await self.aleatorio(ctx)
+        await self.yoji(ctx)
 
     # @commands.command()
     # async def anunciar(self, ctx):
@@ -310,7 +310,12 @@ class Extra(commands.Cog):
         url = "https://animethemes.moe/api/graphql"
 
         has = "animethemeentries" if option == "anime" else "song"
-        tipo = "" if tipo == "random" else tipo
+        if tipo == "random":
+            tipo = ""
+        elif tipo == "opening":
+            tipo = "OP"
+        else:
+            tipo = "ED"
 
         query = '''
         query RandomTheme {
