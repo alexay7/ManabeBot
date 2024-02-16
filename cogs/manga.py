@@ -76,17 +76,17 @@ class Manga(commands.Cog):
             message = await channel.fetch_message(payload.message_id)
 
             if str(payload.emoji) == "📋" and (message.embeds[0].title in ["Búsqueda de mangas", "¡Hay nuevos volúmenes de un manga!", "¡Se ha añadido un nuevo manga!"]):
-                found_manga = manga_db.find_one(
+                found_manga = manga_db.mangas.find_one(
                     {"idAnilist": int(message.embeds[0].fields[2].value)})
                 if found_manga:
-                    found_interested = manga_db.find_one(
+                    found_interested = manga_db.mangas.find_one(
                         {"idAnilist": int(message.embeds[0].fields[2].value), "interested": payload.user_id})
                     if found_interested:
                         embed = discord.Embed(color=0xff2929)
                         embed.add_field(
                             name="❌", value="Ya estás suscrito a ese manga!", inline=False, delete_after=10.0)
                         return await channel.send(embed=embed)
-                    manga_db.update_one({"idAnilist": int(message.embeds[0].fields[2].value)}, {
+                    manga_db.mangas.update_one({"idAnilist": int(message.embeds[0].fields[2].value)}, {
                         "$push": {"interested": payload.user_id}})
                     embed = discord.Embed(
                         title="Subscripción realizada con éxito", color=0x30ffa0)
@@ -101,7 +101,7 @@ class Manga(commands.Cog):
                     await message.add_reaction("❌")
 
             if str(payload.emoji) == "❌" and message.embeds[0].title == "Subscripción realizada con éxito":
-                updated = manga_db.update_one({"idAnilist": int(message.embeds[0].fields[1].value)}, {
+                updated = manga_db.mangas.update_one({"idAnilist": int(message.embeds[0].fields[1].value)}, {
                     "$pull": {"interested": payload.user_id}})
                 if updated.modified_count > 0:
                     embed = discord.Embed(
@@ -118,7 +118,7 @@ class Manga(commands.Cog):
             message = await channel.fetch_message(payload.message_id)
 
             if str(payload.emoji) == "📋" and (message.embeds[0].title in ["Búsqueda de mangas", "¡Hay nuevos volúmenes de un manga!", "¡Se ha añadido un nuevo manga!"]):
-                updated = manga_db.update_one({"idAnilist": int(message.embeds[0].fields[2].value)}, {
+                updated = manga_db.mangas.update_one({"idAnilist": int(message.embeds[0].fields[2].value)}, {
                     "$pull": {"interested": payload.user_id}})
                 if updated.modified_count > 0:
                     embed = discord.Embed(
@@ -132,21 +132,21 @@ class Manga(commands.Cog):
     @commands.Cog.listener()
     async def on_message_edit(self, messageBef: Message, messageAft: Message):
         ctx: ApplicationContext = await self.bot.get_context(messageAft)
-        embeds = await send_yomiyasu_embed(messageAft, manga_db, yomiyasu_db)
+        embeds = await send_yomiyasu_embed(messageAft, manga_db.mangas, yomiyasu_db)
         if embeds:
             await ctx.send(embeds=embeds)
 
     @commands.Cog.listener()
     async def on_message(self, message: Message):
         ctx = await self.bot.get_context(message)
-        embeds = await send_yomiyasu_embed(message, manga_db, yomiyasu_db)
+        embeds = await send_yomiyasu_embed(message, manga_db.mangas, yomiyasu_db)
         if embeds:
             await ctx.send(embeds=embeds)
 
         if ctx.message.channel.id in petitions_channels:
             if "anilist.co/manga/" in message.content:
                 manga = parse.urlsplit(message.content).path.split("/")
-                found_manga = manga_db.find_one({"idAnilist": int(manga[2])})
+                found_manga = manga_db.mangas.find_one({"idAnilist": int(manga[2])})
                 if found_manga:
                     await message.add_reaction("❌")
                     return await send_error_message(ctx, "¡Ese manga ya está en YomiYasu!")
@@ -197,11 +197,11 @@ class Manga(commands.Cog):
         """[ADMIN] Actualiza el número de volúmenes totales de un manga"""
         if ctx.user.id in admin_users:
             await set_processing(ctx)
-            found_manga = manga_db.update_one({"yomiyasuId": yomiyasuid}, {
+            found_manga = manga_db.mangas.update_one({"yomiyasuId": yomiyasuid}, {
                 "$inc": {"totalVolumes": volnum}})
             if found_manga.modified_count < 1:
                 return await send_error_message(ctx, "Ese manga no está en YomiYasu.")
-            updated_manga = manga_db.find_one({"yomiyasuId": yomiyasuid})
+            updated_manga = manga_db.mangas.find_one({"yomiyasuId": yomiyasuid})
 
             # Embed for admin
             admin_embed = discord.Embed(title="Manga modificado con éxito")
@@ -219,14 +219,14 @@ class Manga(commands.Cog):
         """[ADMIN] Actualiza el número de volúmenes de un manga"""
         if ctx.user.id in admin_users:
             await set_processing(ctx)
-            found_manga = manga_db.update_one({"yomiyasuId": yomiyasuid}, {
+            found_manga = manga_db.mangas.update_one({"yomiyasuId": yomiyasuid}, {
                 "$inc": {"volumes": volnum}})
             if found_manga.modified_count < 1:
                 return await send_error_message(ctx, "Ese manga no está en YomiYasu.")
-            updated_manga = manga_db.find_one({"yomiyasuId": yomiyasuid})
+            updated_manga = manga_db.mangas.find_one({"yomiyasuId": yomiyasuid})
 
             if updated_manga['totalVolumes'] < updated_manga['volumes']:
-                found_manga = manga_db.update_one({"yomiyasuId": yomiyasuid},
+                found_manga = manga_db.mangas.update_one({"yomiyasuId": yomiyasuid},
                                                   {"$set": {"totalVolumes": updated_manga['volumes']}})
 
             # Embed for admin
@@ -296,7 +296,7 @@ class Manga(commands.Cog):
             }
 
             try:
-                manga_db.insert_one(new_manga)
+                manga_db.mangas.insert_one(new_manga)
             except errors.DuplicateKeyError:
                 return await send_error_message(ctx, "Ese manga ya existe")
 
@@ -337,13 +337,13 @@ class Manga(commands.Cog):
         if ctx.guild.id != main_guild:
             return
         await set_processing(ctx)
-        found_manga = manga_db.find_one({"idAnilist": anilistid})
+        found_manga = manga_db.mangas.find_one({"idAnilist": anilistid})
         if found_manga:
-            found_interested = manga_db.find_one(
+            found_interested = manga_db.mangas.find_one(
                 {"idAnilist": anilistid, "interested": ctx.user.id})
             if found_interested:
                 return await send_error_message(ctx, "Ya estás suscrito a ese manga!")
-            manga_db.update_one({"idAnilist": anilistid}, {
+            manga_db.mangas.update_one({"idAnilist": anilistid}, {
                 "$push": {"interested": ctx.author.id}})
             embed = discord.Embed(
                 title="Subscripción realizada con éxito", color=0x30ffa0)
@@ -363,13 +363,13 @@ class Manga(commands.Cog):
         if ctx.guild.id != main_guild:
             return
         await set_processing(ctx)
-        found_manga = manga_db.find_one({"idAnilist": anilistid})
+        found_manga = manga_db.mangas.find_one({"idAnilist": anilistid})
         if found_manga:
-            found_interested = manga_db.find_one(
+            found_interested = manga_db.mangas.find_one(
                 {"idAnilist": anilistid, "interested": ctx.user.id})
             if not found_interested:
                 return await send_error_message(ctx, "No estás suscrito a ese manga!")
-            manga_db.update_one({"idAnilist": anilistid}, {
+            manga_db.mangas.update_one({"idAnilist": anilistid}, {
                 "$pull": {"interested": ctx.author.id}})
             embed = discord.Embed(
                 title="Subscripción eliminada con éxito", color=0xff6060)
@@ -392,7 +392,7 @@ class Manga(commands.Cog):
         pipeline = [{"idAnilist": anilistid}]
         if title:
             pipeline.append({"title": title})
-        found_manga = manga_db.find_one(
+        found_manga = manga_db.mangas.find_one(
             {"$or": pipeline})
         if not found_manga:
             return await send_error_message(ctx, "Ese manga no está en YomiYasu. Puedes solicitarlo en <#1005119887200489552>.")
@@ -426,7 +426,7 @@ class Manga(commands.Cog):
     async def yomiyasuinfo(self, ctx):
         """Obtener información sobre YomiYasu"""
         await set_processing(ctx)
-        data = manga_db.aggregate([
+        data = manga_db.mangas.aggregate([
             {
                 '$group': {
                     '_id': '_id',
@@ -466,7 +466,7 @@ class Manga(commands.Cog):
 
     @commands.slash_command()
     async def buscaycaptura(self, ctx):
-        data = manga_db.aggregate([
+        data = manga_db.mangas.aggregate([
             {
                 '$project': {
                     'title': 1,

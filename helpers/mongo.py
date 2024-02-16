@@ -34,6 +34,6 @@ yomiyasu_client = init_mongo(os.environ.get("YOMIYASUURL"), "de yomiyasu")
 
 logs_db = ajr_client.ajrlogs
 kotoba_db = ajr_client.gamereports
-manga_db = ajr_client.mangas
+manga_db = ajr_client.komga
 tests_db = ajr_client.Migii
 yomiyasu_db = yomiyasu_client.yomiyasu
