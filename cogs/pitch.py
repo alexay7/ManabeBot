@@ -13,7 +13,8 @@ SMALLROWKATAKANA = 'ァィゥェォヵㇰヶㇱㇲㇳㇴㇵㇶㇷㇷ゚ㇸㇹㇺ
 # ================ GENERAL VARIABLES ================
 with open("config/kotoba.json", encoding="utf8") as json_file:
     kotoba_config = json.load(json_file)
-    kotoba_channels = kotoba_config["kotoba_channels"]
+    kotoba_channels = kotoba_config["kotoba_channels"] + \
+        [1208109388393488384]
 # ====================================================
 
 
