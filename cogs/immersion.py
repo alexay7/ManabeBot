@@ -36,7 +36,7 @@ from helpers.immersion.logs import MEDIA_TYPES, MEDIA_TYPES_ENGLISH, MONTHS, TIM
 from helpers.immersion.users import check_user, create_user, find_user
 from helpers.general import intToMonth, send_error_message, send_response, set_processing
 from helpers.immersion.divisions import (
-    calculate_promotions_demotions, ascend_users, demote_users, get_user_division, save_division_results)
+    calculate_promotions_demotions, ascend_users, demote_users, get_user_division, save_division_results, get_current_division_users, get_division_users)
 
 # ================ GENERAL VARIABLES ================
 with open("config/general.json") as json_file:
@@ -1258,6 +1258,29 @@ class Immersion(commands.Cog):
         """Video conmemorativo con ranking interactivo de todo el mes"""
         if ctx.author.id not in admin_users:
             return await send_error_message(ctx, "Vuelve a hacer eso y te mato")
+
+        # Get current divisions in format [{userId:id}]
+        current_first_division, current_second_division = get_current_division_users()
+        # Get previous divisions in format [{userId:id}]
+        previous_first_division, previous_second_division = get_division_users(
+            mes, year)
+
+        promotions = []
+        demotions = []
+
+        # Calculate demotions, previous_first and current_second are arrays of objects with the format {userId:id}
+        for position in previous_first_division:
+            for user in current_second_division:
+                if position["userId"] == user["userId"]:
+                    demotions.append(user)
+                    break
+
+        for position in previous_second_division:
+            for user in current_first_division:
+                if position["userId"] == user["userId"]:
+                    promotions.append(user)
+                    break
+
         await set_processing(ctx)
         today = datetime.now()
         next_month = (mes) % 12 + 1
@@ -1307,6 +1330,23 @@ class Immersion(commands.Cog):
             await channel.send(embed=embed, content=message, file=file)
         else:
             await channel.send(embed=embed, content=message)
+
+        # Announce promotions and demotions
+        if len(promotions) > 0:
+            message = "🎉 Felicidades a "
+            for user in promotions:
+                message += f"<@{user['id']}>, "
+            message = message[:-2]
+            message += " por su ascenso a la liga AJR"
+            await channel.send(content=message)
+        if len(demotions) > 0:
+            message = "😔 Lo siento por "
+            for user in demotions:
+                message += f"<@{user['id']}>, "
+            message = message[:-2]
+            message += " por su descenso a la liga 上手"
+            await channel.send(content=message)
+
         await send_response(ctx, "Gráfico generado con éxito")
 
     # @ commands.slash_command()

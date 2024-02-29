@@ -3,7 +3,6 @@ import os
 import random
 import discord
 
-from dotenv import load_dotenv
 from discord.ext import bridge, tasks
 from helpers.general import send_error_message
 from time import sleep
@@ -22,7 +21,6 @@ with open("config/immersion.json") as json_file:
 # ====================================================
 
 
-load_dotenv(".env", override=True)
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True

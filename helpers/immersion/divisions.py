@@ -57,6 +57,38 @@ def get_user_division(userId):
     return user_division["division"]
 
 
+def get_current_division_users():
+    divisions = logs_db.divisions
+    first_division = []
+    second_division = []
+
+    for user in divisions.find():
+        if user["division"] == 1:
+            first_division.append(user)
+        else:
+            second_division.append(user)
+
+    return first_division, second_division
+
+
+def get_division_users(month, year):
+    historic = logs_db.historic
+    historic_data = historic.find_one({"month": month, "year": year})
+    if not historic_data:
+        return []
+
+    first_division = []
+    second_division = []
+
+    for user in historic_data["division"]:
+        if user["division"] == 1:
+            first_division.append(user)
+        else:
+            second_division.append(user)
+
+    return first_division, second_division
+
+
 def save_division_results(ranking, month, year):
     historic = logs_db.historic
 

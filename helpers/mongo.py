@@ -3,6 +3,7 @@ import os
 from pymongo import MongoClient, errors
 
 from termcolor import cprint
+from dotenv import load_dotenv
 
 
 def init_mongo(uri, name):
@@ -25,12 +26,12 @@ def init_mongo(uri, name):
 print("\n\n===============================================")
 
 cprint(
-    f"\n🤖 Iniciando AJRBot 3.0\n", "blue", attrs=["bold"
-                                                  ])
+    f"\n🤖 Iniciando AJRBot 3.0\n", "blue", attrs=["bold"])
+load_dotenv(".env", override=True)
 
 print("=========== CARGANDO BASES DE DATOS ===========\n")
-ajr_client = init_mongo(os.environ.get("MONGOURL"), "principal")
-yomiyasu_client = init_mongo(os.environ.get("YOMIYASUURL"), "de yomiyasu")
+ajr_client = init_mongo(os.getenv("MONGOURL"), "principal")
+yomiyasu_client = init_mongo(os.getenv("YOMIYASUURL"), "de yomiyasu")
 
 logs_db = ajr_client.ajrlogs
 kotoba_db = ajr_client.gamereports

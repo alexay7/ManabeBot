@@ -13,3 +13,5 @@ script/
 dicts/
 medals/
 certs/
+
+.DS_Store
