@@ -32,12 +32,26 @@
         1202030979103850496,
         1204531063741747250
     ],
+    "grammar_messages": {
+        "892868169729986600": "`.test n5 gramatica 15 3`",
+        "892868325724524594": "`.test n4 gramatica 15 3`",
+        "892868371396296724": "`.test n3 gramatica 15 3`",
+        "892868404132843560": "`.test n2 gramatica 15 3`",
+        "892868429877485598": "`.test n1 gramatica 15 3`"
+    },
+    "short_level_up_messages": {
+        "892868169729986600": "`k!quiz n5 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
+        "892868325724524594": "`k!quiz n4 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
+        "892868371396296724": "`k!quiz n3 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
+        "892868404132843560": "`k!quiz n2 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
+        "892868429877485598": "`k!quiz n1 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`"
+    },
     "levelup_messages": {
-        "654352144664887297": "Lucha por el N5:\n`k!quiz n5 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
-        "892868169729986600": "Lucha por el N4:\n`k!quiz n4 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
-        "892868325724524594": "Lucha por el N3:\n`k!quiz n3 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
-        "892868371396296724": "Lucha por el N2:\n`k!quiz n2 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
-        "892868404132843560": "Lucha por el N1:\n`k!quiz n1 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
+        "654352144664887297": "Lucha por el N5:\n`k!quiz n5 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr` y `.test n5 gramatica 15 3`",
+        "892868169729986600": "Lucha por el N4:\n`k!quiz n4 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr` y `.test n4 gramatica 15 3`",
+        "892868325724524594": "Lucha por el N3:\n`k!quiz n3 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr` y `.test n3 gramatica 15 3`",
+        "892868371396296724": "Lucha por el N2:\n`k!quiz n2 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr` y `.test n2 gramatica 15 3`",
+        "892868404132843560": "Lucha por el N1:\n`k!quiz n1 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr` y `.test n1 gramatica 15 3`",
         "892868429877485598": "Ya tienes el N1, listo para un reto?:\n`k!quiz ajrfreq15k(25%)+ajrfreq20k(75%) 30 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
         "1164576111716478996": "Todavía quieres mas?:\n`k!quiz ajrfreq25k(25%)+ajrfreq30k(75%) 30 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
         "1164575116995342438": "Máximo nivel alcanzado, no hay nada más que pueda enseñarte. Pero si no aprecias tu tiempo puedes hacer el test definitivo.\n`k!quiz ajrfreq35k(5%)+ajrfreq40k(5%)+ajrfreq50k(10%)+ajrfreq60k(10%)+ajrfreq70k(15%)+ajrfreq80k(15%)+ajrfreq90k(16%)+ajrfreqmugen1(8%)+ajrfreqmugen2(8%)+ajrfreqmugen3(8%) 50 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",

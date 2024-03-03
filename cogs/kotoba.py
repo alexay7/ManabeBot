@@ -7,10 +7,10 @@ import random
 from discord.ext import commands
 from bson.objectid import ObjectId
 from termcolor import cprint, COLORS
-from helpers.certs import generate_certificate
 
 from helpers.general import send_error_message, send_response
 from helpers.mongo import kotoba_db
+from helpers.kotoba import level_user
 
 # ================ GENERAL VARIABLES ================
 with open("config/general.json") as json_file:
@@ -29,6 +29,9 @@ with open("config/kotoba.json", encoding="utf8") as json_file:
     extra_levelup_messages = kotoba_config["special_levelup_messages"]
     extra_levelup_messages = {int(key): value for key,
                               value in extra_levelup_messages.items()}
+    grammar_messages = kotoba_config["grammar_messages"]
+    grammar_messages = {int(key): value for key,
+                        value in grammar_messages.items()}
     quiz_ranks = kotoba_config["quiz_ranks"]
     noken_ranks = kotoba_config["noken_ranks"]
     special_ranks = kotoba_config["special_quiz_ranks"]
@@ -71,7 +74,7 @@ class Kotoba(commands.Cog):
                                         kotobadict = await self.getjson(jsonurl)
                                     else:
                                         # Obtain data from mongodb directly
-                                        reports_collection = kotoba_db
+                                        reports_collection = kotoba_db.gamereports
                                         # Find report by Object Id
                                         kotobadicts = reports_collection.aggregate([
                                             {
@@ -205,10 +208,6 @@ class Kotoba(commands.Cog):
 
                                     quizwinner = self.myguild.get_member(
                                         mainuserid)
-                                    currentroleid = 0
-                                    for role in quizwinner.roles:
-                                        if role.id in quiz_ranks:
-                                            currentroleid = role.id
 
                                     # Si hay imagen, enviarla.
                                     if image_name != None:
@@ -227,10 +226,52 @@ class Kotoba(commands.Cog):
                                             await announcementchannel.send(f'<@!{mainuserid}> ha aprobado el examen de{shortname}!', file=image if image_name else None)
                                         return
 
-                                    # Si el rol a conseguir está 1 por encima del rol actual, dar el rol.
-                                    if quiz_ranks.index(currentroleid)+1 == quiz_ranks.index(newrankid):
+                                    if newrankid in noken_ranks:
+                                        user_grades = kotoba_db.usergrades
+
+                                        currentroleid = 0
+                                        for role in quizwinner.roles:
+                                            if role.id in noken_ranks:
+                                                currentroleid = role.id
+
+                                        # If the index of the current role is higher than the index of the new role, stop
+                                        if currentroleid != 0 and noken_ranks.index(currentroleid) >= noken_ranks.index(newrankid):
+                                            return
+
+                                        # Check if the user has already passed the level
+                                        user_grade = user_grades.find_one(
+                                            {"userId": mainuserid, "level": newrankid})
+                                        if user_grade:
+                                            if "grammar" in user_grade:
+                                                announcementchannel = self.bot.get_channel(
+                                                    announcement_channel)
+
+                                                await level_user(announcementchannel, quizwinner, self.myguild, quizname.strip(
+                                                ), currentroleid)
+                                                user_grades.delete_one(
+                                                    {"_id": user_grade["_id"]})
+                                                await message.channel.send(f'¡Enhorabuena! Has aprobado el examen de{shortname}!')
+                                                return
+
+                                        # Add the user to the database
+                                        user_grades.insert_one(
+                                            {"userId": mainuserid, "level": newrankid, "vocab": True})
+
+                                        # Decirle al usuario que ha aprobado el examen de vocabulario y que ahora tiene que hacer el de gramática
+                                        await message.channel.send(f'¡Enhorabuena! Has aprobado el examen de vocabulario de{shortname}.\n\nAhora tienes que hacer el examen de gramática para que te sea concedido el rol. Escribe `{grammar_messages[newrankid]}` en <#796084920790679612> para hacerlo.')
+
+                                        return
+
+                                    # Si el rol a conseguir está 1 por encima del rol actual o es el primero de los especiales, dar el rol.
+                                    if (quiz_ranks.index(currentroleid)+1 == quiz_ranks.index(newrankid)) or newrankid == 1164576111716478996:
                                         newrole = self.myguild.get_role(
                                             newrankid)
+
+                                        currentroleid = 0
+                                        for role in quizwinner.roles:
+                                            if role.id in quiz_ranks and role.id not in noken_ranks:
+                                                currentroleid = role.id
+
                                         if currentroleid != 0:
                                             currentrole = self.myguild.get_role(
                                                 currentroleid)
@@ -239,20 +280,10 @@ class Kotoba(commands.Cog):
                                                 await quizwinner.remove_roles(currentrole)
                                         await quizwinner.add_roles(newrole)
 
-                                        if newrankid in noken_ranks:
-                                            # Get level by position in the list
-                                            level = 5 - \
-                                                noken_ranks.index(newrankid)
-                                            generate_certificate(
-                                                quizwinner.name, quizwinner.joined_at, "N"+str(level))
-                                            image = discord.File(
-                                                "temp/certificate.jpg", filename="certificate.jpg")
-                                            image_name = "certificate.jpg"
-
                                         announcementchannel = self.bot.get_channel(
                                             announcement_channel)
                                         await announcementchannel.send(f'<@!{mainuserid}> ha aprobado el examen de{shortname}!\n'
-                                                                       f'Escribe `.levelup` en <#796084920790679612> para ver los requisitos del siguiente nivel.', file=image if image_name else None)
+                                                                       f'Escribe `.levelup` en <#796084920790679612> para ver los requisitos del siguiente nivel.')
                                     # Si ya tiene el rol, no hacer nada
                                     elif quiz_ranks.index(currentroleid) == quiz_ranks.index(newrankid):
                                         return
@@ -272,7 +303,7 @@ class Kotoba(commands.Cog):
     @commands.slash_command()
     async def levelup(self, ctx):
         """Mostrar el comando que necesitas para subir al siguiente nivel."""
-        if ctx.channel.id not in kotoba_channels:
+        if ctx.channel.id not in kotoba_channels and ctx.channel.parent_id not in kotoba_channels:
             await send_error_message(ctx,
                                      "Este comando solo puede ser usado en <#796084920790679612>.")
             return

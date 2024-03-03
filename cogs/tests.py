@@ -3,6 +3,7 @@
 import asyncio
 import random
 import discord
+import json
 
 from time import sleep
 from discord.ext import commands
@@ -10,6 +11,9 @@ from discord.ext import commands
 from helpers.general import send_error_message
 from helpers.mongo import tests_db
 from termcolor import cprint, COLORS
+
+from helpers.mongo import kotoba_db
+from helpers.kotoba import level_user
 
 # BOT'S COMMANDS
 
@@ -80,6 +84,21 @@ def question_params(question):
     return name, description, time
 
 
+with open("config/general.json") as json_file:
+    general_config = json.load(json_file)
+    main_guild = general_config["trusted_guilds"][0]
+
+with open("config/kotoba.json", encoding="utf8") as json_file:
+    kotoba_config = json.load(json_file)
+    noken_ranks = kotoba_config["noken_ranks"]
+    grammar_messages = kotoba_config["grammar_messages"]
+    grammar_messages = {int(key): value for key,
+                        value in grammar_messages.items()}
+    announcement_channel = kotoba_config["announcement_channel"]
+    kotoba_tests = kotoba_config["kotoba_tests"]
+    short_level_up_messages = kotoba_config["short_level_up_messages"]
+
+
 class Test(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -88,11 +107,12 @@ class Test(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
+        self.myguild = self.bot.get_guild(main_guild)
         cprint("- [✅] Cog de tests cargado con éxito",
                random.choice(list(COLORS.keys())))
 
     @commands.command()
-    async def test(self, ctx, level, param=None, questionnum=None, timed="false"):
+    async def test(self, ctx, level, param=None, questionnum=None, maxfails=None):
         if ctx.message.author == self.bot:
             return
         users = tests_db.users
@@ -144,7 +164,6 @@ class Test(commands.Cog):
             if questionnum:
                 if questionnum.lower() == "true":
                     questionnum = 5
-                    timed = "true"
             else:
                 questionnum = 5
 
@@ -170,6 +189,7 @@ class Test(commands.Cog):
                 return await send_error_message(ctx, "Categorías admitidas para el " + level.upper() + ": " + categories + ".")
 
         points = 0
+        fails = 0
         question_counter = 1
         user_data = {
             "user_id": ctx.message.author.id
@@ -180,8 +200,6 @@ class Test(commands.Cog):
             ...
         for question in questions:
             qname, explain, timemax = question_params(question.get("type"))
-            if timed.lower() == "false":
-                timemax = 240
             ""
             qs = question.get("question").replace("＿", " ＿ ").replace(
                 "*", " ( ", 1).replace("*", ") ", 1).replace("_", "\_") + "\n"
@@ -213,7 +231,7 @@ class Test(commands.Cog):
             timeout = False
             try:
                 self.tasks[ctx.message.author.id] = self.bot.wait_for(
-                    'reaction_add', timeout=timemax, check=check)
+                    'reaction_add', timeout=60, check=check)
                 guess = await self.tasks[ctx.message.author.id]
             except asyncio.TimeoutError:
                 timeout = True
@@ -243,8 +261,12 @@ class Test(commands.Cog):
                 sleep(2)
             else:
                 incorrect = discord.Embed(
-                    title="❌ Tu Respuesta: " + str(userans) + ") " + question.get("answers")[userans - 1] + ".", color=0xff2929, description="Respuesta Correcta: " + str(answer) + ") " + question.get("answers")[answer - 1] + ".\n\n" + question.get("explanation"))
+
+                    title="❌Respuesta Correcta: " + str(answer) + ") " + question.get("answers")[answer - 1] + ".", color=0xff2929, description="Tu Respuesta: " + str(userans) + ") " + question.get("answers")[userans - 1] + ".\n\n" + question.get("explanation"))
                 await ctx.send(embed=incorrect)
+                fails += 1
+                if maxfails and fails >= int(maxfails):
+                    break
                 users.update_one({"user_id": ctx.message.author.id}, {
                     "$addToSet": {"questions_failed": question.get("_id")}})
                 # await onlyUserReaction(userans)
@@ -260,10 +282,72 @@ class Test(commands.Cog):
             emoji = "😐"
         else:
             emoji = "⚠️"
+
         embed = discord.Embed(color=0x3344dd, title="Quiz terminado")
         embed.add_field(
             name=" Preguntas acertadas: ", value=emoji + " " + str(points) + "/" + str(questionnum) + " (" + str(round(int(points) * 100 / int(questionnum), 2)) + "%)", inline=True)
         output = await ctx.send(embed=embed)
+
+        # If it is a grammar test
+        if param and param.lower() == "gramatica" and int(questionnum) == 15 and points > 12:
+            user_grades = kotoba_db.usergrades
+
+            if level.upper() == "N5":
+                newrankid = noken_ranks[0]
+                currentroleid = 0
+                shortname = "JLPT N5 Reading Quiz"
+            elif level.upper() == "N4":
+                newrankid = noken_ranks[1]
+                currentroleid = noken_ranks[0]
+                shortname = "JLPT N4 Reading Quiz"
+            elif level.upper() == "N3":
+                newrankid = noken_ranks[2]
+                currentroleid = noken_ranks[1]
+                shortname = "JLPT N3 Reading Quiz"
+            elif level.upper() == "N2":
+                newrankid = noken_ranks[3]
+                currentroleid = noken_ranks[2]
+                shortname = "JLPT N2 Reading Quiz"
+            elif level.upper() == "N1":
+                newrankid = noken_ranks[4]
+                currentroleid = noken_ranks[3]
+                shortname = "JLPT N1 Reading Quiz"
+            else:
+                return
+
+            currentroleid = 0
+            for role in ctx.message.author.roles:
+                if role.id in noken_ranks:
+                    currentroleid = role.id
+
+            # If the index of the current role is higher than the index of the new role, stop
+            if currentroleid != 0 and noken_ranks.index(currentroleid) >= noken_ranks.index(newrankid):
+                return
+
+            # Check if the user has already passed the level
+            user_grade = user_grades.find_one(
+                {"userId": ctx.message.author.id, "level": newrankid})
+
+            if user_grade:
+                if "vocab" in user_grade:
+                    announcementchannel = self.bot.get_channel(
+                        announcement_channel)
+                    await level_user(announcementchannel, ctx.message.author, self.myguild, shortname, currentroleid)
+                    user_grades.delete_one(
+                        {"_id": user_grade["_id"]})
+
+                    await ctx.send(f'¡Enhorabuena! Has aprobado el examen del {shortname}!')
+                    return
+
+            user_grades.insert_one(
+                {"userId": ctx.message.author.id, "level": newrankid, "grammar": True})
+
+            requirements = kotoba_tests[shortname.strip(
+            )]
+            reqscorelimit, reqanswertime, reqfontsize, reqfont, newrankid, reqfailed, shortname, reqAntiOcr, reqStartIndex, reqEndIndex, image_name = requirements
+
+            # Decirle al usuario que ha aprobado el examen de vocabulario y que ahora tiene que hacer el de gramática
+            await ctx.send(f'¡Enhorabuena! Has aprobado el examen de gramática de{shortname}.\n\nAhora tienes que hacer el examen de vocabulario para que te sea concedido el rol. Escribe `{short_level_up_messages[str(newrankid)]}` en <#796084920790679612> para hacerlo.')
 
     @commands.command()
     async def testaño(self, ctx, year, month):
