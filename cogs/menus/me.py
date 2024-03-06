@@ -84,7 +84,7 @@ async def me_command(usuario, periodo, graph):
             hours += log_points/27
             estimated_hours += log_points/27
 
-        if log["medio"] in ["LIBRO", "MANGA", "ANIME", "VN", "LECTURA"]:
+        if log["medio"] in ["LIBRO", "MANGA", "VN", "LECTURA"]:
             if "tiempo" in log:
                 otherHours[log["medio"]] += log["tiempo"] / 60
 
