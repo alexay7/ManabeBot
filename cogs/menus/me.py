@@ -42,6 +42,12 @@ async def me_command(usuario, periodo, graph):
         "AUDIO": 0,
         "VIDEO": 0
     }
+    otherHours = {
+        "LIBRO": 0,
+        "MANGA": 0,
+        "VN": 0,
+        "LECTURA": 0
+    }
 
     graphlogs = {}
 
@@ -78,30 +84,31 @@ async def me_command(usuario, periodo, graph):
             hours += log_points/27
             estimated_hours += log_points/27
 
+        if log["medio"] in ["LIBRO", "MANGA", "ANIME", "VN", "LECTURA"]:
+            if "tiempo" in log:
+                otherHours[log["medio"]] += log["tiempo"] / 60
+
+
     if points["TOTAL"] == 0:
         output = "No se han encontrado logs"
     else:
-        if points["LIBRO"] > 0:
-            output += f"**LIBROS:** {get_media_element(parameters['LIBRO'],'LIBRO')} -> {round(points['LIBRO'],2)} pts\n"
-        if points["MANGA"] > 0:
-            output += f"**MANGA:** {get_media_element(parameters['MANGA'],'MANGA')} -> {round(points['MANGA'],2)} pts\n"
-        if points["ANIME"] > 0:
-            output += f"**ANIME:** {get_media_element(parameters['ANIME'],'ANIME')} -> {round(points['ANIME'],2)} pts\n"
-        if points["VN"] > 0:
-            output += f"**VN:** {get_media_element(parameters['VN'],'VN')} -> {round(points['VN'],2)} pts\n"
-        if points["LECTURA"] > 0:
-            output += f"**LECTURA:** {get_media_element(parameters['LECTURA'],'LECTURA')} -> {round(points['LECTURA'],2)} pts\n"
-        if points["TIEMPOLECTURA"] > 0:
-            output += f"**LECTURA:** {get_media_element(parameters['TIEMPOLECTURA'],'TIEMPOLECTURA')} -> {round(points['TIEMPOLECTURA'],2)} pts\n"
-        if points["OUTPUT"] > 0:
-            output += f"**OUTPUT:** {get_media_element(parameters['OUTPUT'],'OUTPUT')} -> {round(points['OUTPUT'],2)} pts\n"
-        if points["AUDIO"] > 0:
-            output += f"**AUDIO:** {get_media_element(parameters['AUDIO'],'AUDIO')} -> {round(points['AUDIO'],2)} pts\n"
-        if points["VIDEO"] > 0:
-            output += f"**VIDEO:** {get_media_element(parameters['VIDEO'],'VIDEO')} -> {round(points['VIDEO'],2)} pts\n"
+        for media_type in ["LIBRO", "MANGA", "VN", "LECTURA"]:
+            if points[media_type] > 0:
+                hours = round(otherHours[media_type], 2)
+                if hours > 1:
+                    output += f"**{media_type}:** {get_media_element(parameters[media_type], media_type)} -> {hours} horas -> {round(points[media_type], 2)} pts\n"
+                else:
+                    output += f"**{media_type}:** {get_media_element(parameters[media_type], media_type)} -> {round(points[media_type], 2)} pts\n"
+        
+        for media_type in ["TIEMPOLECTURA", "OUTPUT", "ANIME" "AUDIO", "VIDEO"]:
+            if points[media_type] > 0:
+                output += f"**{media_type}:** {get_media_element(parameters[media_type], media_type)} -> {round(points[media_type], 2)} pts\n"
+        
         if points["CLUB AJR"] > 0 and periodo != "TOTAL":
-            output += f"**CLUB AJR:** {round(points['CLUB AJR'],2)} puntos\n"
+            output += f"**CLUB AJR:** {round(points['CLUB AJR'], 2)} puntos\n"
+            
     ranking = await get_sorted_ranking(periodo, "TOTAL")
+
     for user in ranking:
         if user["username"] == usuario.name:
             position = ranking.index(user)
