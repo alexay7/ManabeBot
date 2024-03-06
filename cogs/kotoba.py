@@ -262,6 +262,11 @@ class Kotoba(commands.Cog):
 
                                         return
 
+                                    currentroleid = 0
+                                    for role in quizwinner.roles:
+                                        if role.id in quiz_ranks and role.id not in noken_ranks:
+                                            currentroleid = role.id
+
                                     # Si el rol a conseguir está 1 por encima del rol actual o es el primero de los especiales, dar el rol.
                                     if (quiz_ranks.index(currentroleid)+1 == quiz_ranks.index(newrankid)) or newrankid == 1164576111716478996:
                                         newrole = self.myguild.get_role(
