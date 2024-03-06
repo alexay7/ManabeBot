@@ -112,7 +112,7 @@ class Test(commands.Cog):
                random.choice(list(COLORS.keys())))
 
     @commands.command()
-    async def test(self, ctx, level, param=None, questionnum=None, maxfails=None):
+    async def test(self, ctx: discord.ApplicationContext, level, param=None, questionnum=None, maxfails=None):
         if ctx.message.author == self.bot:
             return
         users = tests_db.users
@@ -238,6 +238,8 @@ class Test(commands.Cog):
             except RuntimeError:
                 return
 
+            await output.clear_reactions()
+
             if not timeout:
                 userans = emojiToInt(guess[0].emoji)
 
@@ -245,6 +247,9 @@ class Test(commands.Cog):
                 incorrect = discord.Embed(
                     title="⌛ Muy lento!", description=question.get("explanation"), color=0xff2929)
                 await ctx.send(embed=incorrect)
+                fails += 1
+                if maxfails and fails >= int(maxfails):
+                    break
                 users.update_one({"user_id": ctx.message.author.id}, {
                                  "$addToSet": {"questions_failed": question.get("_id")}})
                 # await onlyUserReaction(userans)

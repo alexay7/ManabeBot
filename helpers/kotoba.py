@@ -14,12 +14,12 @@ async def level_user(ctx, user, guild, level, currentroleid):
     )]
     reqscorelimit, reqanswertime, reqfontsize, reqfont, newrankid, reqfailed, shortname, reqAntiOcr, reqStartIndex, reqEndIndex, image_name = requirements
 
-    # MODO "PODER HACER EL N1 DE GOLPE"
+    # Check if the user already has the role
     if currentroleid == newrankid:
         return
 
     # MODO "TENER QUE APROBAR TODO POCO A POCO"
-    if (noken_ranks.index(currentroleid)+1 != noken_ranks.index(newrankid)):
+    if (newrankid != noken_ranks[0] and noken_ranks.index(currentroleid)+1 != noken_ranks.index(newrankid)):
         return
 
     #  Get level by position in the list
