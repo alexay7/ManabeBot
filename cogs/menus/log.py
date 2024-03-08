@@ -113,7 +113,7 @@ class UnBonusButton(discord.ui.Button):
         userId = int(interaction.message.embeds[0].footer.text.split(" ")[-1])
 
         # Si el usuario no es el dueño del log, no hacer nada
-        if userId != interaction.user.id and userId not in admin_users:
+        if userId != interaction.user.id and interaction.user.id not in admin_users:
             error_embed = create_error_embed(
                 "No puedes editar logs de otros usuarios")
             await interaction.response.send_message(embed=error_embed, ephemeral=True)
@@ -154,7 +154,7 @@ class LogView(discord.ui.View):
         userId = int(interaction.message.embeds[0].footer.text.split(" ")[-1])
 
         # Si el usuario no es el dueño del log, no hacer nada
-        if userId != interaction.user.id and userId not in admin_users:
+        if userId != interaction.user.id and interaction.user.id not in admin_users:
             error_embed = create_error_embed(
                 "No puedes eliminar logs de otros usuarios")
             await interaction.response.send_message(embed=error_embed, ephemeral=True)
