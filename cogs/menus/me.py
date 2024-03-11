@@ -46,7 +46,8 @@ async def me_command(usuario, periodo, graph):
         "LIBRO": 0,
         "MANGA": 0,
         "VN": 0,
-        "LECTURA": 0
+        "LECTURA": 0,
+        "ANIME": 0,
     }
 
     graphlogs = {}
@@ -84,29 +85,30 @@ async def me_command(usuario, periodo, graph):
             hours += log_points/27
             estimated_hours += log_points/27
 
-        if log["medio"] in ["LIBRO", "MANGA", "VN", "LECTURA"]:
+        if log["medio"] in ["LIBRO", "MANGA", "VN", "LECTURA", "ANIME"]:
             if "tiempo" in log:
                 otherHours[log["medio"]] += log["tiempo"] / 60
-
+            else:
+                otherHours[log["medio"]] += log_points / 27
 
     if points["TOTAL"] == 0:
         output = "No se han encontrado logs"
     else:
-        for media_type in ["LIBRO", "MANGA", "VN", "LECTURA"]:
+        for media_type in ["LIBRO", "MANGA", "VN", "LECTURA", "ANIME"]:
             if points[media_type] > 0:
-                hours = round(otherHours[media_type], 2)
-                if hours > 1:
-                    output += f"**{media_type}:** {get_media_element(parameters[media_type], media_type)} -> {hours} horas -> {round(points[media_type], 2)} pts\n"
+                hours_aux = int(otherHours[media_type])
+                if hours_aux > 1:
+                    output += f"**{media_type}:** {get_media_element(parameters[media_type], media_type)} -> {hours_aux} horas -> {round(points[media_type], 2)} pts\n"
                 else:
                     output += f"**{media_type}:** {get_media_element(parameters[media_type], media_type)} -> {round(points[media_type], 2)} pts\n"
-        
-        for media_type in ["TIEMPOLECTURA", "OUTPUT", "ANIME" "AUDIO", "VIDEO"]:
+
+        for media_type in ["TIEMPOLECTURA", "OUTPUT", "AUDIO", "VIDEO"]:
             if points[media_type] > 0:
                 output += f"**{media_type}:** {get_media_element(parameters[media_type], media_type)} -> {round(points[media_type], 2)} pts\n"
-        
+
         if points["CLUB AJR"] > 0 and periodo != "TOTAL":
             output += f"**CLUB AJR:** {round(points['CLUB AJR'], 2)} puntos\n"
-            
+
     ranking = await get_sorted_ranking(periodo, "TOTAL")
 
     for user in ranking:
