@@ -3,7 +3,7 @@ import os
 import random
 import discord
 
-from discord.ext import bridge, tasks
+from discord.ext import tasks, commands
 from helpers.general import send_error_message
 from time import sleep
 
@@ -25,7 +25,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 intents.reactions = True
-bot = bridge.Bot(command_prefix=".", intents=intents, help_command=None)
+bot = commands.Bot(command_prefix=".", intents=intents, help_command=None)
 
 
 @bot.event

@@ -32,6 +32,8 @@ from cogs.menus.ajr import ajr_command
 from cogs.menus.progreso import progreso_command
 from cogs.menus.league import league_command
 
+from cogs.dialogs.recommend import RecommendModal
+
 from helpers.immersion.logs import MEDIA_TYPES, MEDIA_TYPES_ENGLISH, MONTHS, TIMESTAMP_TYPES, add_log, calc_media, check_max_immersion, compute_points, get_all_logs_in_day, get_best_user_of_range, get_last_log, get_log_by_id, get_logs_animation, get_logs_per_day_in_month, get_logs_per_day_in_year, get_media_element, get_media_level, get_param_for_media_level, get_sorted_ranking, get_total_parameter_of_media, get_user_logs, ordenar_logs, remove_last_log, remove_log, update_log
 from helpers.immersion.users import check_user, create_user, find_user
 from helpers.general import intToMonth, send_error_message, send_response, set_processing
@@ -113,6 +115,11 @@ class Immersion(commands.Cog):
         response = await mvp_command(medio, ano)
 
         await send_response(ctx, embed=response["embed"], view=response["view"])
+
+    @commands.slash_command()
+    async def recomendar(self, ctx):
+        modal = RecommendModal(title="Titulo")
+        await ctx.send_modal(modal)
 
     @commands.command(aliases=["halloffame", "salondelafama", "salonfama", "mvp", "hallofame"])
     async def mvpprefix(self, ctx, argument=""):

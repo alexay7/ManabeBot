@@ -385,7 +385,3 @@ class Extra(commands.Cog):
 
 def setup(bot):
     bot.add_cog(Extra(bot))
-
-
-def setup(bot):
-    bot.add_cog(Extra(bot))
