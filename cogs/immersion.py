@@ -184,7 +184,7 @@ class Immersion(commands.Cog):
     @discord.slash_command()
     async def podio(self, ctx,
                     division: Option(str, "División del podio", choices=[
-                        "Liga Manabe", "Liga 上手", "USUARIO"], required=False, default="USUARIO")
+                        "Liga 学べ", "Liga 上手", "USUARIO"], required=False, default="USUARIO")
                     ):
         await set_processing(ctx)
 
@@ -197,7 +197,7 @@ class Immersion(commands.Cog):
         if division == "USUARIO":
             # Get user division
             user_division = get_user_division(ctx.author.id)
-        elif division == "Liga Manabe":
+        elif division == "Liga 学べ":
             user_division = 1
         elif division == "Liga 上手":
             user_division = 2
@@ -1348,7 +1348,7 @@ class Immersion(commands.Cog):
             for user in promotions:
                 message += f"<@{user['id']}>, "
             message = message[:-2]
-            message += " por su ascenso a la liga Manabe"
+            message += " por su ascenso a la Liga 学べ"
             await channel.send(content=message)
         if len(demotions) > 0:
             message = "😔 Lo siento por "
