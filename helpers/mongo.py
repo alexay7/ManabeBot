@@ -33,8 +33,8 @@ print("=========== CARGANDO BASES DE DATOS ===========\n")
 manabe_client = init_mongo(os.getenv("MONGOURL"), "principal")
 yomiyasu_client = init_mongo(os.getenv("YOMIYASUURL"), "de yomiyasu")
 
-logs_db = manabe_client.manabelogs
+logs_db = manabe_client.ajrlogs
 kotoba_db = manabe_client.kotoba
 manga_db = manabe_client.komga
 tests_db = manabe_client.Migii
-yomiyasu_db = yomiyasu_client.yomiyasu
+yomiyasu_db = yomiyasu_client.tfg
