@@ -181,7 +181,7 @@ class Immersion(commands.Cog):
 
         await msg.create_thread(name=f"Propuestas live actions {next_month_str} {next_year_str}")
 
-    @commands.slash_command()
+    @discord.slash_command()
     async def podio(self, ctx,
                     division: Option(str, "División del podio", choices=[
                         "Liga AJR", "Liga 上手", "USUARIO"], required=False, default="USUARIO")
@@ -211,7 +211,11 @@ class Immersion(commands.Cog):
 
         paginator = Paginator(
             pages=response["pages"], custom_view=response["view"])
-        return await paginator.respond(ctx)
+
+        if not ctx.message:
+            return await paginator.respond(ctx)
+        else:
+            return await paginator.send(ctx)
 
     @commands.command(aliases=["podio", "lb", "leaderboard"])
     async def podio_(self, ctx, division="USUARIO"):
