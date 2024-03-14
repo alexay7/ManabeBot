@@ -38,7 +38,7 @@ def get_media_element(num, media):
         elif int(num) < 120:
             return f"1 hora y {int(num)%60} minutos"
         return f"{int(int(num)/60)} horas y {int(num)%60} minutos"
-    if media == "CLUB AJR":
+    if media == "CLUB Manabe":
         return f"{int(num)} puntos"
 
 

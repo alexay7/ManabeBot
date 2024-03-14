@@ -7,7 +7,7 @@ from helpers.immersion.logs import bonus_log, remove_log, unbonus_log
 
 
 async def unmark_as_bonus(ctx, old_embed, user):
-    if "AJR" not in old_embed.title:
+    if "Manabe" not in old_embed.title:
         await send_error_message(ctx, "Este log no está marcado como bonus")
         return
 
@@ -29,13 +29,13 @@ async def unmark_as_bonus(ctx, old_embed, user):
     old_embed.insert_field_at(
         index=2, name="Puntos", value=f"{round(new_points,2)} (+{round(new_points_aux,2)})", inline=True)
     old_embed.title = old_embed.title.replace(
-        " (club AJR)", "")
+        " (club Manabe)", "")
     old_embed.color = 0x24b14d
     return old_embed
 
 
 async def mark_as_bonus(ctx, old_embed, user):
-    if "AJR" in old_embed.title:
+    if "Manabe" in old_embed.title:
         await send_error_message(ctx, "Este log ya está marcado como bonus")
         return
 
@@ -56,7 +56,7 @@ async def mark_as_bonus(ctx, old_embed, user):
     old_embed.remove_field(2)
     old_embed.insert_field_at(
         index=2, name="Puntos (x1.4)", value=f"{round(new_points,2)} (+{round(new_points_aux,2)})", inline=True)
-    old_embed.title = old_embed.title+" (club AJR)"
+    old_embed.title = old_embed.title+" (club Manabe)"
     old_embed.color = 0xbf9000
 
     return old_embed

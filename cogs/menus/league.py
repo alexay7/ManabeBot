@@ -9,7 +9,7 @@ from helpers.immersion.divisions import calculate_promotions_demotions
 
 async def league_command(division: int, divisions):
     if division:
-        league = "LIGA AJR" if division == 1 else "LIGA 上手"
+        league = "LIGA Manabe" if division == 1 else "LIGA 上手"
 
     high_div = divisions[0]
     low_div = divisions[1]
@@ -89,7 +89,7 @@ class LeagueView(discord.ui.View):
         else:
             self.get_item("segunda").disabled = True
 
-    @discord.ui.button(label="🏅 Liga AJR", style=discord.ButtonStyle.primary, custom_id="primera")
+    @discord.ui.button(label="🏅 Liga Manabe", style=discord.ButtonStyle.primary, custom_id="primera")
     async def first_div(self, button: discord.Button, interaction: discord.Interaction):
         # Venimos de paginator
         await interaction.response.defer()

@@ -203,7 +203,7 @@ class Extra(commands.Cog):
         for element in meaninggroup[1:]:
             meanings += ", " + element
 
-        embed = discord.Embed(title="Yoji aleatorio de AJR",
+        embed = discord.Embed(title="Yoji aleatorio de Manabe",
                               description="Recibe un yojijukugo aleatorio de jisho.org", color=0x24b14d)
         embed.set_author(
             name="IniestaBot", icon_url="https://cdn.discordapp.com/avatars/892168738193936424/c08307c917ffb2fe9e4f59b66db66c9e.webp?size=48")

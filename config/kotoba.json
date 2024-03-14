@@ -52,17 +52,17 @@
         "892868325724524594": "Lucha por el N3:\n`k!quiz n3 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr` y `.test n3 gramatica 15 3`",
         "892868371396296724": "Lucha por el N2:\n`k!quiz n2 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr` y `.test n2 gramatica 15 3`",
         "892868404132843560": "Lucha por el N1:\n`k!quiz n1 25 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr` y `.test n1 gramatica 15 3`",
-        "892868429877485598": "Ya tienes el N1, listo para un reto?:\n`k!quiz ajrfreq15k(25%)+ajrfreq20k(75%) 30 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
-        "1164576111716478996": "Todavía quieres mas?:\n`k!quiz ajrfreq25k(25%)+ajrfreq30k(75%) 30 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
-        "1164575116995342438": "Máximo nivel alcanzado, no hay nada más que pueda enseñarte. Pero si no aprecias tu tiempo puedes hacer el test definitivo.\n`k!quiz ajrfreq35k(5%)+ajrfreq40k(5%)+ajrfreq50k(10%)+ajrfreq60k(10%)+ajrfreq70k(15%)+ajrfreq80k(15%)+ajrfreq90k(16%)+ajrfreqmugen1(8%)+ajrfreqmugen2(8%)+ajrfreqmugen3(8%) 50 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
+        "892868429877485598": "Ya tienes el N1, listo para un reto?:\n`k!quiz manabefreq15k(25%)+manabefreq20k(75%) 30 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
+        "1164576111716478996": "Todavía quieres mas?:\n`k!quiz manabefreq25k(25%)+manabefreq30k(75%) 30 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
+        "1164575116995342438": "Máximo nivel alcanzado, no hay nada más que pueda enseñarte. Pero si no aprecias tu tiempo puedes hacer el test definitivo.\n`k!quiz manabefreq35k(5%)+manabefreq40k(5%)+manabefreq50k(10%)+manabefreq60k(10%)+manabefreq70k(15%)+manabefreq80k(15%)+manabefreq90k(16%)+manabefreqmugen1(8%)+manabefreqmugen2(8%)+manabefreqmugen3(8%) 50 hardcore nd atl=16 mmq=5 dauq=1 font=11 size=100 effect=antiocr`",
         "1169355627764658356": "Por favor, sal que te dé el aire"
     },
     "special_levelup_messages": {
         "1202019474371248168": "Medalla de Kanjis\n`k!quiz strokes_kanken(2135-end) 50 hardcore nd atl=16 mmq=1 dauq=1`",
         "1202029123061415977": "Medalla de Números\n`k!quiz numbers 30 hardcore nd atl=16 mmq=1 dauq=1`",
-        "1202032130226397196": "Medalla de Pitch Accent\n`ek!q pitchajr 50 hardcore nd atl=16 mmq=1 dauq=1`",
+        "1202032130226397196": "Medalla de Pitch Accent\n`ek!q pitchmanabe 50 hardcore nd atl=16 mmq=1 dauq=1`",
         "1202027790799474728": "Medalla de Myoujis\n`k!quiz myouji 25 hardcore nd atl=16 mmq=1 dauq=1 font=11 size=100 effect=antiocr`",
-        "1202030979103850496": "Medalla de Yojijukugos\n`k!quiz ajryojis 20 hardcore nd atl=16 mmq=1 dauq=1 font=11 size=100 effect=antiocr`",
+        "1202030979103850496": "Medalla de Yojijukugos\n`k!quiz manabeyojis 20 hardcore nd atl=16 mmq=1 dauq=1 font=11 size=100 effect=antiocr`",
         "1204531063741747250": "Medalla del lector\n`k!quiz ranobe 30 hardcore nd atl=16 mmq=1 dauq=1 font=12 effect=antiocr`"
     },
     "kotoba_tests": {
@@ -131,7 +131,7 @@
             null,
             null
         ],
-        "AJR Frecuencia de 10k a 15k(25%) AJR Frecuencia de 15k a 20k(75%)": [
+        "Manabe Frecuencia de 10k a 15k(25%) Manabe Frecuencia de 15k a 20k(75%)": [
             30,
             16001,
             100,
@@ -144,7 +144,7 @@
             null,
             null
         ],
-        "AJR Frecuencia de 20k a 25k(25%) AJR Frecuencia de 25k a 30k(75%)": [
+        "Manabe Frecuencia de 20k a 25k(25%) Manabe Frecuencia de 25k a 30k(75%)": [
             30,
             16001,
             100,
@@ -157,7 +157,7 @@
             null,
             null
         ],
-        "AJR Frecuencia de 30k a 35k(5%) AJR Frecuencia de 35k a 40k(5%) AJR Frecuencia de 40k a 50k(10%) AJR Frecuencia de 50k a 60k(10%) AJR Frecuencia de 60k a 70k(15%) AJR Frecuencia de 70k a 80k(15%) AJR Frecuencia de 80k a 90k(16%) AJR Frecuencia desde 90k 1(8%) AJR Frecuencia desde 90k 2(8%) AJR Frecuencia desde 90k 3(8%)": [
+        "Manabe Frecuencia de 30k a 35k(5%) Manabe Frecuencia de 35k a 40k(5%) Manabe Frecuencia de 40k a 50k(10%) Manabe Frecuencia de 50k a 60k(10%) Manabe Frecuencia de 60k a 70k(15%) Manabe Frecuencia de 70k a 80k(15%) Manabe Frecuencia de 80k a 90k(16%) Manabe Frecuencia desde 90k 1(8%) Manabe Frecuencia desde 90k 2(8%) Manabe Frecuencia desde 90k 3(8%)": [
             50,
             16001,
             100,

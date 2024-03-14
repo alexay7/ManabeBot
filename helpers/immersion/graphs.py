@@ -16,7 +16,7 @@ def generate_linear_graph(points, horas):
         labels.append(x),
         values.append(y)
     plt.plot(labels, values)
-    plt.title("Inmersión en AJR")
+    plt.title("Inmersión en Manabe")
     plt.xticks(rotation=45)
     plt.xlabel("Tiempo")
     if horas:
@@ -42,8 +42,8 @@ def generate_graph(points, type, timelapse=None, total_points=None, position=Non
                 aux.pop(elem)
         aux.pop("TOTAL")
 
-        if "CLUB AJR" in aux:
-            aux.pop("CLUB AJR")
+        if "CLUB Manabe" in aux:
+            aux.pop("CLUB Manabe")
 
         labels = []
         values = []

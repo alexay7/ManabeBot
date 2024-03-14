@@ -11,7 +11,7 @@ class ZZZ(commands.Cog):
     async def on_ready(self):
         print("===============================================")
         cprint(
-            f"\n🎉 AJRBot listo con usuario {self.bot.user}\n", "blue", attrs=["bold"])
+            f"\n🎉 ManabeBot listo con usuario {self.bot.user}\n", "blue", attrs=["bold"])
         print("===============================================")
 
 

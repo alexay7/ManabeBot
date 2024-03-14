@@ -29,7 +29,7 @@ async def me_command(usuario, periodo, graph):
         "AUDIO": 0,
         "VIDEO": 0,
         "TOTAL": 0,
-        "CLUB AJR": 0
+        "CLUB Manabe": 0
     }
     parameters = {
         "LIBRO": 0,
@@ -62,7 +62,7 @@ async def me_command(usuario, periodo, graph):
         if "bonus" in log and log["bonus"]:
             log_points = log["puntos"]/1.4
             bonus_points = log["puntos"]-log_points
-            points["CLUB AJR"] += bonus_points
+            points["CLUB Manabe"] += bonus_points
 
         points[log["medio"]] += log_points
         parameters[log["medio"]] += int(log["parametro"])
@@ -106,8 +106,8 @@ async def me_command(usuario, periodo, graph):
             if points[media_type] > 0:
                 output += f"**{media_type}:** {get_media_element(parameters[media_type], media_type)} -> {round(points[media_type], 2)} pts\n"
 
-        if points["CLUB AJR"] > 0 and periodo != "TOTAL":
-            output += f"**CLUB AJR:** {round(points['CLUB AJR'], 2)} puntos\n"
+        if points["CLUB Manabe"] > 0 and periodo != "TOTAL":
+            output += f"**CLUB Manabe:** {round(points['CLUB Manabe'], 2)} puntos\n"
 
     ranking = await get_sorted_ranking(periodo, "TOTAL")
 

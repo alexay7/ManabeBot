@@ -21,7 +21,7 @@ def generate_certificate(username, register_date: datetime, level):
     # Add user name
     I1.text((202, 370), username, fill=(0, 0, 0), font=font_names)
 
-    # Add register date in ajr
+    # Add register date in manabe
     complete_register_date = register_date.strftime("%Y-%m-%d")
     I1.text((202, 440), complete_register_date,
             fill=(0, 0, 0), font=font_names)

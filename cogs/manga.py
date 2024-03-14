@@ -146,7 +146,8 @@ class Manga(commands.Cog):
         if ctx.message.channel.id in petitions_channels:
             if "anilist.co/manga/" in message.content:
                 manga = parse.urlsplit(message.content).path.split("/")
-                found_manga = manga_db.mangas.find_one({"idAnilist": int(manga[2])})
+                found_manga = manga_db.mangas.find_one(
+                    {"idAnilist": int(manga[2])})
                 if found_manga:
                     await message.add_reaction("❌")
                     return await send_error_message(ctx, "¡Ese manga ya está en YomiYasu!")
@@ -201,7 +202,8 @@ class Manga(commands.Cog):
                 "$inc": {"totalVolumes": volnum}})
             if found_manga.modified_count < 1:
                 return await send_error_message(ctx, "Ese manga no está en YomiYasu.")
-            updated_manga = manga_db.mangas.find_one({"yomiyasuId": yomiyasuid})
+            updated_manga = manga_db.mangas.find_one(
+                {"yomiyasuId": yomiyasuid})
 
             # Embed for admin
             admin_embed = discord.Embed(title="Manga modificado con éxito")
@@ -223,11 +225,12 @@ class Manga(commands.Cog):
                 "$inc": {"volumes": volnum}})
             if found_manga.modified_count < 1:
                 return await send_error_message(ctx, "Ese manga no está en YomiYasu.")
-            updated_manga = manga_db.mangas.find_one({"yomiyasuId": yomiyasuid})
+            updated_manga = manga_db.mangas.find_one(
+                {"yomiyasuId": yomiyasuid})
 
             if updated_manga['totalVolumes'] < updated_manga['volumes']:
                 found_manga = manga_db.mangas.update_one({"yomiyasuId": yomiyasuid},
-                                                  {"$set": {"totalVolumes": updated_manga['volumes']}})
+                                                         {"$set": {"totalVolumes": updated_manga['volumes']}})
 
             # Embed for admin
             admin_embed = discord.Embed(title="Manga modificado con éxito")
@@ -255,7 +258,7 @@ class Manga(commands.Cog):
             notify_embed.add_field(
                 name="Id del manga", value=updated_manga["idAnilist"], inline=False)
             notify_embed.add_field(name="Link de YomiYasu",
-                                   value=f"[{updated_manga['title']}](https://manga.ajr.moe/app/series/{updated_manga['yomiyasuId']})")
+                                   value=f"[{updated_manga['title']}](https://manga.manabe.es/app/series/{updated_manga['yomiyasuId']})")
             notify_embed.set_footer(
                 text=f"Para suscribirte a este manga reacciona con 📋 a este mensaje")
 
@@ -321,7 +324,7 @@ class Manga(commands.Cog):
             notify_embed.add_field(
                 name="Id del manga", value=anilist, inline=False)
             notify_embed.add_field(name="Link de YomiYasu",
-                                   value=f"[{new_manga['title']}](https://manga.ajr.moe/app/series/{yomiyasuid})")
+                                   value=f"[{new_manga['title']}](https://manga.manabe.es/app/series/{yomiyasuid})")
             notify_embed.set_footer(
                 text=f"Para suscribirte a este manga reacciona con 📋 a este mensaje")
             petitions = await self.bot.fetch_channel(notification_channel)
@@ -405,7 +408,7 @@ class Manga(commands.Cog):
         embed.add_field(name="Id de anilist",
                         value=found_manga["idAnilist"], inline=True)
         embed.add_field(name="Link de YomiYasu",
-                        value=f"[{found_manga['title']}](https:/manga.ajr.moe/app/series/{found_manga['yomiyasuId']})")
+                        value=f"[{found_manga['title']}](https:/manga.manabe.es/app/series/{found_manga['yomiyasuId']})")
         embed.set_thumbnail(url=found_manga["thumbnail"])
         # Añadir campo con enlace a YomiYasu
         embed.set_footer(
@@ -444,12 +447,13 @@ class Manga(commands.Cog):
         ])
         for result in data:
             info = result
-        embed = discord.Embed(title="Información YomiYasu AJR", color=0xf4f344)
+        embed = discord.Embed(
+            title="Información YomiYasu Manabe", color=0xf4f344)
         embed.add_field(
             name="Datos:", value=f">>> `Total de Series de Manga`: {info['totalSeries']} Series\n`Total de Volúmenes`: {info['totalVolumes']} Volúmenes\n`Total de Volúmenes no Encontrados`: {info['wantedVolumes']} Volúmenes", inline=False)
         links = ""
         if ctx.guild.id == main_guild:
-            links = "[YomiYasu](https://manga.ajr.moe/)"
+            links = "[YomiYasu](https://manga.manabe.es/)"
         else:
             links = "[Servidor de Peticiones](https://discord.gg/57hUwdTNBh)"
         embed.add_field(name="Links",

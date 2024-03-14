@@ -9,7 +9,7 @@ from helpers.mongo import logs_db
 from helpers.views import prepare_response
 
 
-async def ajr_command(horas):
+async def manabe_command(horas):
     pipeline = [
         {
             "$match": {
@@ -167,7 +167,7 @@ async def ajr_command(horas):
         ax.set_ylabel('Puntos')
 
     # Set the title
-    ax.set_title('Inmersión en AJR')
+    ax.set_title('Inmersión en Manabe')
 
     # Create the legend outside the plot
     ax.legend([filled_data[user_id]['label'] for user_id, data in filled_data.items(
@@ -196,7 +196,7 @@ async def ajr_command(horas):
     plt.savefig("temp/image.png", bbox_inches="tight")
     plt.close()
     file = discord.File("temp/image.png", filename="image.png")
-    return {"file": file, "view": AJRView(horas)}
+    return {"file": file, "view": ManabeView(horas)}
 
 
 class PointsButton(discord.ui.Button):
@@ -207,7 +207,7 @@ class PointsButton(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         await prepare_response(interaction, self.view)
 
-        response = await ajr_command(False)
+        response = await manabe_command(False)
 
         # Delete this button
         self.view.clear_items()
@@ -224,7 +224,7 @@ class HorasButton(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         await prepare_response(interaction, self.view)
 
-        response = await ajr_command(True)
+        response = await manabe_command(True)
 
         # Delete this button
         self.view.clear_items()
@@ -233,7 +233,7 @@ class HorasButton(discord.ui.Button):
         await interaction.edit_original_response(files=[response["file"]], view=self.view, embeds=[])
 
 
-class AJRView(discord.ui.View):
+class ManabeView(discord.ui.View):
     def __init__(self, horas):
         super().__init__()
 

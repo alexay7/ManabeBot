@@ -28,7 +28,7 @@ from cogs.menus.log import LogView
 from cogs.menus.backlog import BacklogView
 from cogs.menus.me import me_command
 from cogs.menus.achievements import logros_command, LogroView
-from cogs.menus.ajr import ajr_command
+from cogs.menus.manabe import manabe_command
 from cogs.menus.progreso import progreso_command
 from cogs.menus.league import league_command
 
@@ -184,7 +184,7 @@ class Immersion(commands.Cog):
     @discord.slash_command()
     async def podio(self, ctx,
                     division: Option(str, "División del podio", choices=[
-                        "Liga AJR", "Liga 上手", "USUARIO"], required=False, default="USUARIO")
+                        "Liga Manabe", "Liga 上手", "USUARIO"], required=False, default="USUARIO")
                     ):
         await set_processing(ctx)
 
@@ -197,7 +197,7 @@ class Immersion(commands.Cog):
         if division == "USUARIO":
             # Get user division
             user_division = get_user_division(ctx.author.id)
-        elif division == "Liga AJR":
+        elif division == "Liga Manabe":
             user_division = 1
         elif division == "Liga 上手":
             user_division = 2
@@ -467,7 +467,7 @@ class Immersion(commands.Cog):
                        descripción: Option(str, "Pequeño resumen de lo inmersado", required=True),
                        tiempo: Option(int, "Tiempo que te ha llevado en minutos", required=False),
                        caracteres: Option(int, "Caracteres leídos (para medios que no sean lectura)", required=False),
-                       bonus: Option(bool, "Log de un club mensual de AJR", required=False)):
+                       bonus: Option(bool, "Log de un club mensual de Manabe", required=False)):
         """Loguear inmersión hecha en el pasado"""
         # Check if the user has logs
         await set_processing(ctx)
@@ -505,11 +505,11 @@ class Immersion(commands.Cog):
             await send_error_message(ctx, "Prohibido viajar en el tiempo")
             return
 
-        bonus = "ajrclub" in descripción.lower() or bonus or "clubajr" in descripción.lower(
-        ) or "ajr-club" in descripción.lower() or "club-ajr" in descripción.lower()
+        bonus = "manabeclub" in descripción.lower() or bonus or "clubmanabe" in descripción.lower(
+        ) or "manabe-club" in descripción.lower() or "club-manabe" in descripción.lower()
 
-        compiled = re.compile(re.escape("ajrclub"), re.IGNORECASE)
-        compiled_2 = re.compile(re.escape("clubajr"), re.IGNORECASE)
+        compiled = re.compile(re.escape("manabeclub"), re.IGNORECASE)
+        compiled_2 = re.compile(re.escape("clubmanabe"), re.IGNORECASE)
         message_aux = compiled.sub("", descripción).strip()
         message = compiled_2.sub("", message_aux).strip()
 
@@ -563,7 +563,7 @@ class Immersion(commands.Cog):
 
             if bonus:
                 color = 0xbf9000
-                extra = " (club AJR)"
+                extra = " (club Manabe)"
                 multiplier = " (x1.4)"
 
             embed = discord.Embed(title=f"Log registrado con éxito{extra}",
@@ -637,7 +637,7 @@ class Immersion(commands.Cog):
                   tiempo: Option(int, "Tiempo que te ha llevado en minutos", required=False),
                   caracteres: Option(int, "Caracteres leídos (para medios que no sean lectura)", required=False),
                   bonus: Option(
-                      bool, "Log de un club mensual de AJR", required=False)
+                      bool, "Log de un club mensual de Manabe", required=False)
                   ):
         """Loguear inmersión"""
         # Verify the user is in the correct channel
@@ -655,11 +655,11 @@ class Immersion(commands.Cog):
             await send_error_message(ctx, "Esa cantidad de inmersión no es posible en un solo día, considera usar el comando /backfill para indicar las fechas con precisión")
             return
 
-        bonus = "ajrclub" in descripción.lower() or bonus or "clubajr" in descripción.lower(
-        ) or "ajr-club" in descripción.lower() or "club-ajr" in descripción.lower()
+        bonus = "manabeclub" in descripción.lower() or bonus or "clubmanabe" in descripción.lower(
+        ) or "manabe-club" in descripción.lower() or "club-manabe" in descripción.lower()
 
-        compiled = re.compile(re.escape("ajrclub"), re.IGNORECASE)
-        compiled_2 = re.compile(re.escape("clubajr"), re.IGNORECASE)
+        compiled = re.compile(re.escape("manabeclub"), re.IGNORECASE)
+        compiled_2 = re.compile(re.escape("clubmanabe"), re.IGNORECASE)
         message_aux = compiled.sub("", descripción).strip()
         message = compiled_2.sub("", message_aux).strip()
 
@@ -757,7 +757,7 @@ class Immersion(commands.Cog):
 
             if bonus:
                 color = 0xbf9000
-                extra = " (club AJR)"
+                extra = " (club Manabe)"
                 multiplier = " (x1.4)"
 
             embed = discord.Embed(title=f"Log registrado con éxito{extra}",
@@ -1021,7 +1021,7 @@ class Immersion(commands.Cog):
 
         if "bonus" in aux_log and aux_log["bonus"]:
             color = 0xbf9000
-            extra = " (club AJR)"
+            extra = " (club Manabe)"
             multiplier = " (x1.4)"
 
         embed = discord.Embed(title=f"Log registrado con éxito{extra}",
@@ -1226,17 +1226,17 @@ class Immersion(commands.Cog):
         await self.ordenarlogs(ctx)
 
     @commands.slash_command()
-    async def ajrstats(self, ctx,
-                       horas: Option(bool, "Mostrar horas en vez de puntos", required=False, default=False)):
-        """Estadísticas totales de todo el servidor de AJR"""
+    async def manabestats(self, ctx,
+                          horas: Option(bool, "Mostrar horas en vez de puntos", required=False, default=False)):
+        """Estadísticas totales de todo el servidor de Manabe"""
 
-        response = await ajr_command(horas)
+        response = await manabe_command(horas)
 
         await send_response(ctx, file=response["file"], view=response["view"])
 
-    @ commands.command(aliases=["ajrstats"])
-    async def ajrstatsprefix(self, ctx, horas=False):
-        return await self.ajrstats(ctx, horas)
+    @ commands.command(aliases=["manabestats"])
+    async def manabestatsprefix(self, ctx, horas=False):
+        return await self.manabestats(ctx, horas)
 
     @ commands.slash_command()
     async def progreso(self, ctx,
@@ -1309,7 +1309,7 @@ class Immersion(commands.Cog):
         plt.rcParams['ytick.color'] = "#FFFFFF"
         plt.rcParams.update({'figure.autolayout': True})
         fig, ax = plt.subplots(figsize=(10, 5), dpi=300)
-        ax.set_title(f"Ranking {intToMonth(mes)} AJR")
+        ax.set_title(f"Ranking {intToMonth(mes)} Manabe")
         ax.set_facecolor("#36393F")
         fig.set_facecolor("#36393F")
         ax.set_xlabel('Puntos', color="white")
@@ -1327,7 +1327,7 @@ class Immersion(commands.Cog):
         await mvpuser.add_roles(newrole)
 
         embed = discord.Embed(
-            title=f"🎌 AJR mes de {intToMonth(mes)} 🎌", color=0x1302ff, description="-----------------")
+            title=f"🎌 Manabe mes de {intToMonth(mes)} 🎌", color=0x1302ff, description="-----------------")
         embed.add_field(name="Usuario del mes",
                         value=mvp["username"], inline=False)
         if mvpuser is not None:
@@ -1348,7 +1348,7 @@ class Immersion(commands.Cog):
             for user in promotions:
                 message += f"<@{user['id']}>, "
             message = message[:-2]
-            message += " por su ascenso a la liga AJR"
+            message += " por su ascenso a la liga Manabe"
             await channel.send(content=message)
         if len(demotions) > 0:
             message = "😔 Lo siento por "

@@ -30,7 +30,7 @@ async def logros_command(user_id, user_name):
         "OUTPUT": 0,
         "AUDIO": 0,
         "VIDEO": 0,
-        "CLUB AJR": 0
+        "CLUB Manabe": 0
     }
 
     graphlogs = {}
@@ -40,7 +40,7 @@ async def logros_command(user_id, user_name):
         if "bonus" in log and log["bonus"]:
             log_points = log["puntos"]/1.4
             bonus_points = log["puntos"]-log_points
-            parameters["CLUB AJR"] += bonus_points
+            parameters["CLUB Manabe"] += bonus_points
 
         points[log["medio"]] += log_points
         parameters[log["medio"]] += int(log["parametro"])

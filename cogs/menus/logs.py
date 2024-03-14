@@ -24,7 +24,7 @@ async def logs_command(authorId, periodo, medio):
         extra = ""
 
         if "bonus" in log and log["bonus"]:
-            extra = " (Club AJR)"
+            extra = " (Club Manabe)"
 
         timestring = datetime.fromtimestamp(
             log["timestamp"]).strftime('%d/%m/%Y')

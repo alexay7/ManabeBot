@@ -298,11 +298,11 @@
                 }
             ]
         },
-        "ajrstats": {
+        "manabestats": {
             "categoria": "inmersion",
-            "comando": ".ajrstats",
+            "comando": ".manabestats",
             "short_description": "Gráfica de inmersión de todo el servidor",
-            "uso": ".ajrstats",
+            "uso": ".manabestats",
             "descripcion": "Muestra una gráfica con la inmersión global de todos los miembros del servidor desde la creación del bot."
         },
         "logros": {
