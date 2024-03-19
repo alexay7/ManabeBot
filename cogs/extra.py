@@ -51,6 +51,69 @@ class Extra(commands.Cog):
                 await message.author.remove_roles(immerse_role)
                 await send_error_message(channel, "El tiempo máximo permitido es de 16 horas, si quieres desconectar más tiempo plantéate desinstalar Discord.")
 
+        if message.channel.id == 1216787655573114971 and message.author.id == 302050872383242240 and message.interaction:
+            channel = self.bot.get_channel(1216787655573114971)
+
+            # Search the message with the ranking with id 1219439399167856682
+            rank_message = await channel.fetch_message(1219439399167856682)
+
+            # Ranking has format - name: interactions, ignore the title and the last line
+            ranking = rank_message.content.split("\n")[2:-1]
+
+            real_ranking = {}
+
+            # Create ranking with the message
+            for user in ranking:
+                user = user.split(":")
+                points = int(user[1].strip())
+                username = user[0].strip().replace(
+                    "- ", "")
+
+                if message.interaction.user.name == username:
+                    points += 1
+
+                real_ranking[username] = points
+
+            # Edit the message with the new ranking
+            ranking_message = "```md\n# Ranking de bumps\n"
+            for user, interactions in real_ranking.items():
+                ranking_message += f"- {user}: {interactions}\n"
+            ranking_message += "```"
+
+            await rank_message.edit(content=ranking_message)
+
+    @commands.command()
+    async def updatebumps(self, ctx):
+        # Get channel with id 1216787655573114971
+        channel = self.bot.get_channel(1216787655573114971)
+
+        # Get all messages from channel with interactions
+        messages = await channel.history(limit=1000).flatten()
+
+        # Create a ranking with the interaction user
+        ranking = {}
+
+        for message in messages:
+            if message.interaction:
+                user = message.interaction.user
+                if user.name in ranking:
+                    ranking[user.name] += 1
+                else:
+                    ranking[user.name] = 1
+
+        # Sort the ranking
+        ranking = dict(
+            sorted(ranking.items(), key=lambda item: item[1], reverse=True))
+
+        # Send the ranking to the channel without embed in one message
+        ranking_message = "```md\n# Ranking de bumps\n"
+        for user, interactions in ranking.items():
+            ranking_message += f"- {user}: {interactions}\n"
+        ranking_message += "```"
+
+        rank_message = await channel.fetch_message(1219439399167856682)
+        await rank_message.edit(content=ranking_message)
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: RawReactionActionEvent):
         message_id = str(payload.message_id)
