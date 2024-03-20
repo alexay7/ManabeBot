@@ -1,6 +1,7 @@
 
 import json
 import random
+import re
 import discord
 import requests
 import discord
@@ -50,6 +51,20 @@ class Extra(commands.Cog):
                     message.guild.roles, id=865660735761678386)
                 await message.author.remove_roles(immerse_role)
                 await send_error_message(channel, "El tiempo máximo permitido es de 16 horas, si quieres desconectar más tiempo plantéate desinstalar Discord.")
+
+        if "ajr" in message.content.lower():
+            # Replace "ajr" with "manabe" and send the message with webhooks
+            webhook = await message.channel.create_webhook(name=message.author.name)
+            compiled = re.compile(re.escape("ajr"), re.IGNORECASE)
+            msg = compiled.sub("manabe", message.content).strip()
+            await webhook.send(
+                content=msg, username=message.author.display_name, avatar_url=message.author.display_avatar)
+
+            webhooks = await message.channel.webhooks()
+            for webhook in webhooks:
+                await webhook.delete()
+
+            await message.delete()
 
         if message.channel.id == 1216787655573114971 and message.author.id == 302050872383242240 and message.interaction:
             channel = self.bot.get_channel(1216787655573114971)
