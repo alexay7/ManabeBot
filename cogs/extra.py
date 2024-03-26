@@ -3,9 +3,11 @@ import json
 import random
 import re
 import discord
+from matplotlib.ticker import MaxNLocator
 import requests
 import discord
 import requests
+import matplotlib.pyplot as plt
 
 from datetime import datetime
 from time import gmtime, strftime
@@ -128,6 +130,55 @@ class Extra(commands.Cog):
 
         rank_message = await channel.fetch_message(1219439399167856682)
         await rank_message.edit(content=ranking_message)
+
+    @commands.command(aliases=["crecimientomanabe", "manabeusers", "usuariosmanabe"])
+    async def get_total_members_by_day(self, ctx):
+        # Get all members from the guild
+        guild = self.bot.get_guild(654351832734498836)
+        members = guild.members
+
+        # Get the date they joined
+        joined = [member.joined_at for member in members]
+
+        # Sort the dates
+        joined = sorted(joined)
+
+        # Create a dictionary with the date and the number of members. This is the members of the day before plus the new members that day
+        total_members = {}
+        total = 0
+        for date in joined:
+            date = date.strftime("%Y-%m")
+            if date in total_members:
+                total_members[date] += 1
+            else:
+                total_members[date] = total+1
+            total += 1
+
+        # Create the plot
+        fig1, ax = plt.subplots(figsize=(7, 5))
+        plt.plot(list(total_members.keys()), list(total_members.values()))
+        plt.xlabel("Fecha")
+        plt.ylabel("Miembros")
+        plt.title("Miembros totales en Manabe")
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+
+        # Decrease desnity of the x axis
+        plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True, prune='both'))
+        ax.set_facecolor('#36393f')  # Color de fondo similar al de Discord
+        fig1.set_facecolor('#36393f')
+
+        ax.title.set_color('white')
+        ax.xaxis.label.set_color('white')
+        ax.yaxis.label.set_color('white')
+        ax.tick_params(axis='x', colors='white')  # Change tick labels color
+        ax.tick_params(axis='y', colors='white')  # Change tick labels color
+
+        plt.savefig("temp/image.png", bbox_inches="tight")
+        plt.close()
+        file = discord.File("temp/image.png", filename="image.png")
+
+        await ctx.send(file=file)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: RawReactionActionEvent):
