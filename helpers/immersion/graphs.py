@@ -1,11 +1,15 @@
+import asyncio
 from datetime import datetime, timedelta
 import discord
 from matplotlib.ticker import MaxNLocator
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import bar_chart_race as bcr
 
-from helpers.general import intToWeekday
+from helpers.general import intToMonth, intToWeekday, send_response
+from helpers.immersion.logs import get_best_user_of_range
 
 
 def generate_linear_graph(points, horas):
@@ -182,3 +186,67 @@ def generate_graph(points, type, timelapse=None, total_points=None, position=Non
         plt.close()
         file = discord.File("temp/image.png", filename="image.png")
         return file
+
+
+async def fin_de_mes_graph(self, ctx: discord.ApplicationContext, mes, year, promotions, demotions):
+    # Generate monthly ranking animation
+    df = pd.read_csv('temp/test.csv', index_col='date',
+                     parse_dates=['date'])
+    df.tail()
+    plt.rc('font', family='Noto Sans JP')
+    plt.rcParams['text.color'] = "#FFFFFF"
+    plt.rcParams['axes.labelcolor'] = "#FFFFFF"
+    plt.rcParams['xtick.color'] = "#FFFFFF"
+    plt.rcParams['ytick.color'] = "#FFFFFF"
+    plt.rcParams.update({'figure.autolayout': True})
+    fig, ax = plt.subplots(figsize=(10, 5), dpi=300)
+    ax.set_title(f"Ranking {intToMonth(mes)} Manabe")
+    ax.set_facecolor("#36393F")
+    fig.set_facecolor("#36393F")
+    ax.set_xlabel('Puntos', color="white")
+    ax.tick_params(axis='both', colors='white')
+    bcr.bar_chart_race(df, 'temp/video.mp4', figsize=(20, 12), fig=fig, n_bars=10,
+                       period_fmt="%d/%m/%Y", period_length=2000, steps_per_period=50, bar_size=0.7, interpolate_period=True)
+    file = discord.File("temp/video.mp4", filename="ranking.mp4")
+    mvp = await get_best_user_of_range("TOTAL", f"{year}/{mes}")
+    newrole = discord.utils.get(ctx.guild.roles, name="先輩")
+    for user in ctx.guild.members:
+        if newrole in user.roles:
+            await user.remove_roles(newrole)
+    mvpuser = ctx.guild.get_member(mvp["id"])
+    await mvpuser.add_roles(newrole)
+
+    embed = discord.Embed(
+        title=f"🎌 Manabe mes de {intToMonth(mes)} 🎌", color=0x1302ff, description="-----------------")
+    embed.add_field(name="Usuario del mes",
+                    value=mvp["username"], inline=False)
+    if mvpuser is not None:
+        embed.set_thumbnail(
+            url=mvpuser.avatar)
+    embed.add_field(name="Puntos conseguidos",
+                    value=round(mvp["points"], 2), inline=False)
+    message = f"🎉 Felicidades a {mvpuser.mention} por ser el usuario del mes de {intToMonth(mes)}!"
+    channel = await self.bot.fetch_channel(1024229398003597343)
+    await channel.send(embed=embed, content=message, file=file)
+
+    # Announce promotions and demotions
+    if len(promotions) > 0:
+        message = "🎉 Felicidades a "
+        for user in promotions:
+            message += f"<@{user['userId']}>, "
+        message = message[:-2]
+        message += " por su ascenso a la Liga 学べ"
+        await channel.send(content=message)
+    if len(demotions) > 0:
+        message = "😔 Lo siento por "
+        for user in demotions:
+            message += f"<@{user['userId']}>, "
+        message = message[:-2]
+        message += " por su descenso a la liga 上手"
+        await channel.send(content=message)
+
+    await send_response(ctx, "Gráfico generado con éxito")
+
+
+def fin_de_mes_sync(self, ctx, mes, year, promotions, demotions):
+    asyncio.run(fin_de_mes_graph(self, ctx, mes, year, promotions, demotions))

@@ -19,6 +19,72 @@ MEDIA_TYPES_ENGLISH = {"BOOK": "LIBRO", "READING": "LECTURA",
 TIMESTAMP_TYPES = ["TOTAL", "MES", "SEMANA", "HOY"]
 
 
+def get_start_end_from_timestamp(timelapse):
+    if timelapse in MONTHS:
+        year = year if year else datetime.now().year
+        month = MONTHS.index(timelapse) + 1
+        timelapse = f"{year}/{month}"
+
+    if timelapse == "SEMANA":
+        start = int((datetime.today() - timedelta(weeks=1)
+                     ).replace(hour=0, minute=0, second=0).timestamp())
+        end = int(datetime.today().replace(
+            hour=23, minute=59, second=59).timestamp())
+        # SEVEN-DAY LOGS OF A MEDIA TYPE FROM USER
+
+    elif timelapse == "MES":
+        start = int(
+            (datetime(datetime.today().year, datetime.today().month, 1)).replace(hour=0, minute=0, second=0).timestamp())
+        end = int(datetime.today().replace(
+            hour=23, minute=59, second=59).timestamp())
+
+    elif timelapse == "HOY":
+        start = int(datetime.today().replace(
+            hour=0, minute=0, second=0).timestamp())
+        end = int(datetime.today().replace(
+            hour=23, minute=59, second=59).timestamp())
+    elif len(timelapse.split("-")) == 1:
+        split_time = timelapse.split("/")
+        if len(split_time) == 1:
+            # TOTAL VIEW
+            start = int(
+                (datetime(int(split_time[0]), 1, 1)).replace(hour=0, minute=0, second=0).timestamp())
+            end = int(
+                (datetime(int(split_time[0]), 12, 31)).replace(hour=23, minute=59, second=59).timestamp())
+
+        elif len(split_time) == 2:
+            # MONTHLY VIEW
+            month = int(split_time[1])
+            year = int(split_time[0])
+            start = int(
+                (datetime(int(year), month, 1)).replace(hour=0, minute=0, second=0).timestamp())
+            if month + 1 > 12:
+                month = 0
+                year += 1
+            end = int(
+                (datetime(int(year), month + 1, 1) - timedelta(days=1)).replace(hour=23, minute=59, second=59).timestamp())
+        else:
+            day = int(split_time[2])
+            month = int(split_time[1])
+            year = int(split_time[0])
+            start = int((datetime(int(year), month, 1)).replace(
+                hour=0, minute=0, second=0).timestamp())
+            end = int((datetime(int(year), month, day)).replace(
+                hour=23, minute=59, second=59).timestamp())
+    else:
+        dates = timelapse.split("-")
+        start_split = dates[0].split("/")
+        end_split = dates[1].split("/")
+        try:
+            start = int(
+                datetime(int(start_split[2]), int(start_split[1]), int(start_split[0])).timestamp())
+            end = int(
+                datetime(int(end_split[2]), int(end_split[1]), int(end_split[0])).timestamp())
+        except:
+            return ""
+    return start, end
+
+
 def get_media_element(num, media):
     if media in {"MANGA", "LIBRO"}:
         if int(num) == 1:
@@ -419,7 +485,9 @@ async def get_user_data(userid, timelapse, media="TOTAL", chars=False, year=None
 
 async def get_best_user_of_range(media, timelapse):
     aux = None
-    users = logs_db.users.find({}, {"userId", "username"})
+    # Get users that have logs in that range
+    users = await get_users_that_logged_in_range(timelapse)
+
     points = 0
     tot_parameters = 0
     for user in users:
@@ -443,7 +511,42 @@ async def get_best_user_of_range(media, timelapse):
     return None
 
 
-async def get_sorted_ranking(timelapse, media, caracteres=False, year=None, division=None):
+async def get_users_that_logged_in_range(timelapse):
+    start, end = get_start_end_from_timestamp(timelapse)
+
+    users = logs_db.logs.aggregate([
+        {
+            '$match': {
+                'timestamp': {
+                    '$gte': start,
+                    '$lte': end
+                },
+            }
+        }, {
+            '$lookup': {
+                'from': 'users',
+                'localField': 'userId',
+                'foreignField': 'userId',
+                'as': 'user'
+            }
+        }, {
+            '$unwind': '$user'
+        }, {
+            '$group': {
+                '_id': '$user'
+            }
+        }, {
+            '$project': {
+                'userId': '$_id.userId',
+                'username': '$_id.username'
+            }
+        }
+    ])
+
+    return users
+
+
+async def get_sorted_ranking(timelapse, media, caracteres=False, year=None, division=None, user_ids=[]):
     leaderboard = []
     if division:
         users = logs_db.users.aggregate([
@@ -460,8 +563,11 @@ async def get_sorted_ranking(timelapse, media, caracteres=False, year=None, divi
                 }
             }
         ])
+    elif user_ids:
+        users = logs_db.users.find({"userId": {"$in": user_ids}})
     else:
         users = logs_db.users.find({})
+
     counter = 0
     for user in users:
         points, parameters = await get_user_data(
@@ -482,18 +588,30 @@ async def get_sorted_ranking(timelapse, media, caracteres=False, year=None, divi
             leaderboard, key=lambda x: x["points"], reverse=True)
 
 
-async def get_logs_animation(month, day, year):
+async def get_logs_animation(month, day, year, users, firsts):
     # Esta función va a tener como parámetro el día, lo pasará a la función get logs y a partir de ahí generará el ranking pertinente
     header = []
     data = []
     header.append("date")
-    monthly_ranking = await get_sorted_ranking(MONTHS[int(month) - 1], "TOTAL", False, year, division=1)
+
+    monthly_ranking = await get_sorted_ranking(MONTHS[int(month) - 1], "TOTAL", False, year, user_ids=users)
     userlist = []
     for elem in monthly_ranking:
         if elem["points"] != 0:
             userlist.append(elem["username"])
     for user in userlist:
         header.append(user)
+
+    aux = [-1 for i in range(len(header))]
+    # First value is the name of the previous month
+    aux[0] = f"{month}/{1}/{year}"
+    for user in monthly_ranking:
+        for elem in firsts:
+            if elem["userId"] == user["id"]:
+                aux[header.index(user["username"])] = 0
+
+    data.append(aux)
+
     total = dict()
     date = datetime.today()
     # if int(day) > date.day:
@@ -501,7 +619,7 @@ async def get_logs_animation(month, day, year):
     counter = 1
     while counter < int(day) + 1:
         total[str(counter)] = await get_sorted_ranking(
-            f"{year}/{month}/{counter}", "TOTAL", division=1)
+            f"{year}/{month}/{counter}", "TOTAL", user_ids=users)
         aux = [0 for i in range(len(header))]
         aux[0] = f"{month}/{counter}/{year}"
         for user in total[str(counter)]:

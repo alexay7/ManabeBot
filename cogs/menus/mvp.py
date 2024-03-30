@@ -12,7 +12,9 @@ from helpers.immersion.logs import MEDIA_TYPES, get_best_user_of_range, get_medi
 async def mvp_command(medio, ano):
     output = ""
     if ano != "TOTAL":
-        domain = range(1, 13)
+        current_month = datetime.today().month
+        domain = range(1, current_month+1 if ano ==
+                       datetime.today().year else 13)
         for x in domain:
             winner = await get_best_user_of_range(medio, f"{ano}/{x}")
             if not (winner is None):

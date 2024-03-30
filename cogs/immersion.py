@@ -1,8 +1,12 @@
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+import multiprocessing
 import re
 import csv
 import calendar
 import json
 import math
+import threading
 import numpy as np
 import matplotlib.pyplot as plt
 import discord
@@ -34,6 +38,7 @@ from cogs.menus.league import league_command
 
 from cogs.dialogs.recommend import RecommendModal
 
+from helpers.immersion.graphs import fin_de_mes_graph, fin_de_mes_sync
 from helpers.immersion.logs import MEDIA_TYPES, MEDIA_TYPES_ENGLISH, MONTHS, TIMESTAMP_TYPES, add_log, calc_media, check_max_immersion, compute_points, get_all_logs_in_day, get_best_user_of_range, get_last_log, get_log_by_id, get_logs_animation, get_logs_per_day_in_month, get_logs_per_day_in_year, get_media_element, get_media_level, get_param_for_media_level, get_sorted_ranking, get_total_parameter_of_media, get_user_logs, ordenar_logs, remove_last_log, remove_log, update_log
 from helpers.immersion.users import check_user, create_user, find_user
 from helpers.general import intToMonth, send_error_message, send_response, set_processing
@@ -52,6 +57,8 @@ with open("config/immersion.json") as json_file:
     immersion_mvp_role = immersion_config["immersion_mvp_role"]
     announces_channel = immersion_config["announces_channel"]
 # ====================================================
+
+process_pool: list[multiprocessing.Process] = []
 
 
 class Immersion(commands.Cog):
@@ -1264,8 +1271,7 @@ class Immersion(commands.Cog):
     @ commands.slash_command()
     async def findemes(self, ctx,
                        mes: Option(int, "Mes que ha finalizado", min_value=1, max_value=12, required=False, default=datetime.now().month - 1),
-                       year: Option(int, "Año", required=False, default=datetime.now().year),
-                       video: Option(bool, "Video o no", required=False, default=True)):
+                       year: Option(int, "Año", required=False, default=datetime.now().year)):
         """Video conmemorativo con ranking interactivo de todo el mes"""
         if ctx.author.id not in admin_users:
             return await send_error_message(ctx, "Vuelve a hacer eso y te mato")
@@ -1297,68 +1303,19 @@ class Immersion(commands.Cog):
         next_month = (mes) % 12 + 1
         day = (datetime(year, next_month, 1) - timedelta(days=1)).day
         await ctx.send("Procesando datos del mes, espere por favor...", delete_after=60.0)
-        await get_logs_animation(mes, day, year)
-        # Generate monthly ranking animation
-        df = pd.read_csv('temp/test.csv', index_col='date',
-                         parse_dates=['date'])
-        df.tail()
-        plt.rc('font', family='Noto Sans JP')
-        plt.rcParams['text.color'] = "#FFFFFF"
-        plt.rcParams['axes.labelcolor'] = "#FFFFFF"
-        plt.rcParams['xtick.color'] = "#FFFFFF"
-        plt.rcParams['ytick.color'] = "#FFFFFF"
-        plt.rcParams.update({'figure.autolayout': True})
-        fig, ax = plt.subplots(figsize=(10, 5), dpi=300)
-        ax.set_title(f"Ranking {intToMonth(mes)} Manabe")
-        ax.set_facecolor("#36393F")
-        fig.set_facecolor("#36393F")
-        ax.set_xlabel('Puntos', color="white")
-        ax.tick_params(axis='both', colors='white')
-        if video:
-            bcr.bar_chart_race(df, 'temp/video.mp4', figsize=(20, 12), fig=fig,
-                               period_fmt="%d/%m/%Y", period_length=2000, steps_per_period=75, bar_size=0.7, interpolate_period=True)
-            file = discord.File("temp/video.mp4", filename="ranking.mp4")
-        mvp = await get_best_user_of_range("TOTAL", f"{year}/{mes}")
-        newrole = discord.utils.get(ctx.guild.roles, name="先輩")
-        for user in ctx.guild.members:
-            if newrole in user.roles:
-                await user.remove_roles(newrole)
-        mvpuser = ctx.guild.get_member(mvp["id"])
-        await mvpuser.add_roles(newrole)
 
-        embed = discord.Embed(
-            title=f"🎌 Manabe mes de {intToMonth(mes)} 🎌", color=0x1302ff, description="-----------------")
-        embed.add_field(name="Usuario del mes",
-                        value=mvp["username"], inline=False)
-        if mvpuser is not None:
-            embed.set_thumbnail(
-                url=mvpuser.avatar)
-        embed.add_field(name="Puntos conseguidos",
-                        value=round(mvp["points"], 2), inline=False)
-        message = f"🎉 Felicidades a <@{mvp['id']}> por ser el usuario del mes de {intToMonth(mes)}!"
-        channel = await self.bot.fetch_channel(announces_channel)
-        if video:
-            await channel.send(embed=embed, content=message, file=file)
-        else:
-            await channel.send(embed=embed, content=message)
+        # Add to chosen_ones the ids of the union between the current first division and the previous first division
+        chosen_ones = []
+        for user in current_first_division:
+            chosen_ones.append(user["userId"])
+        for user in previous_first_division:
+            if user["userId"] not in chosen_ones:
+                chosen_ones.append(user["userId"])
 
-        # Announce promotions and demotions
-        if len(promotions) > 0:
-            message = "🎉 Felicidades a "
-            for user in promotions:
-                message += f"<@{user['id']}>, "
-            message = message[:-2]
-            message += " por su ascenso a la Liga 学べ"
-            await channel.send(content=message)
-        if len(demotions) > 0:
-            message = "😔 Lo siento por "
-            for user in demotions:
-                message += f"<@{user['id']}>, "
-            message = message[:-2]
-            message += " por su descenso a la liga 上手"
-            await channel.send(content=message)
+        await get_logs_animation(mes, day, year, chosen_ones, previous_first_division)
 
-        await send_response(ctx, "Gráfico generado con éxito")
+        # Execute fin_de_mes_graph async function in another thread
+        await fin_de_mes_graph(self, ctx, mes, year, promotions, demotions)
 
     # @ commands.slash_command()
     # async def addanilist(self, ctx,
