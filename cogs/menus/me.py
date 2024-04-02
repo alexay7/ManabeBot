@@ -97,8 +97,9 @@ async def me_command(usuario, periodo, graph):
         for media_type in ["LIBRO", "MANGA", "VN", "LECTURA", "ANIME"]:
             if points[media_type] > 0:
                 hours_aux = int(otherHours[media_type])
-                if hours_aux > 1:
-                    output += f"**{media_type}:** {get_media_element(parameters[media_type], media_type)} -> {hours_aux} horas -> {round(points[media_type], 2)} pts\n"
+                if hours_aux >= 1:
+                    unit = "horas" if hours_aux > 1 else "hora"
+                    output += f"**{media_type}:** {get_media_element(parameters[media_type], media_type)} -> {hours_aux} {unit} -> {round(points[media_type], 2)} pts\n"
                 else:
                     output += f"**{media_type}:** {get_media_element(parameters[media_type], media_type)} -> {round(points[media_type], 2)} pts\n"
 
