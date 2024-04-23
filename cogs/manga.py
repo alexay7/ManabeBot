@@ -295,7 +295,8 @@ class Manga(commands.Cog):
                 "idAnilist": anilist,
                 "interested": interested,
                 "thumbnail": manga_info["coverImage"]["large"],
-                "yomiyasuId": yomiyasuid
+                "yomiyasuId": yomiyasuid,
+                "type": "manga"
             }
 
             try:

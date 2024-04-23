@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime, timedelta
+import json
 import discord
 from matplotlib.ticker import MaxNLocator
 
@@ -10,6 +11,10 @@ import bar_chart_race as bcr
 
 from helpers.general import intToMonth, intToWeekday, send_response
 from helpers.immersion.logs import get_best_user_of_range
+
+with open("config/immersion.json") as json_file:
+    immersion_config = json.load(json_file)
+    announces_channel = immersion_config["announces_channel"]
 
 
 def generate_linear_graph(points, horas):
@@ -226,7 +231,8 @@ async def fin_de_mes_graph(self, ctx: discord.ApplicationContext, mes, year, pro
     embed.add_field(name="Puntos conseguidos",
                     value=round(mvp["points"], 2), inline=False)
     message = f"🎉 Felicidades a {mvpuser.mention} por ser el usuario del mes de {intToMonth(mes)}!"
-    channel = await self.bot.fetch_channel(1024229398003597343)
+
+    channel = await self.bot.fetch_channel(announces_channel)
     await channel.send(embed=embed, content=message, file=file)
 
     # Announce promotions and demotions

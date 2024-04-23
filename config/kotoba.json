@@ -236,14 +236,14 @@
             "yojis.png"
         ],
         "Light Novel Typing Quiz": [
-            30,
+            50,
             16001,
             100,
             "any",
             1204531063741747250,
             1,
             " dominio de la lectura. Consigue por ello la **medalla del 書痴** y se le concede el rol de <@&1204531063741747250>",
-            true,
+            false,
             null,
             null,
             "read.png"
