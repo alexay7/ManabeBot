@@ -63,7 +63,7 @@
         "1202032130226397196": "Medalla de Pitch Accent\n`ek!q pitchmanabe 50 hardcore nd atl=16 mmq=1 dauq=1`",
         "1202027790799474728": "Medalla de Myoujis\n`k!quiz myouji 25 hardcore nd atl=16 mmq=1 dauq=1 size=100 effect=antiocr`",
         "1202030979103850496": "Medalla de Yojijukugos\n`k!quiz manabeyojis 20 hardcore nd atl=16 mmq=1 dauq=1 size=100 effect=antiocr`",
-        "1204531063741747250": "Medalla del lector\n`k!quiz ranobe 50 hardcore nd atl=16 mmq=1 dauq=1`"
+        "1204531063741747250": "Medalla del lector\n`k!quiz ranobe 30 hardcore nd atl=20 mmq=1 dauq=1`"
     },
     "kotoba_tests": {
         "JLPT N5 Reading Quiz": [
@@ -236,8 +236,8 @@
             "yojis.png"
         ],
         "Light Novel Typing Quiz": [
-            50,
-            16001,
+            30,
+            20001,
             9999,
             "any",
             1204531063741747250,
