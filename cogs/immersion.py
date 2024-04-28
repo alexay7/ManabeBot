@@ -524,10 +524,11 @@ class Immersion(commands.Cog):
             'timestamp': datets,
             'descripcion': message,
             'medio': medio.upper(),
-            'parametro': cantidad
+            'parametro': cantidad,
+            "bonus": bonus
         }
 
-        output = compute_points(newlog)
+        output = compute_points(newlog, bonus)
 
         if tiempo and tiempo > 0:
             newlog['tiempo'] = math.ceil(tiempo)
