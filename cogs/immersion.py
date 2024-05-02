@@ -70,7 +70,7 @@ class Immersion(commands.Cog):
     @tasks.loop(minutes=1)
     async def check_if_first_of_month(self):
         # Return if it's not the first minute of the first day of the month
-        if datetime.now().day != 1 or datetime.now().hour != 0 or datetime.now().minute != 0:
+        if datetime.now().day != 1 or datetime.now().hour != 0 or datetime.now().minute != 23:
             return
 
         print("ACTUALIZANDO RANKINGS")
@@ -598,7 +598,7 @@ class Immersion(commands.Cog):
                 text=ctx.author.id)
             message = await send_response(ctx, embed=embed, view=BacklogView(bonus))
         elif output == 0:
-            await send_error_message(ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, output, audio y video")
+            await send_error_message(ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, output, juego, audio y video")
             return
         elif output == -1:
             await send_error_message(ctx, "La cantidad de inmersión solo puede expresarse en números enteros")
@@ -848,7 +848,7 @@ class Immersion(commands.Cog):
             await sleep(10)
 
         elif output == 0:
-            await send_error_message(ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, output, audio y video")
+            await send_error_message(ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, output, juego, audio y video")
             return
         elif output == -1:
             await send_error_message(ctx, "La cantidad de inmersión solo puede expresarse en números enteros")
@@ -869,7 +869,7 @@ class Immersion(commands.Cog):
             if medio.upper() in MEDIA_TYPES_ENGLISH:
                 medio = MEDIA_TYPES_ENGLISH[medio.upper()]
             else:
-                return await send_error_message(ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, output, audio y video")
+                return await send_error_message(ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, output, juego, audio y video")
         if not str(cantidad).isnumeric():
             return await send_error_message(ctx, "La cantidad de inmersión solo puede expresarse en números enteros")
         if int(cantidad) > 5000000:
@@ -977,7 +977,7 @@ class Immersion(commands.Cog):
             if output > 0.01:
                 points = output
             elif output == 0:
-                await send_error_message(ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, output, audio y video")
+                await send_error_message(ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, output, juego, audio y video")
                 return
             elif output == -1:
                 await send_error_message(ctx, "La cantidad de inmersión solo puede expresarse en números enteros")
@@ -1122,7 +1122,7 @@ class Immersion(commands.Cog):
                 return await send_error_message(ctx, "Los puntos deben ser un número entero")
         if medio != "":
             if medio.upper() not in MEDIA_TYPES:
-                return await send_error_message(ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, output, audio y video")
+                return await send_error_message(ctx, "Los medios admitidos son: libro, manga, anime, vn, lectura, tiempolectura, output, juego, audio y video")
             else:
                 await self.puntos(ctx, cantidad, medio.upper())
         else:

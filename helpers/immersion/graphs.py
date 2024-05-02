@@ -95,7 +95,7 @@ def generate_graph(points, type, timelapse=None, total_points=None, position=Non
         labels = []
         values = []
         media = {"LIBRO": [], "LECTURA": [], "TIEMPOLECTURA": [], "OUTPUT": [], "ANIME": [], "MANGA": [], "VN": [],
-                 "AUDIO": [], "VIDEO": []}
+                 "AUDIO": [], "VIDEO": [], "JUEGO": []}
 
         for x, y in aux.items():
             labels.append(x),
@@ -113,9 +113,10 @@ def generate_graph(points, type, timelapse=None, total_points=None, position=Non
             media["OUTPUT"].append(elem["OUTPUT"])
             media["AUDIO"].append(elem["AUDIO"])
             media["VIDEO"].append(elem["VIDEO"])
+            media["JUEGO"].append(elem["JUEGO"])
             total = elem["LIBRO"] + elem["MANGA"] + elem["VN"] + elem["ANIME"] +  \
                 elem["LECTURA"] + elem["TIEMPOLECTURA"] + elem["OUTPUT"] +  \
-                elem["AUDIO"] + elem["VIDEO"]
+                elem["AUDIO"] + elem["VIDEO"] + elem["JUEGO"]
             if total > max:
                 max = total
 
@@ -128,6 +129,7 @@ def generate_graph(points, type, timelapse=None, total_points=None, position=Non
         output = np.array(media["OUTPUT"])
         audio = np.array(media["AUDIO"])
         video = np.array(media["VIDEO"])
+        juego = np.array(media["JUEGO"])
         read = np.sum([libro, lectura, tiempolectura], axis=0)
         plt.xticks(rotation=45)
         # plt.bar(labels, libro, color='#f3054d')
@@ -146,12 +148,14 @@ def generate_graph(points, type, timelapse=None, total_points=None, position=Non
                 bottom=read + anime + manga + vn + audio, color='#0f5f0c')
         plt.bar(labels, output,
                 bottom=read + anime + manga + vn + audio + video, color='#ff5f0c')
+        plt.bar(labels, juego,
+                bottom=read + anime + manga + vn + audio + video + output, color='#0073ff')
         plt.xlabel("FECHA")
         plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True, prune='both'))
         plt.ylabel("PUNTOS")
         plt.ylim(0, max * 1.05)
         plt.legend(["LECTURA", "ANIME", "MANGA", "VN", "AUDIO",
-                    "VIDEO", "OUTPUT"], loc='upper center', bbox_to_anchor=(0.5, 1.25),
+                    "VIDEO", "OUTPUT", "JUEGO"], loc='upper center', bbox_to_anchor=(0.5, 1.25),
                    ncol=3, fancybox=True, shadow=True, labelcolor="black")
 
         ax.set_facecolor('#36393f')  # Color de fondo similar al de Discord

@@ -28,6 +28,7 @@ async def me_command(usuario, periodo, graph):
         "OUTPUT": 0,
         "AUDIO": 0,
         "VIDEO": 0,
+        "JUEGO": 0,
         "TOTAL": 0,
         "CLUB Manabe": 0
     }
@@ -40,7 +41,8 @@ async def me_command(usuario, periodo, graph):
         "TIEMPOLECTURA": 0,
         "OUTPUT": 0,
         "AUDIO": 0,
-        "VIDEO": 0
+        "VIDEO": 0,
+        "JUEGO": 0
     }
     otherHours = {
         "LIBRO": 0,
@@ -75,7 +77,7 @@ async def me_command(usuario, periodo, graph):
         else:
             graphlogs[logdate] = log_points
 
-        if log["medio"] in ["VIDEO", "AUDIO", "TIEMPOLECTURA", "OUTPUT"]:
+        if log["medio"] in ["VIDEO", "AUDIO", "TIEMPOLECTURA", "OUTPUT", "JUEGO"]:
             hours += int(log["parametro"])/60
         elif "tiempo" in log:
             hours += log["tiempo"]/60
@@ -103,7 +105,7 @@ async def me_command(usuario, periodo, graph):
                 else:
                     output += f"**{media_type}:** {get_media_element(parameters[media_type], media_type)} -> {round(points[media_type], 2)} pts\n"
 
-        for media_type in ["TIEMPOLECTURA", "OUTPUT", "AUDIO", "VIDEO"]:
+        for media_type in ["TIEMPOLECTURA", "OUTPUT", "AUDIO", "VIDEO", "JUEGO"]:
             if points[media_type] > 0:
                 output += f"**{media_type}:** {get_media_element(parameters[media_type], media_type)} -> {round(points[media_type], 2)} pts\n"
 

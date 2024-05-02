@@ -11,10 +11,10 @@ MONTHS = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
           "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"]
 
 MEDIA_TYPES = ["ANIME", "AUDIO", "LECTURA", "LIBRO",
-               "MANGA", "OUTPUT", "TIEMPOLECTURA", "VIDEO", "VN"]
+               "MANGA", "OUTPUT", "TIEMPOLECTURA", "VIDEO", "VN", "JUEGO"]
 
 MEDIA_TYPES_ENGLISH = {"BOOK": "LIBRO", "READING": "LECTURA",
-                       "READTIME": "TIEMPOLECTURA", "LISTENING": "AUDIO"}
+                       "READTIME": "TIEMPOLECTURA", "LISTENING": "AUDIO", "GAME": "JUEGO"}
 
 TIMESTAMP_TYPES = ["TOTAL", "MES", "SEMANA", "HOY"]
 
@@ -98,7 +98,7 @@ def get_media_element(num, media):
         if int(num) == 1:
             return "1 episodio"
         return f"{num} episodios"
-    if media in {"TIEMPOLECTURA", "AUDIO", "VIDEO", "OUTPUT"}:
+    if media in {"TIEMPOLECTURA", "AUDIO", "VIDEO", "OUTPUT", "JUEGO"}:
         if int(num) < 60:
             return f"{int(num)%60} minutos"
         elif int(num) < 120:
@@ -119,7 +119,8 @@ def calc_media(points):
         "tiempolectura": points / 45 * 100,
         "output": points/45*100,
         "audio": points / 45 * 100,
-        "video": points / 45 * 100
+        "video": points / 45 * 100,
+        "juego": points / 45 * 100
     }
     return result
 
@@ -139,7 +140,7 @@ def get_ranking_title(timelapse, media):
     else:
         tiempo = "total"
     medio = ""
-    if media in {"MANGA", "ANIME", "AUDIO", "LECTURA", "VIDEO"}:
+    if media in {"MANGA", "ANIME", "AUDIO", "LECTURA", "VIDEO", "JUEGO"}:
         medio = "de " + media.lower() + " "
     elif media in {"LIBRO"}:
         medio = "de " + media.lower() + "s "
@@ -280,9 +281,11 @@ async def get_user_logs(userid, timelapse, media=None, year=None):
         end_split = dates[1].split("/")
         try:
             start = int(
-                datetime(int(start_split[2]), int(start_split[1]), int(start_split[0])).timestamp())
+                datetime(int(start_split[2]), int(start_split[1]), int(start_split[0])).replace(
+                    hour=0, minute=0, second=0).timestamp())
             end = int(
-                datetime(int(end_split[2]), int(end_split[1]), int(end_split[0])).timestamp())
+                datetime(int(end_split[2]), int(end_split[1]), int(end_split[0])).replace(
+                    hour=23, minute=59, second=59).timestamp())
         except:
             return ""
 
@@ -447,6 +450,7 @@ async def get_user_data(userid, timelapse, media="TOTAL", chars=False, year=None
         "OUTPUT": 0,
         "AUDIO": 0,
         "VIDEO": 0,
+        "JUEGO": 0,
         "TOTAL": 0
     }
     parameters = {
@@ -459,6 +463,7 @@ async def get_user_data(userid, timelapse, media="TOTAL", chars=False, year=None
         "OUTPUT": 0,
         "AUDIO": 0,
         "VIDEO": 0,
+        "JUEGO": 0,
         "TOTAL": 0
     }
 
@@ -658,6 +663,8 @@ def compute_points(log, bonus=False):
         puntos = round(int(log["parametro"]) * 45 / 100, 4)
     elif log["medio"] == "VIDEO":
         puntos = round(int(log["parametro"]) * 45 / 100, 4)
+    elif log["medio"] == "JUEGO":
+        puntos = round(int(log["parametro"]) * 45 / 100, 4)
 
     if bonus:
         puntos = round(puntos * 1.4, 2)
@@ -750,7 +757,7 @@ def check_max_immersion(parameter: int, media: str):
         return 720000 >= parameter
     elif media == "ANIME":
         return 60 >= parameter
-    elif media in ["TIEMPOLECTURA", "AUDIO", "OUTPUT", "VIDEO"]:
+    elif media in ["TIEMPOLECTURA", "AUDIO", "OUTPUT", "VIDEO", "JUEGO"]:
         return 1440 >= parameter
     return
 

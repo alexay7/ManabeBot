@@ -49,6 +49,7 @@ async def progreso_command(user, ano, total):
             "OUTPUT": 0,
             "AUDIO": 0,
             "VIDEO": 0,
+            "JUEGO": 0
         }
         local_total = 0
         for log in logs:

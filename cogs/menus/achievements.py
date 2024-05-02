@@ -18,6 +18,7 @@ async def logros_command(user_id, user_name):
         "OUTPUT": 0,
         "AUDIO": 0,
         "VIDEO": 0,
+        "JUEGO": 0,
         "TOTAL": 0
     }
     parameters = {
@@ -30,6 +31,7 @@ async def logros_command(user_id, user_name):
         "OUTPUT": 0,
         "AUDIO": 0,
         "VIDEO": 0,
+        "JUEGO": 0,
         "CLUB Manabe": 0
     }
 
