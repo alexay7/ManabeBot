@@ -239,23 +239,105 @@ class Extra(commands.Cog):
     async def kaliseprefix(self, ctx):
         await self.kalise(ctx)
 
+    countries = [
+        {
+            "title": "Hora Japonesa 🇯🇵",
+            "tz": "Japan"
+        },
+        {
+            "title": "Hora Española 🇪🇸",
+            "tz": "Spain"
+        },
+        {
+            "title": "Hora en Argentina 🇦🇷",
+            "tz": "America/Argentina/Buenos_Aires"
+        },
+        {
+            "title": "Hora en Uruguay 🇺🇾",
+            "tz": "America/Montevideo"
+        },
+        {
+            "title": "Hora en Puerto Rico 🇵🇷",
+            "tz": "America/Puerto_Rico"
+        },
+        {
+            "title": "Hora en República Dominicana 🇩🇴",
+            "tz": "America/Santo_Domingo"
+        },
+        {
+            "title": "Hora en Cuba 🇨🇺",
+            "tz": "America/Havana"
+        },
+        {
+            "title": "Hora en Bolivia 🇧🇴",
+            "tz": "America/La_Paz"
+        },
+        {
+            "title": "Hora en Paraguay 🇵🇾",
+            "tz": "America/Asuncion"
+        },
+        {
+            "title": "Hora en Chile 🇨🇱",
+            "tz": "Chile/Continental"
+        },
+        {
+            "title": "Hora en Venezuela 🇻🇪",
+            "tz": "America/Caracas"
+        },
+        {
+            "title": "Hora en Perú 🇵🇪",
+            "tz": "America/Lima"
+        },
+        {
+            "title": "Hora en Colombia 🇨🇴",
+            "tz": "America/Bogota"
+        },
+        {
+            "title": "Hora en Ecuador 🇪🇨",
+            "tz": "America/Guayaquil"
+        },
+        {
+            "title": "Hora en Panamá 🇵🇦",
+            "tz": "America/Panama"
+        },
+        {
+            "title": "Hora en México 🇲🇽",
+            "tz": "America/Mexico_City"
+        },
+        {
+            "title": "Hora en Costa Rica 🇨🇷",
+            "tz": "America/Costa_Rica"
+        },
+        {
+            "title": "Hora en El Salvador 🇸🇻",
+            "tz": "America/El_Salvador"
+        },
+        {
+            "title": "Hora en Guatemala 🇬🇹",
+            "tz": "America/Guatemala"
+        },
+        {
+            "title": "Hora en Honduras 🇭🇳",
+            "tz": "America/Tegucigalpa"
+        },
+        {
+            "title": "Hora en Nicaragua 🇳🇮",
+            "tz": "America/Managua"
+        }
+    ]
+
     @ commands.slash_command()
     async def japantime(self, ctx):
         "Muestra la hora actual y la de Japón."
-        local = datetime.now(gettz('Spain'))
-        local_japan = datetime.now(gettz('Japan'))
-        local_chile = datetime.now(gettz('Chile/Continental'))
-        local_venezuela = datetime.now(gettz('America/Caracas'))
-        local_mexico = datetime.now(gettz('America/Mexico_City'))
+        hours = ""
 
-        localtime = strftime("%H:%M", gmtime(
-            int(local.hour) * 3600 + int(local.minute) * 60))
+        for country in self.countries:
+            local = datetime.now(gettz(country["tz"]))
 
-        japantime = strftime("%H:%M", gmtime(
-            int(local_japan.hour) * 3600 + int(local_japan.minute) * 60))
+            hours += f"- \"{country['title']}\": {strftime('%H:%M', gmtime(int(local.hour) * 3600 + int(local.minute) * 60))} del {local.day} de {intToMonth(local.month)} de {local.year}\n"
 
         await ctx.send(
-            f"```matlab\n- \"Hora Japonesa 🇯🇵\": {japantime} del {local_japan.day} de {intToMonth(local_japan.month)} de {local_japan.year}\n- \"Hora Española 🇪🇸\": {localtime} del {local.day} de {intToMonth(local.month)} de {local.year}\n- \"Hora en Chile 🇨🇱\": {strftime('%H:%M', gmtime(int(local_chile.hour) * 3600 + int(local_chile.minute) * 60))} del {local_chile.day} de {intToMonth(local_chile.month)} de {local_chile.year}\n- \"Hora en Venezuela 🇻🇪\": {strftime('%H:%M', gmtime(int(local_venezuela.hour) * 3600 + int(local_venezuela.minute) * 60))} del {local_venezuela.day} de {intToMonth(local_venezuela.month)} de {local_venezuela.year}\n- \"Hora en México 🇲🇽\": {strftime('%H:%M', gmtime(int(local_mexico.hour) * 3600 + int(local_mexico.minute) * 60))} del {local_mexico.day} de {intToMonth(local_mexico.month)} de {local_mexico.year}```")
+            f"```matlab\n{hours}```")
 
     @ commands.command(aliases=['tiempojapon', 'horajapon', 'japonhora', 'japontiempo', 'japantime', "hora", "horalocal", "time", "localtime"])
     async def japantimeprefix(self, ctx):
