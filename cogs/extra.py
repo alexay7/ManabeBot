@@ -68,6 +68,16 @@ class Extra(commands.Cog):
 
             await message.delete()
 
+        if "ayuda," in message.content.lower():
+            # Get content after "ayuda," taking cap combinations of ayuda into account with regex
+            content = re.search(r"(?i)ayuda, (.*)", message.content).group(1)
+
+            # Google link
+            google = f"https://www.google.com/search?q={content.replace(' ', '+')}"
+
+            # Send the message with the link
+            await message.channel.send(google)
+
         if message.channel.id == 1216787655573114971 and message.author.id == 302050872383242240 and message.interaction:
             channel = self.bot.get_channel(1216787655573114971)
 
