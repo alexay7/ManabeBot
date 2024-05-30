@@ -32,6 +32,11 @@ with open("config/roles.json", encoding="utf-8") as roles_file:
 # ====================================================
 
 
+def sanitize_input(input_string):
+    # Remove any characters that are not alphanumeric, spaces, or common punctuation
+    return re.sub(r"[^a-zA-Z0-9\s,.!?-]", "", input_string)
+
+
 class Extra(commands.Cog):
     def __init__(self, bot):
         self.bot: discord.bot.Bot = bot
@@ -69,11 +74,19 @@ class Extra(commands.Cog):
             await message.delete()
 
         if "ayuda," in message.content.lower():
-            # Get content after "ayuda," taking cap combinations of ayuda into account with regex
-            content = re.search(r"(?i)ayuda, (.*)", message.content).group(1)
+            match = re.search(r"(?i)ayuda, (.*)", message.content)
+            if match:
+                content = match.group(1)
 
-            # Google link
-            google = f"https://www.google.com/search?q={content.replace(' ', '+')}"
+                # Sanitize the extracted content
+                content = sanitize_input(content)
+
+                # Construct Google search link
+                google = f"https://www.google.com/search?q={content.replace(' ', '+')}"
+            else:
+                # Handle the case where "ayuda," is not found
+                content = ""
+                google = ""
 
             # Send the message with the link
             await message.channel.send(google)
