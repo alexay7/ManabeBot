@@ -1,9 +1,10 @@
+import datetime
 import json
 import discord
 import random
 
 from urllib import parse
-from discord.ext import commands
+from discord.ext import commands, tasks
 from pymongo import errors
 from discord import Message, ApplicationContext
 from discord.ext.pages import Paginator
@@ -56,6 +57,8 @@ class Manga(commands.Cog):
     async def on_ready(self):
         cprint("- [✅] Cog de gestión de manga cargado con éxito",
                random.choice(list(COLORS.keys())))
+
+        self.check_votes.start()
 
     # Waits for reactions on output channel for warning the user when a petition has been accomplished
     @commands.Cog.listener()
@@ -153,31 +156,13 @@ class Manga(commands.Cog):
                     return await send_error_message(ctx, "¡Ese manga ya está en YomiYasu!")
                 response = await get_media_info_by_id(manga[2])
                 if response.status_code == 200:
-                    if response.json()["data"]["Media"]["meanScore"] is None or int(response.json()["data"]["Media"]["meanScore"]) < 65:
-                        await message.add_reaction("❌")
-                        badgrade = discord.Embed(color=0xff2929)
-                        badgrade.add_field(
-                            name="❌", value="Nota media demasiado baja", inline=False)
-                        await ctx.send(embed=badgrade, delete_after=10.0)
-                        return
-                    output = self.bot.get_channel(output_channel[0])
-                    embed = discord.Embed(
-                        title="Nueva petición de manga", description="Ha llegado una nueva petición de manga", color=0x24b14d)
-                    embed.set_author(
-                        name=ctx.message.author, icon_url=ctx.message.author.avatar)
-                    embed.set_thumbnail(
-                        url=response.json()["data"]["Media"]["coverImage"]["large"])
-                    embed.add_field(
-                        name="Nombre", value=response.json()["data"]["Media"]["title"]["native"], inline=True)
-                    embed.add_field(
-                        name="UserId", value=ctx.message.author.id, inline=True)
-                    embed.add_field(
-                        name="Volúmenes", value=response.json()["data"]["Media"]["volumes"], inline=True)
-                    embed.add_field(
-                        name="Nota Media", value=response.json()["data"]["Media"]["meanScore"], inline=False)
-                    embed.add_field(
-                        name="Link", value=message.content, inline=False)
-                    await output.send(embed=embed)
+                    # if response.json()["data"]["Media"]["meanScore"] is None or int(response.json()["data"]["Media"]["meanScore"]) < 60:
+                    #     await message.add_reaction("❌")
+                    #     badgrade = discord.Embed(color=0xff2929)
+                    #     badgrade.add_field(
+                    #         name="❌", value="Nota media demasiado baja", inline=False)
+                    #     await ctx.send(embed=badgrade, delete_after=10.0)
+                    #     return
                     await message.add_reaction("✅")
                 else:
                     await message.add_reaction("❌")
@@ -189,6 +174,62 @@ class Manga(commands.Cog):
             else:
                 if not ctx.message.author.bot:
                     await message.delete()
+
+    @tasks.loop(minutes=1)
+    async def check_votes(self):
+        now = datetime.datetime.now()
+
+        # Only continue if it is the first minute of the first day of the month
+        if now.day != 1 or now.hour != 0 or now.minute != 0:
+            return
+
+        print("Getting manga of the month")
+
+        # Get all messages from channel
+        channel = await self.bot.fetch_channel(petitions_channels[0])
+
+        messages = await channel.history(limit=100).flatten()
+
+        # Count all the votes and sort the messages by the number of votes
+        votes = list()
+
+        for message in messages:
+            for reaction in message.reactions:
+                if reaction.count > 1 and str(reaction.emoji) == "✅":
+                    votes.append({"message": message, "votes": reaction.count})
+            await message.clear_reactions()
+            await message.add_reaction("✅")
+
+        # Get message with the most votes
+        if len(votes) > 0:
+            votes.sort(key=lambda x: x["votes"], reverse=True)
+
+            top_msg = votes[0].get("message")
+
+            manga = parse.urlsplit(top_msg.content).path.split("/")
+
+            response = await get_media_info_by_id(manga[2])
+
+            output = self.bot.get_channel(output_channel[0])
+            embed = discord.Embed(
+                title="MANGA QUE HA GANADO ESTE MES", description="Ha llegado una nueva petición de manga", color=0x24b14d)
+            embed.set_author(
+                name=top_msg.author, icon_url=top_msg.author.avatar)
+            embed.set_thumbnail(
+                url=response.json()["data"]["Media"]["coverImage"]["large"])
+            embed.add_field(
+                name="Nombre", value=response.json()["data"]["Media"]["title"]["native"], inline=True)
+            embed.add_field(
+                name="UserId", value=top_msg.author.id, inline=True)
+            embed.add_field(
+                name="Volúmenes", value=response.json()["data"]["Media"]["volumes"], inline=True)
+            embed.add_field(
+                name="Nota Media", value=response.json()["data"]["Media"]["meanScore"], inline=False)
+            embed.add_field(
+                name="Link", value=top_msg.content, inline=False)
+            await output.send(embed=embed)
+
+            await top_msg.delete()
 
     @commands.slash_command()
     @commands.has_permissions(administrator=True)
@@ -358,7 +399,7 @@ class Manga(commands.Cog):
                 text="Serás informado cuando nuevos volúmenes sean subidos a YomiYasu.")
             return await send_response(ctx, embed=embed, ephemeral=True)
         else:
-            return await send_error_message(ctx, "Ese manga no está en YomiYasu. Puedes solicitarlo en <#1005119887200489552>.")
+            return await send_error_message(ctx, "Ese manga no está en YomiYasu. Puedes solicitarlo en <#1251570889166815334>.")
 
     @ commands.slash_command()
     async def unsubscribe(self, ctx,
@@ -381,7 +422,7 @@ class Manga(commands.Cog):
                 text="Ya no serás informado cuando nuevos volúmenes sean subidos a YomiYasu.")
             return await send_response(ctx, embed=embed, ephemeral=True)
         else:
-            return await send_error_message(ctx, "Ese manga no está en YomiYasu. Puedes solicitarlo en <#1005119887200489552>.")
+            return await send_error_message(ctx, "Ese manga no está en YomiYasu. Puedes solicitarlo en <#1251570889166815334>.")
 
     @ commands.slash_command()
     async def buscarmanga(self, ctx,
@@ -399,7 +440,7 @@ class Manga(commands.Cog):
         found_manga = manga_db.mangas.find_one(
             {"$or": pipeline})
         if not found_manga:
-            return await send_error_message(ctx, "Ese manga no está en YomiYasu. Puedes solicitarlo en <#1005119887200489552>.")
+            return await send_error_message(ctx, "Ese manga no está en YomiYasu. Puedes solicitarlo en <#1251570889166815334>.")
         embed = discord.Embed(
             title="Búsqueda de mangas", color=0x301fa0)
         embed.add_field(name="Nombre del manga",
