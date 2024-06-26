@@ -147,7 +147,7 @@ class Immersion(commands.Cog):
 
         next_year_str = next_month.strftime("%Y")
 
-        timestamp = datetime.now() + relativedelta(days=3)
+        timestamp = datetime.now() + relativedelta(days=2)
         timestamp = timestamp.replace(hour=23, minute=59, second=0)
 
         timestamp_str = f"<t:{int(timestamp.timestamp())}:f>"
