@@ -1,49 +1,66 @@
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
-import multiprocessing
-import re
-import csv
 import calendar
+import csv
 import json
-import math
-import threading
-import numpy as np
-import matplotlib.pyplot as plt
-import discord
-import pandas as pd
-import bar_chart_race as bcr
 import locale
+import math
+import multiprocessing
 import random
-
-from dateutil.relativedelta import relativedelta
-from discord.ext import commands, tasks
-from discord.ext.pages import Paginator
-from discord import Member, Option
+import re
+import threading
+from asyncio import sleep
+from concurrent.futures import ThreadPoolExecutor
 from copy import copy
 from datetime import datetime, timedelta
-from termcolor import cprint, COLORS
-from asyncio import sleep
 
-from cogs.menus.ranking import ranking_command
-from cogs.help import Help
-from cogs.menus.mvp import mvp_command
-from cogs.menus.logs import logs_command
-from cogs.menus.log import LogView
-from cogs.menus.backlog import BacklogView
-from cogs.menus.me import me_command
-from cogs.menus.achievements import logros_command, LogroView
-from cogs.menus.manabe import manabe_command
-from cogs.menus.progreso import progreso_command
-from cogs.menus.league import league_command
+import bar_chart_race as bcr
+import discord
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from bson import Int64
+from dateutil.relativedelta import relativedelta
+from discord import Member, Option
+from discord.ext import commands, tasks
+from discord.ext.pages import Paginator
+from matplotlib.animation import FuncAnimation
+from termcolor import COLORS, cprint
 
 from cogs.dialogs.recommend import RecommendModal
-
-from helpers.immersion.graphs import fin_de_mes_graph, fin_de_mes_sync
-from helpers.immersion.logs import MEDIA_TYPES, MEDIA_TYPES_ENGLISH, MONTHS, TIMESTAMP_TYPES, add_log, calc_media, check_max_immersion, compute_points, get_all_logs_in_day, get_best_user_of_range, get_last_log, get_log_by_id, get_logs_animation, get_logs_per_day_in_month, get_logs_per_day_in_year, get_media_element, get_media_level, get_param_for_media_level, get_sorted_ranking, get_total_parameter_of_media, get_user_logs, ordenar_logs, remove_last_log, remove_log, update_log
+from cogs.help import Help
+from cogs.menus.achievements import LogroView, logros_command
+from cogs.menus.backlog import BacklogView
+from cogs.menus.league import league_command
+from cogs.menus.log import LogView
+from cogs.menus.logs import logs_command
+from cogs.menus.manabe import manabe_command
+from cogs.menus.me import me_command
+from cogs.menus.mvp import mvp_command
+from cogs.menus.progreso import progreso_command
+from cogs.menus.ranking import ranking_command
+from helpers.general import send_error_message, send_response, set_processing
+from helpers.immersion.divisions import (ascend_users,
+                                         calculate_promotions_demotions,
+                                         demote_users,
+                                         get_current_division_users,
+                                         get_division_users, get_user_division,
+                                         save_division_results)
+from helpers.immersion.graphs import fin_de_mes_graph
+from helpers.immersion.logs import (MEDIA_TYPES, MEDIA_TYPES_ENGLISH, MONTHS,
+                                    TIMESTAMP_TYPES, add_log, calc_media,
+                                    check_max_immersion, compute_points,
+                                    get_all_logs_in_day, get_last_log,
+                                    get_log_by_id, get_logs_animation,
+                                    get_logs_per_day_in_month,
+                                    get_logs_per_day_in_year,
+                                    get_media_element, get_media_level,
+                                    get_param_for_media_level,
+                                    get_sorted_ranking,
+                                    get_total_parameter_of_media,
+                                    get_user_logs, ordenar_logs,
+                                    remove_last_log, remove_log, update_log)
 from helpers.immersion.users import check_user, create_user, find_user
-from helpers.general import intToMonth, send_error_message, send_response, set_processing
-from helpers.immersion.divisions import (
-    calculate_promotions_demotions, ascend_users, demote_users, get_user_division, save_division_results, get_current_division_users, get_division_users)
+from helpers.mongo import logs_db
 
 # ================ GENERAL VARIABLES ================
 with open("config/general.json") as json_file:
@@ -636,6 +653,124 @@ class Immersion(commands.Cog):
 
         logros_embed = await logros_command(user_id, user_name)
         return await send_response(ctx, embed=logros_embed)
+
+    @commands.command(aliases=["dynamicme"])
+    async def _dynamicme(self, ctx, usuario: discord.Member = None):
+        if not usuario:
+            usuario = ctx.author
+
+        result = logs_db.logs.aggregate([
+            {
+                '$match': {
+                    'userId': Int64(usuario.id)
+                }
+            }, {
+                '$group': {
+                    '_id': {
+                        'yearMonth': {
+                            '$dateToString': {
+                                'format': '%Y-%m',
+                                'date': {
+                                    '$toDate': {
+                                        '$multiply': [
+                                            '$timestamp', 1000
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        'medio': '$medio'
+                    },
+                    'totalPoints': {
+                        '$sum': '$puntos'
+                    }
+                }
+            }, {
+                '$group': {
+                    '_id': '$_id.yearMonth',
+                    'medios': {
+                        '$addToSet': {
+                            'medio': '$_id.medio',
+                            'puntos': '$totalPoints'
+                        }
+                    }
+                }
+            }, {
+                '$sort': {
+                    '_id': 1
+                }
+            }
+        ])
+
+        values = {}
+
+        colors = ['gold', 'yellowgreen', 'lightcoral', 'lightskyblue', 'limegreen',
+                  'red', 'navy', 'blue', 'magenta', 'crimson']
+        labels = ["MANGA", "ANIME", "VN", "LECTURA", "JUEGO",
+                  "VIDEO", "AUDIO", "TIEMPOLECTURA", "OUTPUT"]
+        explode = (0.1, 0, 0, 0, 0, 0, 0, 0, 0)
+
+        # Accumulate each months values, this means, february will have the sum of january
+        # and february and so
+
+        for doc in result:
+            month = doc['_id']
+            medios = doc['medios']
+
+            # Initialize the month with the previous month or 0 if it's the first
+            if len(values) == 0:
+                values[month] = [0] * len(labels)
+            else:
+                values[month] = values[list(values.keys())[-1]].copy()
+
+            for medio in medios:
+                medio_name = medio['medio']
+                medio_points = medio['puntos']
+
+                index = labels.index(medio_name)
+                values[month][index] += medio_points
+
+        fig, ax = plt.subplots()
+
+        # Set dark background and white text
+        fig.patch.set_facecolor('#36393f')
+        ax.set_facecolor('#36393f')
+        ax.title.set_color('white')
+        ax.xaxis.label.set_color('white')
+        ax.yaxis.label.set_color('white')
+        ax.tick_params(axis='x', colors='white')  # Change tick labels color
+        ax.tick_params(axis='y', colors='white')  # Change tick labels color
+        ax.set_ylabel('Puntos', color="white")
+        ax.tick_params(axis='both', colors='white')
+
+        def update(num):
+            ax.clear()
+            ax.axis('equal')
+            str_num = list(values.keys())[num]
+            nums = values[str_num]
+
+            ax.pie(nums, explode=explode, labels=labels, colors=colors,
+                   autopct='%1.1f%%', shadow=True, startangle=140)
+            ax.set_title(str_num)
+
+        ani = FuncAnimation(fig, update, frames=range(len(values)),
+                            repeat=True, interval=1000)
+
+        ani.save('temp/dynamicme.gif', writer='pillow', fps=3)
+
+        plt.close()
+
+        file = discord.File("temp/dynamicme.gif", filename="dynamicme.gif")
+        await send_response(ctx, file=file)
+
+    @commands.slash_command()
+    async def dynamicme(self, ctx, usuario: Option(Member, "Usuario del que quieres ver las stats", required=False) = None):
+        """Muestra gráfica dinámica de los puntos acumulados por mes"""
+        if not usuario:
+            usuario = ctx.author
+
+        await set_processing(ctx)
+        await self._dynamicme(ctx, usuario)
 
     @commands.slash_command()
     async def log(self, ctx,

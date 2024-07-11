@@ -602,8 +602,7 @@ async def get_logs_animation(month, day, year, users, firsts):
     monthly_ranking = await get_sorted_ranking(MONTHS[int(month) - 1], "TOTAL", False, year, user_ids=users)
     userlist = []
     for elem in monthly_ranking:
-        if elem["points"] != 0:
-            userlist.append(elem["username"])
+        userlist.append(elem["username"])
     for user in userlist:
         header.append(user)
 
