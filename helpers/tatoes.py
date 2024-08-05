@@ -8,7 +8,7 @@ import urllib
 async def parse_and_lookup_sentence(sentence):
     """ Parse a sentence and look up the words in the dictionary. """
 
-    url = f"https://manga.manabe.es/api/dictionary/v2/{sentence}"
+    url = f"https://manga.manabe.es/api/dictionary/v1/{sentence}"
 
     response = requests.get(url, timeout=30)
 
@@ -16,6 +16,9 @@ async def parse_and_lookup_sentence(sentence):
         return None
 
     parsed_response = response.json()
+
+    if len(parsed_response) == 0:
+        return None
 
     words = []
 
@@ -28,7 +31,7 @@ async def parse_and_lookup_sentence(sentence):
         definitions = definitions[:-1]
 
         words.append({
-            "word": word["words"][0]["kanji"][0]["text"],
+            "word": word["words"][0]["kanji"][0]["text"] if len(word["words"][0]["kanji"]) > 0 else word["words"][0]["kana"][0]["text"],
             "reading": word["words"][0]["kana"][0]["text"],
             "definitions": definitions
         })
@@ -65,7 +68,8 @@ async def get_example_sentences(query):
             "episode": sentence["basic_info"]["episode"] if "episode" in
             sentence["basic_info"] else None,
             "season": sentence["basic_info"]["season"] if "season" in
-            sentence["basic_info"] else None
+            sentence["basic_info"] else None,
+            "cover": sentence["basic_info"]["cover"] if "cover" in sentence["basic_info"] else None
         }
 
         sentence_info = {

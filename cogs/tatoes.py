@@ -36,13 +36,16 @@ class Tatoes(commands.Cog):
 
         examples = await get_example_sentences(consulta)
 
+        if not examples:
+            return await send_error_message(ctx, "No se encontraron ejemplos de frases para esta palabra")
+
         pages = []
 
         for example in examples:
             series_info = example["series_info"]
             sentence_info = example["sentence_info"]
 
-            target_word = definitions[word_index]["word"]
+            target_word = definitions[word_index]["word"] if definitions else consulta
 
             # Put ** around the target word in the sentence
 
@@ -65,10 +68,18 @@ class Tatoes(commands.Cog):
                 description=description,
                 color=Color.green())
 
-            # Add word definition
-            embed.add_field(
-                name=f"Definición de {definitions[word_index]['word']}",
-                value=definitions[word_index]["definitions"])
+            if series_info["cover"]:
+                url = series_info["cover"].replace("\\", "/")
+                # Encode url
+                url = url.replace(" ", "%20")
+                embed.set_thumbnail(
+                    url=url)
+
+            if definitions:
+                # Add word definition
+                embed.add_field(
+                    name=f"Definición de {definitions[word_index]['word']}",
+                    value=definitions[word_index]["definitions"])
 
             embed.set_footer(
                 text="Powered by NadeDB || Creditos a la BrigadaSOS por su desarrollo")
