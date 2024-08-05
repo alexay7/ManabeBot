@@ -87,7 +87,7 @@ class Immersion(commands.Cog):
     @tasks.loop(minutes=1)
     async def check_if_first_of_month(self):
         # Return if it's not the first minute of the first day of the month
-        if datetime.now().day != 1 or datetime.now().hour != 0 or datetime.now().minute != 23:
+        if datetime.now().day != 1 or datetime.now().hour != 0 or datetime.now().minute != 1:
             return
 
         print("ACTUALIZANDO RANKINGS")
