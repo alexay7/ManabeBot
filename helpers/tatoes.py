@@ -2,7 +2,8 @@
 
 import os
 import requests
-import urllib
+from moviepy.editor import AudioFileClip, ImageClip
+import io
 
 
 async def parse_and_lookup_sentence(sentence):
@@ -100,17 +101,32 @@ async def gen_video_from_img_and_audio(image_url, audio_url):
     audio_file = requests.get(audio_url, stream=True, timeout=30)
 
     if image_file.status_code != 200 or audio_file.status_code != 200:
+        print("Failed to download image or audio file.")
         return None
 
-    # Create the video in the temp folder
+    # Save them locally
+    image_path = os.path.join(os.getcwd(), "temp", "image.jpg")
+    audio_path = os.path.join(os.getcwd(), "temp", "audio.mp3")
+
+    with open(image_path, "wb") as img_file:
+        img_file.write(image_file.content)
+
+    with open(audio_path, "wb") as aud_file:
+        aud_file.write(audio_file.content)
+
+    # Load the image and audio into MoviePy
+    image_clip = ImageClip(image_path)
+    audio_clip = AudioFileClip(audio_path)
+
+    # Set the duration of the image clip to match the duration of the audio
+    image_clip = image_clip.set_duration(audio_clip.duration)
+
+    # Set the audio of the image clip
+    video_clip = image_clip.set_audio(audio_clip)
+
+    # Write the result to a file
     video_path = os.path.join(os.getcwd(), "temp", "video.mp4")
-
-    with open(video_path, "wb") as video:
-        for chunk in image_file.iter_content(chunk_size=1024):
-            video.write(chunk)
-
-    with open(video_path, "ab") as video:
-        for chunk in audio_file.iter_content(chunk_size=1024):
-            video.write(chunk)
+    video_clip.write_videofile(
+        video_path, codec="libx264", audio_codec="aac", fps=24)
 
     return video_path

@@ -89,8 +89,15 @@ class Tatoes(commands.Cog):
 
         first_result = pages[0]
 
-        video_path = await gen_video_from_img_and_audio(
-            first_result["image"], first_result["audio"])
+        video_path = None
+        while not video_path:
+            video_path = await gen_video_from_img_and_audio(
+                first_result["image"], first_result["audio"])
+
+            if not video_path:
+                first_result = random.choice(pages)
+
+                pages.remove(first_result)
 
         video = File(video_path, filename="video.mp4")
         embed = first_result["embed"]
