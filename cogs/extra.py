@@ -102,7 +102,7 @@ class Extra(commands.Cog):
 
             word = message.content.split("とは")[0]
 
-            url = f"https://dictionary.goo.ne.jp/srch/jn/{word}/m1u/"
+            url = f"https://dictionary.goo.ne.jp/srch/all/{word}/m1u/"
 
             await message.channel.send(url)
 
@@ -117,7 +117,7 @@ class Extra(commands.Cog):
 
             word = message.content.split("toha")[0]
 
-            url = f"https://dictionary.goo.ne.jp/srch/jn/{word}/m1u/"
+            url = f"https://dictionary.goo.ne.jp/srch/all/{word}/m1u/"
 
             await message.channel.send(url)
 
