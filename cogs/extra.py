@@ -97,6 +97,9 @@ class Extra(commands.Cog):
             if len(splitted_msg) > 2:
                 return
 
+            if splitted_msg[1] != "":
+                return
+
             word = message.content.split("とは")[0]
 
             url = f"https://dictionary.goo.ne.jp/srch/jn/{word}/m1u/"
