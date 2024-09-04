@@ -106,6 +106,21 @@ class Extra(commands.Cog):
 
             await message.channel.send(url)
 
+        if "toha" in message.content:
+            splitted_msg = message.content.split("toha")
+
+            if len(splitted_msg) > 2:
+                return
+
+            if splitted_msg[1] != "":
+                return
+
+            word = message.content.split("toha")[0]
+
+            url = f"https://dictionary.goo.ne.jp/srch/jn/{word}/m1u/"
+
+            await message.channel.send(url)
+
         if message.channel.id == 1216787655573114971 and message.author.id == 302050872383242240 and message.interaction:
             channel = self.bot.get_channel(1216787655573114971)
 
